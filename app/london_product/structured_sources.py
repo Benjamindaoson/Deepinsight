@@ -65,7 +65,7 @@ def planning_events(store, doc, source, content):
         identity = 'planning-record:' + identifier
         previous = store.get('events', identity)
         payload = dict(kind='planning', title=f'{council} planning application {identifier}',
-                       summary=excerpt, importance='normal', status='pending_review',
+                       summary=excerpt, importance='high', status='pending_review',
                        human_review_status='pending_review', geography=council,
                        source_id=source['id'], document_id=doc['id'], url=doc['url'],
                        published_at=record.get('last_updated'), application_id=identifier,
