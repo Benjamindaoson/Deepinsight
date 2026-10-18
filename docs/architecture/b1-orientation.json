@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "DeepInsight Lite B1 实施前架构",
+    "locale": "zh-CN",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "原版 Agent UI",
+      "sublabel": "B0 已验证",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        235,
+        90
+      ]
+    },
+    {
+      "id": "os",
+      "type": "backend",
+      "label": "AgentOS 2.9.0",
+      "sublabel": "API 与运行记录",
+      "pos": [
+        390,
+        80
+      ],
+      "size": [
+        235,
+        90
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "London Data Agent",
+      "sublabel": "B1 待实现",
+      "pos": [
+        740,
+        80
+      ],
+      "size": [
+        235,
+        90
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "backend",
+      "label": "领域只读 Tools",
+      "sublabel": "B1 待实现",
+      "pos": [
+        1090,
+        80
+      ],
+      "size": [
+        235,
+        90
+      ]
+    },
+    {
+      "id": "flow",
+      "type": "backend",
+      "label": "原生 Workflow",
+      "sublabel": "业务链路待实现",
+      "pos": [
+        390,
+        450
+      ],
+      "size": [
+        235,
+        90
+      ]
+    },
+    {
+      "id": "skills",
+      "type": "backend",
+      "label": "Extract / Compare Skills",
+      "sublabel": "业务规则待实现",
+      "pos": [
+        740,
+        450
+      ],
+      "size": [
+        235,
+        90
+      ]
+    },
+    {
+      "id": "relay",
+      "type": "external",
+      "label": "已授权模型 Relay",
+      "sublabel": "边界外服务",
+      "pos": [
+        1090,
+        450
+      ],
+      "size": [
+        235,
+        90
+      ]
+    },
+    {
+      "id": "market",
+      "type": "database",
+      "label": "市场事实 SQLite",
+      "sublabel": "B1 待实现",
+      "pos": [
+        1090,
+        265
+      ],
+      "size": [
+        235,
+        90
+      ]
+    },
+    {
+      "id": "history",
+      "type": "database",
+      "label": "Agno Runs / Sessions",
+      "sublabel": "B0 已验证",
+      "pos": [
+        390,
+        265
+      ],
+      "size": [
+        235,
+        90
+      ]
+    },
+    {
+      "id": "files",
+      "type": "database",
+      "label": "原始报告与证据",
+      "sublabel": "B1 待采集",
+      "pos": [
+        40,
+        450
+      ],
+      "size": [
+        235,
+        90
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "ui",
+      "to": "os",
+      "label": "HTTP / SSE"
+    },
+    {
+      "from": "os",
+      "to": "agent",
+      "label": "查询"
+    },
+    {
+      "from": "agent",
+      "to": "tools",
+      "label": "工具调用"
+    },
+    {
+      "from": "flow",
+      "to": "skills",
+      "label": "抽取与比较"
+    },
+    {
+      "from": "skills",
+      "to": "relay",
+      "label": "受限推理"
+    },
+    {
+      "from": "tools",
+      "to": "market",
+      "label": "只读查询",
+      "labelDy": 24
+    },
+    {
+      "from": "os",
+      "to": "history",
+      "label": "原生持久化",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "证据与状态",
+      "items": [
+        "底座依据 B0 最终报告；B1 组件依据已批准设计，当前待实现。",
+        "市场事实独立于会话存储；原始报告视为不可信输入。"
+      ]
+    }
+  ]
+}

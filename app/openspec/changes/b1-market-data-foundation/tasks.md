@@ -1,0 +1,8 @@
+- [ ] G0 qualification: real sources and native structured-output tested; rent annual denominator BLOCKED; human gold pending_review
+- [x] G1 contracts, secure fetch/parse, real snapshots and negative-path tests
+- [x] G2 engineering: native extraction, validation, versioned persistence and recovery implemented and tested
+- [ ] G2 business gate: six formally reviewed facts and original repeated extraction thresholds not passed
+- [x] G3 engineering: native seven-step Workflow, deterministic comparison tool, export and readonly Agent/UI integration
+- [ ] G3 business gate: third comparable rent pair BLOCKED
+- [x] G4 engineering: actual repeated evaluation, retained failures, browser/refresh/restart, 30 AC records, independent review repairs and reports
+- [ ] G4 formal acceptance: source gate, human signoff and original heldout quality gate remain unresolved; no B1 PASS

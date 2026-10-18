@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRD — London Office Market Monitoring AI Agent</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel-2:#1e222b; --border:#2a2f3a;
+    --text:#e6e8ec; --muted:#9aa3b2; --accent:#5b8cff; --accent-2:#7ee0c0;
+    --warn:#ffb454; --danger:#ff6b6b; --ok:#4ade80;
+    --code-bg:#12141a; --chip:#232733;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,-apple-system,sans-serif;line-height:1.65;font-size:15px}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 28px 80px}
+  header.hero{padding:36px 32px;border-radius:16px;background:linear-gradient(135deg,#1a2140 0%,#0f1115 60%);border:1px solid var(--border);margin-bottom:32px}
+  header.hero .tag{display:inline-block;padding:4px 12px;border-radius:999px;background:rgba(91,140,255,.15);color:var(--accent);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+  header.hero h1{margin:0 0 10px;font-size:30px;line-height:1.25}
+  header.hero .sub{color:var(--muted);font-size:15px;max-width:760px}
+  header.hero .meta{display:flex;flex-wrap:wrap;gap:18px;margin-top:22px;font-size:13px;color:var(--muted)}
+  header.hero .meta b{color:var(--text);font-weight:600}
+  h2{font-size:22px;margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;font-size:14px;font-weight:700}
+  h3{font-size:17px;margin:28px 0 12px;color:var(--accent-2)}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--text)}
+  p{margin:8px 0}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin:14px 0}
+  .card.alt{background:var(--panel-2)}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:760px){.grid-2,.grid-3{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{background:var(--panel-2);color:var(--accent-2);font-weight:600;font-size:13px}
+  tr:hover td{background:rgba(91,140,255,.04)}
+  .chip{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--chip);color:var(--muted);font-size:12px;margin:2px 4px 2px 0}
+  .chip.p0{background:rgba(255,107,107,.15);color:var(--danger)}
+  .chip.p1{background:rgba(255,180,84,.15);color:var(--warn)}
+  .chip.p2{background:rgba(91,140,255,.15);color:var(--accent)}
+  .chip.ok{background:rgba(74,222,128,.12);color:var(--ok)}
+  .chip.out{background:rgba(255,107,107,.1);color:var(--danger);text-decoration:line-through}
+  ul,ol{padding-left:22px}
+  li{margin:5px 0}
+  code{background:var(--code-bg);padding:2px 7px;border-radius:5px;font-size:13px;color:var(--accent-2)}
+  .callout{border-left:4px solid var(--accent);background:rgba(91,140,255,.06);padding:14px 18px;border-radius:0 10px 10px 0;margin:14px 0}
+  .callout.warn{border-color:var(--warn);background:rgba(255,180,84,.06)}
+  .callout.danger{border-color:var(--danger);background:rgba(255,107,107,.06)}
+  .callout.ok{border-color:var(--ok);background:rgba(74,222,128,.06)}
+  .kpi{text-align:center;padding:18px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
+  .kpi .v{font-size:26px;font-weight:700;color:var(--accent)}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:4px}
+  .muted{color:var(--muted)}
+  .req-id{font-family:monospace;color:var(--accent);font-weight:600}
+  .tbd{color:var(--warn);font-style:italic}
+  .assumption{color:var(--accent-2);font-style:italic}
+  details{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 18px;margin:10px 0}
+  summary{cursor:pointer;font-weight:600;color:var(--accent)}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 0}
+  .flow .node{padding:8px 14px;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;font-size:13px}
+  .flow .arrow{color:var(--muted)}
+  footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="tag">Business Requirements Document</span>
+  <h1>London Office Market Monitoring AI Agent</h1>
+  <p class="sub">An AI-powered assistant that continuously monitors the London commercial real estate (CRE) office market, detects shifts, surfaces risks and opportunities, and delivers evidence-based insights to the business team — replacing manual research and static reports.</p>
+  <div class="meta">
+    <div><b>Document ID:</b> BRD-LOM-001</div>
+    <div><b>Version:</b> 1.0</div>
+    <div><b>Status:</b> Draft for Review</div>
+    <div><b>Date:</b> 2026-10-18</div>
+    <div><b>Owner:</b> Product / Business Analytics</div>
+  </div>
+</header>
+
+<!-- ===================== 1. EXECUTIVE SUMMARY ===================== -->
+<h2><span class="num">1</span> Executive Summary</h2>
+
+<p>The business team currently relies on <b>manual research</b> and <b>static periodic reports</b> to track the London office market. This approach is slow, inconsistent, and easily misses early signals of market shifts — whether rental movements, vacancy changes, new supply, or occupier-demand shocks. The cost is delayed decision-making, missed opportunities, and exposure to unmonitored risks.</p>
+
+<p>This BRD defines the business requirements for an <b>AI Agent</b> that automates market monitoring. The agent will continuously acquire market data from authoritative sources, extract and normalize key metrics, detect meaningful changes, and deliver concise, evidence-backed insights to the team through a conversational interface and scheduled reports. The goal is to let the team <b>stay ahead of market shifts</b>, <b>spot risks/opportunities early</b>, and make faster, better-informed decisions.</p>
+
+<div class="grid-3">
+  <div class="kpi"><div class="v">7×</div><div class="l">Faster insight turnaround vs. manual research</div></div>
+  <div class="kpi"><div class="v">24/7</div><div class="l">Continuous market monitoring coverage</div></div>
+  <div class="kpi"><div class="v">100%</div><div class="l">Insights traceable to cited source evidence</div></div>
+</div>
+
+<!-- ===================== 2. BUSINESS CONTEXT ===================== -->
+<h2><span class="num">2</span> Business Context & Problem Statement</h2>
+
+<h3>2.1 Current State</h3>
+<p>The business team monitors the London office CRE market to support investment, leasing, and strategy decisions. Today this work is performed manually:</p>
+<ul>
+  <li>Analysts periodically visit broker websites (Savills, CBRE, JLL, Knight Frank, BNP Paribas) and download PDF/HTML reports.</li>
+  <li>Key metrics are manually extracted and pasted into spreadsheets.</li>
+  <li>Trends are identified by eyeballing period-over-period changes.</li>
+  <li>News and events are gathered from ad-hoc web browsing or email alerts.</li>
+  <li>Findings are compiled into static reports for internal circulation.</li>
+</ul>
+
+<h3>2.2 Pain Points</h3>
+<div class="grid-2">
+  <div class="card">
+    <h4>Latency & Inconsistency</h4>
+    <p class="muted">Manual cycles mean the team is always looking at stale data. A rental spike or vacancy shock may go unnoticed for days or weeks.</p>
+  </div>
+  <div class="card">
+    <h4>Information Overload</h4>
+    <p class="muted">Dozens of reports, press releases, and news articles arrive weekly. Humans cannot reliably filter signal from noise across all sources.</p>
+  </div>
+  <div class="card">
+    <h4>Data Inconsistency</h4>
+    <p class="muted">Different brokers define metrics differently (e.g., vacancy methodology, geographic boundaries, time denominators). Cross-source comparison is error-prone.</p>
+  </div>
+  <div class="card">
+    <h4>No Early-Warning System</h4>
+    <p class="muted">There is no automated alerting when a metric moves beyond a threshold or when a material event (large letting, planning approval, tenant exit) occurs.</p>
+  </div>
+</div>
+
+<h3>2.3 Problem Statement</h3>
+<div class="callout">
+  <b>The business team lacks a reliable, automated system to continuously monitor the London office market, detect material changes early, and deliver actionable, evidence-backed insights.</b> As a result, decision-making is slower than it should be, and the team is exposed to risks and opportunities it only discovers after the fact.
+</div>
+
+<!-- ===================== 3. OBJECTIVES ===================== -->
+<h2><span class="num">3</span> Business Objectives & Success Criteria</h2>
+
+<table>
+  <thead><tr><th>#</th><th>Objective</th><th>Success Criterion</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td>O1</td><td>Continuously monitor the London office market from authoritative sources</td><td>System acquires new market data on a configurable schedule without manual intervention</td><td><span class="chip p0">P0</span></td></tr>
+    <tr><td>O2</td><td>Provide on-demand, conversational access to market data and insights</td><td>Business user can ask a natural-language question and receive a cited, evidence-based answer</td><td><span class="chip p0">P0</span></td></tr>
+    <tr><td>O3</td><td>Detect and alert on material market changes</td><td>When a metric exceeds a configured threshold or a material event occurs, the system flags it and notifies the team</td><td><span class="chip p0">P0</span></td></tr>
+    <tr><td>O4</td><td>Deliver scheduled market reports (daily/weekly)</td><td>Reports are auto-generated and available to the team at the configured cadence</td><td><span class="chip p1">P1</span></td></tr>
+    <tr><td>O5</td><td>Enable historical comparison across periods and submarkets</td><td>User can compare a metric across two periods/submarkets and see the change with methodology transparency</td><td><span class="chip p1">P1</span></td></tr>
+    <tr><td>O6</td><td>Ensure every insight is traceable to its source</td><td>Every metric, event, and answer links back to the original source document and exact location</td><td><span class="chip p0">P0</span></td></tr>
+  </tbody>
+</table>
+
+<!-- ===================== 4. STAKEHOLDERS & USERS ===================== -->
+<h2><span class="num">4</span> Stakeholders & Users</h2>
+
+<h3>4.1 Primary Users</h3>
+<table>
+  <thead><tr><th>Role</th><th>Description</th><th>Key Needs</th></tr></thead>
+  <tbody>
+    <tr><td>Business Analyst / Researcher</td><td>Day-to-day market monitoring and reporting</td><td>Quick data lookup, change detection, report generation, source traceability</td></tr>
+    <tr><td>Investment / Strategy Lead</td><td>Decision-maker needing market context</td><td>Executive summaries, risk/opportunity alerts, scenario comparison</td></tr>
+    <tr><td>Leasing / Occupier Advisor</td><td>Advising tenants or landlords</td><td>Submarket rents, vacancy, supply pipeline, demand drivers</td></tr>
+  </tbody>
+</table>
+
+<h3>4.2 Secondary Stakeholders</h3>
+<ul>
+  <li><b>Data Governance / Compliance</b> — ensures sourced data is used within licensing terms and that AI-generated content is not presented as verified fact without review.</li>
+  <li><b>IT / Platform</b> — hosts and operates the system; manages API keys, model budget, and uptime.</li>
+</ul>
+
+<!-- ===================== 5. SCOPE ===================== -->
+<h2><span class="num">5</span> Scope</h2>
+
+<h3>5.1 In Scope (P0 — MVP)</h3>
+<div class="grid-2">
+  <div class="card">
+    <h4>Market Data Acquisition</h4>
+    <ul>
+      <li>Acquire office market reports (PDF/HTML/CSV) from authoritative sources</li>
+      <li>Parse and extract structured metrics (rents, vacancy, take-up, supply)</li>
+      <li>Support Central London submarkets: City, West End, Canary Wharf, Midtown/Fringe</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Metric Extraction & Normalization</h4>
+    <ul>
+      <li>Extract prime &amp; Grade A rents, vacancy rate, availability, take-up, supply pipeline</li>
+      <li>Normalize units, periods, and geography definitions</li>
+      <li>Record the source definition and any ambiguity</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Change Detection &amp; Alerts</h4>
+    <ul>
+      <li>Compare new metrics against prior periods</li>
+      <li>Flag changes exceeding configurable thresholds</li>
+      <li>Surface material events (lettings, planning, tenant moves)</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Conversational Q&amp;A</h4>
+    <ul>
+      <li>Natural-language interface for market queries</li>
+      <li>Answers cite source documents and exact evidence</li>
+      <li>Safe fallback when evidence is insufficient</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Scheduled Reports</h4>
+    <ul>
+      <li>Daily news digest and weekly market summary</li>
+      <li>Exportable as HTML / Markdown</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Source Traceability</h4>
+    <ul>
+      <li>Every fact links to original document + page/location</li>
+      <li>Original file integrity verified via hash</li>
+      <li>Human review status tracked per fact</li>
+    </ul>
+  </div>
+</div>
+
+<h3>5.2 Out of Scope (for this PoC)</h3>
+<div class="card alt">
+  <ul>
+    <li><span class="chip out">Full market forecasting</span> — predictive modelling beyond trend detection is deferred.</li>
+    <li><span class="chip out">Portfolio-level analytics</span> — integrating the team's own holdings/transactions is out of scope.</li>
+    <li><span class="chip out">Automated trading or execution</span> — the agent advises; it does not act on the market.</li>
+    <li><span class="chip out">Non-London geographies</span> — scope is limited to London office market.</li>
+    <li><span class="chip out">Real-time tick data</span> — sources are periodic reports and news, not live exchange feeds.</li>
+  </ul>
+</div>
+
+<!-- ===================== 6. BUSINESS REQUIREMENTS ===================== -->
+<h2><span class="num">6</span> Business Requirements</h2>
+
+<p class="muted">Requirements are organized by capability. Each states the trigger, the processing rule, the result, and any state change. Priority: <span class="chip p0">P0</span> = MVP-blocking, <span class="chip p1">P1</span> = important, <span class="chip p2">P2</span> = enhancement.</p>
+
+<!-- 6.1 Data Acquisition -->
+<h3>6.1 Market Data Acquisition</h3>
+
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="req-id">BR-ACQ-01</td>
+      <td><b>Configurable source registry.</b> The system maintains a registry of market data sources (broker reports, macro data, news, planning data, owner disclosures). Each source has a type, URL, and acquisition method. Sources can be enabled/disabled independently without affecting others.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-ACQ-02</td>
+      <td><b>Scheduled acquisition.</b> The system automatically fetches new content from enabled sources on a configurable schedule (news: 1–24h; market: daily/weekly). Manual "refresh" is also available on demand.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-ACQ-03</td>
+      <td><b>Multi-format ingestion.</b> The system ingests PDF, HTML, CSV, RSS/XML, and JSON formats. Acquired documents are stored in their original form with a content hash for integrity verification.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-ACQ-04</td>
+      <td><b>Idempotent acquisition.</b> Re-fetching the same document does not create duplicate records; the system detects duplicates by content hash and reuses the existing snapshot.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-ACQ-05</td>
+      <td><b>Partial-failure resilience.</b> If one source fails (HTTP error, timeout, access denied), acquisition of other sources continues; the failure is recorded with reason and is visible to operators.</td>
+      <td><span class="chip p1">P1</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- 6.2 Metric Extraction -->
+<h3>6.2 Metric Extraction &amp; Normalization</h3>
+
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="req-id">BR-EXT-01</td>
+      <td><b>Core metric extraction.</b> For each ingested document, the system extracts the following where present: <i>prime rent, Grade A rent, vacancy rate, availability rate, take-up, supply pipeline, pre-let share</i>. Each extraction records the source-defined geography, period, value, unit, and exact evidence location (page / character range / locator).</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-EXT-02</td>
+      <td><b>Macro metric extraction.</b> Where available, the system extracts macroeconomic context: <i>base interest rate, inflation, employment / unemployment</i>.</td>
+      <td><span class="chip p1">P1</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-EXT-03</td>
+      <td><b>Normalization with provenance.</b> Values are normalized to canonical units (e.g., £/sq ft/year, %) and periods (e.g., 2026Q2). The original (source) value and unit are always preserved; any ambiguity (e.g., rent time denominator not stated) is flagged rather than silently resolved.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-EXT-04</td>
+      <td><b>Human review gate.</b> Extracted facts start in a <code>pending_review</code> state. A fact can participate in formal comparisons and published analyses only after an authorized user marks it <code>approved</code>. Ambiguous or disputed facts are marked <code>needs_review</code> and excluded from formal comparison.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-EXT-05</td>
+      <td><b>Reported-change capture.</b> When a source explicitly states a period-over-period change (e.g., "take-up up 15% QoQ"), the system captures that as a publisher-reported change, distinct from a system-computed change, and does not back-calculate the prior value.</td>
+      <td><span class="chip p1">P1</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- 6.3 Comparison & Analysis -->
+<h3>6.3 Historical Comparison &amp; Change Detection</h3>
+
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="req-id">BR-CMP-01</td>
+      <td><b>Strict comparability check.</b> Before comparing two facts, the system verifies they share the same metric, geography definition, methodology, and unit, and that both are human-approved. If any condition fails, the comparison is rejected with a clear reason (e.g., <code>HUMAN_REVIEW_PENDING</code>, <code>UNKNOWN_METHOD</code>, <code>UNIT_MISMATCH</code>) — no change number is produced.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-CMP-02</td>
+      <td><b>Change quantification.</b> For comparable facts, the system computes absolute change, relative change (%), and the change unit, with the calculation method recorded.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-CMP-03</td>
+      <td><b>Threshold-based alerts.</b> The user configures thresholds (e.g., rent ±5%, take-up ±10%, vacancy ±0.5pp). When a valid comparison exceeds the threshold, the system creates an alert event.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-CMP-04</td>
+      <td><b>Event classification.</b> Material market events are classified by category: <i>planning, lease/letting, relocation, supply, policy, demand, publisher-reported change</i>. Each event carries the source evidence.</td>
+      <td><span class="chip p1">P1</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- 6.4 Conversational Q&A -->
+<h3>6.4 Conversational Q&amp;A</h3>
+
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="req-id">BR-QA-01</td>
+      <td><b>Natural-language query interface.</b> A business user can ask a question in plain English (e.g., "What happened to West End rents last quarter?") and receive a written answer.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-QA-02</td>
+      <td><b>Evidence-grounded answers.</b> Every factual claim in an answer must cite the underlying fact(s), event(s), or source document(s). The user can drill into the cited evidence.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-QA-03</td>
+      <td><b>Safe answer fallback.</b> If the retrieved evidence is insufficient, conflicting, or not human-approved, the system must not invent a confident answer. It returns a transparent response indicating what is known, what is pending review, and what cannot be concluded.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-QA-04</td>
+      <td><b>Analysis publication guard.</b> AI-generated analysis that asserts market trends, risk, or opportunity must pass a review gate before publication. If the gate detects unsupported claims (e.g., a trend asserted without two approved periods, or a supply figure conflating pre-let and under-offer space), the draft is withheld and the user is told it requires review.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-QA-05</td>
+      <td><b>Deterministic mode.</b> A "saved" query mode answers using only already-approved facts — no model generation — for fast, reproducible lookups.</td>
+      <td><span class="chip p1">P1</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-QA-06</td>
+      <td><b>Budget &amp; retry control.</b> Model usage is bounded (max requests, input/output token caps, time limit) to prevent runaway cost. No automatic retries on provider failures; the error is surfaced to the user.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- 6.5 Reports & Notifications -->
+<h3>6.5 Reports &amp; Notifications</h3>
+
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="req-id">BR-RPT-01</td>
+      <td><b>Scheduled market reports.</b> The system generates a daily market digest and a weekly market summary on a configurable schedule. Reports include: key metrics snapshot, top changes/alerts, notable events, and cited sources.</td>
+      <td><span class="chip p1">P1</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-RPT-02</td>
+      <td><b>On-demand report generation.</b> A user can trigger a report at any time and view it in the UI.</td>
+      <td><span class="chip p1">P1</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-RPT-03</td>
+      <td><b>Report export.</b> Reports can be exported as HTML and Markdown.</td>
+      <td><span class="chip p2">P2</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-RPT-04</td>
+      <td><b>Change notifications.</b> When a threshold alert is triggered or a material event is detected, the system can send a notification to a configured channel (e.g., email, chat webhook). If no notification channel is configured, the event is still surfaced in the UI and the missing configuration is reported honestly.</td>
+      <td><span class="chip p1">P1</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- 6.6 User Interface -->
+<h3>6.6 User Interface</h3>
+
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="req-id">BR-UI-01</td>
+      <td><b>Market overview dashboard.</b> A landing page showing the latest key metrics (rents, vacancy, take-up), recent events, source status, and review-backlog count.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-UI-02</td>
+      <td><b>Market data browser.</b> A filterable, paginated list of extracted facts (by submarket, metric, period, review status) with evidence drill-down.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-UI-03</td>
+      <td><b>Events &amp; alerts view.</b> A list of detected events and threshold alerts, filterable by category and status, with source evidence.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-UI-04</td>
+      <td><b>Ask (conversational Q&amp;A).</b> A chat-style interface where the user asks questions and receives evidence-grounded answers, with cited evidence expandable inline.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-UI-05</td>
+      <td><b>Reports library.</b> A list of generated reports (daily/weekly/on-demand) with open and export actions.</td>
+      <td><span class="chip p1">P1</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-UI-06</td>
+      <td><b>Settings.</b> Configure monitoring schedules, thresholds, geographies, metrics of interest, and notification preferences.</td>
+      <td><span class="chip p1">P1</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-UI-07</td>
+      <td><b>Job status.</b> Visibility into background jobs (acquisition, extraction, report generation): status, progress, errors, and retry action.</td>
+      <td><span class="chip p1">P1</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- 6.7 Data Governance -->
+<h3>6.7 Data Governance &amp; Trust</h3>
+
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="req-id">BR-GOV-01</td>
+      <td><b>Source licensing respect.</b> Sources with licensing restrictions (e.g., no automated access) are not scraped; the system flags them as requiring manual or alternative access.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-GOV-02</td>
+      <td><b>Immutable originals.</b> Original source documents are never modified once stored. Their content hash is recorded and can be verified at any time.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-GOV-03</td>
+      <td><b>Review-state audit trail.</b> Every change to a fact's review status (pending → approved / needs_review) is recorded with who, when, and why. Prior versions remain accessible.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+    <tr>
+      <td class="req-id">BR-GOV-04</td>
+      <td><b>No fabricated facts.</b> The system never synthesizes a metric value that is not present in a source document. Search snippets never become facts.</td>
+      <td><span class="chip p0">P0</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ===================== 7. FUNCTIONAL FLOW ===================== -->
+<h2><span class="num">7</span> Core Functional Flow</h2>
+
+<p>The end-to-end journey for a market insight, from source to decision:</p>
+
+<div class="flow">
+  <div class="node">Source Acquisition</div><span class="arrow">→</span>
+  <div class="node">Document Storage (hashed)</div><span class="arrow">→</span>
+  <div class="node">Metric Extraction</div><span class="arrow">→</span>
+  <div class="node">Normalization</div><span class="arrow">→</span>
+  <div class="node">Human Review Gate</div><span class="arrow">→</span>
+  <div class="node">Comparison / Change Detection</div><span class="arrow">→</span>
+  <div class="node">Alert / Report / Q&amp;A</div>
+</div>
+
+<div class="callout">
+  <b>Key business rule:</b> No metric reaches a published comparison, alert, report, or Q&amp;A answer until it has passed the human review gate. AI-generated trend/risk/opportunity analysis additionally passes an analysis publication guard. This is the central trust mechanism of the product.
+</div>
+
+<!-- ===================== 8. NON-FUNCTIONAL ===================== -->
+<h2><span class="num">8</span> Non-Functional Requirements</h2>
+
+<table>
+  <thead><tr><th>Category</th><th>Requirement</th></tr></thead>
+  <tbody>
+    <tr><td>Performance</td><td>Saved (deterministic) queries respond in under 3 seconds. AI agent answers respond within 30 seconds under normal model load. <span class="tbd">[Target; to be confirmed with actual model]</span></td></tr>
+    <tr><td>Reliability</td><td>Acquisition and extraction jobs are idempotent and recoverable after a service restart (no lost state, no duplicate work).</td></tr>
+    <tr><td>Cost Control</td><td>Model usage is bounded per request (max calls, input/output token caps, time limit). Usage is logged and visible. No silent retries.</td></tr>
+    <tr><td>Security</td><td>API keys and notification endpoints are stored in server-side environment variables, never exposed to the frontend or chat.</td></tr>
+    <tr><td>Auditability</td><td>Every fact, event, comparison, report, and model call is persisted with timestamps and provenance. Original documents are hash-verifiable.</td></tr>
+    <tr><td>Transparency</td><td>When the system cannot answer confidently (insufficient evidence, pending review, source conflict), it says so explicitly rather than guessing.</td></tr>
+    <tr><td>Extensibility</td><td>New sources, metrics, and geographies can be added without changing core business logic.</td></tr>
+  </tbody>
+</table>
+
+<!-- ===================== 9. DATA & SOURCES ===================== -->
+<h2><span class="num">9</span> Data &amp; Source Requirements</h2>
+
+<h3>9.1 Core Metrics</h3>
+<table>
+  <thead><tr><th>Metric</th><th>Canonical Unit</th><th>Granularity</th></tr></thead>
+  <tbody>
+    <tr><td>Prime Rent</td><td>£ / sq ft / year</td><td>Submarket × period</td></tr>
+    <tr><td>Grade A Rent</td><td>£ / sq ft / year</td><td>Submarket × period</td></tr>
+    <tr><td>Vacancy Rate</td><td>%</td><td>Submarket × period</td></tr>
+    <tr><td>Availability Rate</td><td>%</td><td>Submarket × period</td></tr>
+    <tr><td>Take-up (Leasing Activity)</td><td>sq ft</td><td>Submarket × period</td></tr>
+    <tr><td>Supply Pipeline</td><td>sq ft</td><td>Submarket × period</td></tr>
+    <tr><td>Pre-let Share</td><td>% of pipeline</td><td>Submarket × period</td></tr>
+    <tr><td>Base Interest Rate</td><td>%</td><td>UK × period</td></tr>
+  </tbody>
+</table>
+
+<h3>9.2 Target Geographies (Submarkets)</h3>
+<p><span class="chip">City</span> <span class="chip">West End</span> <span class="chip">Canary Wharf</span> <span class="chip">Midtown / Fringe</span> <span class="chip">South Bank</span> <span class="chip">King's Cross</span> <span class="chip">Paddington</span> <span class="chip">Victoria</span></p>
+<p class="muted">The MVP focuses on the first four; others are added as source coverage permits.</p>
+
+<h3>9.3 Source Categories</h3>
+<table>
+  <thead><tr><th>Category</th><th>Examples</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td>Broker research reports</td><td>Savills, CBRE, JLL, Knight Frank, BNP Paribas</td><td>Core market metrics</td></tr>
+    <tr><td>Owner / REIT disclosures</td><td>GPE, British Land, Landsec</td><td>Letting activity, pipeline, sentiment</td></tr>
+    <tr><td>Macro data</td><td>Bank of England, ONS</td><td>Interest rates, inflation, employment</td></tr>
+    <tr><td>News / RSS</td><td>BBC, industry press</td><td>Events, sentiment</td></tr>
+    <tr><td>Planning data</td><td>London Planning Datahub</td><td>New supply pipeline</td></tr>
+  </tbody>
+</table>
+
+<!-- ===================== 10. SUCCESS METRICS ===================== -->
+<h2><span class="num">10</span> Success Metrics &amp; KPIs</h2>
+
+<div class="grid-2">
+  <div class="card">
+    <h4>Business Outcomes</h4>
+    <ul>
+      <li>Time-to-insight reduced vs. manual baseline <span class="tbd">[TBD: quantify baseline]</span></li>
+      <li>Number of material market changes detected before the team would have found them manually</li>
+      <li>User satisfaction with Q&amp;A answer quality and citation coverage</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>System Health</h4>
+    <ul>
+      <li>Source acquisition success rate (by source)</li>
+      <li>Fact extraction precision / recall against a gold-standard set</li>
+      <li>Human-review throughput (facts approved / pending)</li>
+      <li>Model cost per answer and per report</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===================== 11. CONSTRAINTS & RISKS ===================== -->
+<h2><span class="num">11</span> Constraints, Assumptions &amp; Risks</h2>
+
+<h3>11.1 Constraints</h3>
+<ul>
+  <li>Must be built with <b>Python</b> (per task requirements) and delivered as a runnable PoC.</li>
+  <li>Agent should be architected with <b>skills</b> (modular, composable capabilities).</li>
+  <li>Delivery time-boxed to <b>two days</b> — scope must be disciplined.</li>
+  <li>Data sources are third-party and subject to licensing/access restrictions.</li>
+</ul>
+
+<h3>11.2 Assumptions</h3>
+<div class="card alt">
+  <ul>
+    <li class="assumption">[Assumption, TBD] The team has access to at least one LLM API provider with sufficient rate limits.</li>
+    <li class="assumption">[Assumption, TBD] A small set of broker reports can be acquired (downloaded or seeded) for the PoC.</li>
+    <li class="assumption">[Assumption, TBD] Human review is performed by a team member with market knowledge; no external auditor.</li>
+  </ul>
+</div>
+
+<h3>11.3 Key Risks &amp; Mitigations</h3>
+<table>
+  <thead><tr><th>Risk</th><th>Impact</th><th>Mitigation</th></tr></thead>
+  <tbody>
+    <tr><td>Source access blocked (licensing, 403, CAPTCHA)</td><td>Metrics unavailable</td><td>Maintain multiple sources per metric; allow manual upload; flag blocked sources clearly</td></tr>
+    <tr><td>AI hallucination / unsupported claims</td><td>Loss of trust, wrong decisions</td><td>Evidence grounding + human review gate + analysis publication guard + safe fallback</td></tr>
+    <tr><td>Cross-source metric incomparability</td><td>Misleading comparisons</td><td>Strict comparability checks; refuse to compare when methodology/units differ</td></tr>
+    <tr><td>Runaway model cost</td><td>Budget overrun</td><td>Per-request token/call/time caps; usage logging; no automatic retries</td></tr>
+    <tr><td>Two-day delivery window</td><td>Incomplete scope</td><td>Focus on P0 end-to-end path; defer P1/P2; ensure PoC is runnable and demonstrable</td></tr>
+  </tbody>
+</table>
+
+<!-- ===================== 12. GLOSSARY ===================== -->
+<h2><span class="num">12</span> Glossary</h2>
+
+<table>
+  <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+  <tbody>
+    <tr><td>CRE</td><td>Commercial Real Estate</td></tr>
+    <tr><td>Prime Rent</td><td>The highest rent achievable for the best-quality space in a submarket</td></tr>
+    <tr><td>Grade A Rent</td><td>Rent for the highest specification of office accommodation</td></tr>
+    <tr><td>Vacancy Rate</td><td>Share of total stock that is vacant (source-defined methodology)</td></tr>
+    <tr><td>Take-up</td><td>Total floor space let/leased in a period</td></tr>
+    <tr><td>Supply Pipeline</td><td>Space under development or refurbishment, including pre-lets</td></tr>
+    <tr><td>Flight-to-quality</td><td>Occupier trend toward higher-quality, ESG-certified space</td></tr>
+    <tr><td>ESG</td><td>Environmental, Social, Governance — sustainability criteria</td></tr>
+    <tr><td>Fact</td><td>A single extracted metric value with source, geography, period, and evidence</td></tr>
+    <tr><td>Event</td><td>A detected material market change or news item with category and evidence</td></tr>
+    <tr><td>Human Review Gate</td><td>The rule that no fact participates in formal comparison/publication until approved</td></tr>
+  </tbody>
+</table>
+
+<footer>
+  <p>BRD-LOM-001 · London Office Market Monitoring AI Agent · Version 1.0 · Draft for Review</p>
+  <p>This document defines business requirements only. Technical architecture, API design, and implementation plans are out of scope and will follow in separate artifacts.</p>
+</footer>
+
+</div>
+</body>
+</html>

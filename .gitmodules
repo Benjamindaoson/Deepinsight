@@ -1,0 +1,9 @@
+[submodule "upstream/agent-ui"]
+	path = upstream/agent-ui
+	url = https://github.com/agno-agi/agent-ui.git
+[submodule "upstream/agentos-docker"]
+	path = upstream/agentos-docker
+	url = https://github.com/agno-agi/agentos-docker.git
+[submodule "upstream/agno"]
+	path = upstream/agno
+	url = https://github.com/agno-agi/agno.git

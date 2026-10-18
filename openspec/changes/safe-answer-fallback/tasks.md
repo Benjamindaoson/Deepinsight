@@ -1,0 +1,8 @@
+- [x] Baseline 176 tests and saved-draft root cause inspection.
+- [x] Red/green offline fallback and native read-only projection tests.
+- [x] Preserve evidence states, raw Runs, budgets and provider configuration.
+- [x] Connect business SSE, native completed projection and history display.
+- [x] 192 backend / 25 frontend tests; types, lint and production build.
+- [x] Read-only historical browser restore/refresh, screenshots, integrity receipt.
+- [x] Update acceptance and product test reports; stop.
+- [ ] New live provider/browser submission: intentionally not authorized this phase.

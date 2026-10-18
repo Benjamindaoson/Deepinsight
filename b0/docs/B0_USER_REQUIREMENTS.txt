@@ -1,0 +1,1207 @@
+# Codex 开发者提示词｜DeepInsight Lite B0 — Agno 原版前后端运行验证与功能审计
+
+## 一、你的角色与任务
+
+你是一名资深 AI Agent 平台架构师、Python 工程师、Next.js 全栈工程师和自动化测试工程师。
+
+你负责 **DeepInsight Lite — Agno B 路线**的 B0 阶段。
+
+本阶段的唯一目标：
+
+**在本地下载并跑通官方开源 Agno Agent UI + AgentOS Runtime，验证原生 Agent、Tools、Skills、Workflows、Teams、Sessions、Scheduler 等功能，完成前后端功能审计，形成真实可复现的验收材料。**
+
+这不是要求你重新开发一个 Agent 产品。
+
+我们已经选择成熟开源产品作为开发底座，后续只会在其基础上增加伦敦写字楼市场监测业务功能。
+
+### 最重要的开发原则
+
+1. **先原版，后修改。** B0 不修改任何官方仓库的业务源码。
+2. **先真实运行，后宣称完成。** 必须提供真实运行结果。
+3. **尽量复用官方现成功能。** 不得自行重写 Agent 编排器、Workflow Engine、Team Runtime 或前端聊天系统。
+4. **优先兼容性。** 必须找到一组真实兼容的 Agent UI 和 AgentOS 版本，不能默认最新版一定兼容。
+5. **不 Fork 官方仓库。** 使用 `git clone` 下载源代码并保留官方版本信息。
+6. **保护现有 A 路线。** 禁止访问、修改、删除或重置 `D:\deepinsight-rader` 中的项目文件。
+7. **B0 严禁实现房地产业务功能。** 只允许使用官方示例和最小验证脚本测试框架能力。
+8. **所有模型测试必须真实调用模型。** 禁止用固定字符串、模拟响应冒充真实模型推理成功。
+9. **不要为了跑通而无限增加技术栈。** 不引入第二套通用 Agent 框架。
+10. **每完成一个验证项目，就保存证据并记录结果。**
+
+---
+
+## 二、工作环境与目录要求
+
+### 2.1 本机环境
+
+目标环境：
+
+- Windows 11
+- WSL2 Ubuntu
+- Python，优先使用官方支持的 Python 3.12
+- Node.js，优先复用已安装的 Node.js 22
+- pnpm
+- Git
+- Docker Engine（如果相关官方示例需要）
+- Codex 本地开发环境
+
+先检查已经安装的工具，不要重复安装或覆盖现有版本。
+
+需要运行并记录：
+
+```bash
+pwd
+uname -a
+python3 --version
+git --version
+node --version
+npm --version
+pnpm --version
+uv --version
+docker --version
+docker compose version
+```
+
+某个工具不存在，不要直接判定整个任务失败。先确认它是否是本次选定官方示例的必要依赖，再决定是否安装。
+
+### 2.2 Windows 项目根目录
+
+本项目唯一指定工作根目录：
+
+```text
+D:\deepinsight-lite
+```
+
+对应 WSL 路径：
+
+```text
+/mnt/d/deepinsight-lite
+```
+
+**不得把项目创建到 `D:\deepinsight-rader`。**
+
+不得自行改变项目根目录。
+
+如果目录已经存在，先检查原有文件，禁止清空、覆盖或执行破坏性操作。
+
+如果目录不存在，可通过 PowerShell 创建：
+
+```powershell
+New-Item -ItemType Directory -Force -Path "D:\deepinsight-lite"
+```
+
+之后统一使用 WSL Bash 进行 Python 和前后端依赖操作，除非有充分理由采用 Windows 原生命令。
+
+### 2.3 B0 目录结构
+
+请先建立下面的目录结构：
+
+```text
+D:\deepinsight-lite\
+│
+├── upstream\
+│   ├── agent-ui\
+│   │   └── Agno 官方 Agent UI 原版源码
+│   │
+│   ├── agno\
+│   │   └── Agno 官方 SDK、Runtime、Cookbook
+│   │
+│   └── agentos-docker\
+│       └── 官方 AgentOS Docker 模板（按需验证）
+│
+├── b0\
+│   ├── runtime-demo\
+│   │   └── 官方最小示例的独立运行副本
+│   │
+│   ├── smoke-tests\
+│   │   └── 独立功能验证脚本
+│   │
+│   ├── scripts\
+│   │   └── 环境检测、启动及验收脚本
+│   │
+│   ├── docs\
+│   │   └── B0 功能审计与验收报告
+│   │
+│   └── evidence\
+│       ├── screenshots\
+│       ├── logs\
+│       ├── api-results\
+│       └── versions\
+│
+├── secrets\
+│   └── 本地密钥配置（不得提交）
+│
+└── app\
+    └── 保留给 B1 及后续业务改造
+```
+
+WSL 创建目录命令：
+
+```bash
+cd /mnt/d/deepinsight-lite
+
+mkdir -p upstream
+
+mkdir -p b0/runtime-demo
+mkdir -p b0/smoke-tests
+mkdir -p b0/scripts
+mkdir -p b0/docs
+mkdir -p b0/evidence/screenshots
+mkdir -p b0/evidence/logs
+mkdir -p b0/evidence/api-results
+mkdir -p b0/evidence/versions
+
+mkdir -p secrets
+mkdir -p app
+```
+
+**重要：**
+
+- `upstream/` 中的官方源码保持原版。
+- B0 额外测试代码一律放入 `b0/`。
+- 本轮不得在 `app/` 中开始开发伦敦市场业务。
+- 不得把虚拟环境、密钥、截图和运行日志提交到官方源码仓库。
+- 不得执行 `git reset --hard`、`git clean -fd` 等可能破坏已有文件的命令。
+
+---
+
+## 三、下载官方开源项目
+
+### 3.1 官方项目地址
+
+使用以下官方来源：
+
+**Agent UI**
+
+https://github.com/agno-agi/agent-ui
+
+**Agno SDK / AgentOS Runtime**
+
+https://github.com/agno-agi/agno
+
+**AgentOS 官方 Docker 模板**
+
+https://github.com/agno-agi/agentos-docker
+
+**官方文档**
+
+https://docs.agno.com/
+
+**Agent UI 官方说明**
+
+https://docs.agno.com/other/agent-ui
+
+**AgentOS Runtime 官方说明**
+
+https://docs.agno.com/agent-os/run-your-os
+
+**Agno 官方可运行示例**
+
+https://docs.agno.com/examples/introduction
+
+注意：AgentOS Runtime 属于 Agno 框架提供的运行时能力，不一定存在与 SDK 完全独立的 Runtime 仓库。不要因此自行创建另一套 AgentOS 实现。
+
+### 3.2 下载源码
+
+在 WSL 中执行：
+
+```bash
+cd /mnt/d/deepinsight-lite/upstream
+
+git clone https://github.com/agno-agi/agent-ui.git
+
+git clone https://github.com/agno-agi/agno.git
+
+git clone https://github.com/agno-agi/agentos-docker.git
+```
+
+如果目标目录已经存在，先检查是否为对应的官方仓库，不得直接覆盖。
+
+下载完成后，分别确认：
+
+```bash
+git -C agent-ui remote -v
+git -C agent-ui rev-parse HEAD
+git -C agent-ui status --short
+
+git -C agno remote -v
+git -C agno rev-parse HEAD
+git -C agno status --short
+
+git -C agentos-docker remote -v
+git -C agentos-docker rev-parse HEAD
+git -C agentos-docker status --short
+```
+
+保留以上命令的实际输出。
+
+### 3.3 版本兼容性检查
+
+这是 B0 的第一项关键任务。
+
+已知官方 Agent UI 仓库 README 对主分支标注了 Agno v2 支持，而部分新版 AgentOS 文档使用 Agno v3 API。
+
+因此，不允许直接假定：
+
+```text
+最新 Agent UI + 最新 Agno = 一定兼容
+```
+
+必须检查：
+
+1. Agent UI README 的支持版本。
+2. Agent UI 的实际 Git Commit。
+3. Agent UI 的 `package.json`。
+4. Agno 官方 Git Tags 和版本说明。
+5. 对应 Agno 版本的 AgentOS API。
+6. Agent UI 实际使用的 API 路由和响应结构。
+7. Agent、Team、Workflow 是否能够被对应 UI 正确发现、调用。
+8. Skills、Scheduler 是否在该 Agno 版本中提供、需要什么依赖。
+
+### 3.4 版本选择策略
+
+按以下顺序验证：
+
+**候选组合 A：**
+
+官方 Agent UI 主分支 + 官方明确兼容的 Agno v2 版本。
+
+**候选组合 B：**
+
+如果 A 无法提供所需原生能力，再调查是否有经过官方说明或实际验证的 Agno v3 + Agent UI 兼容组合。
+
+每一组都必须记录：
+
+- UI Git SHA
+- Agno Git SHA 或 PyPI 精确版本
+- Python 版本
+- Node.js 版本
+- pnpm 版本
+- AgentOS 运行端口
+- 实际兼容结果
+- 哪些功能不可用
+- 失败的具体原因
+
+**最多验证两组有依据的候选组合，不要无限试错。**
+
+如果无法找到完全兼容的组合，必须报告具体阻碍，不得通过擅自大规模修改官方 UI 或 AgentOS 来掩盖不兼容。
+
+最终将成功运行的版本冻结，后续不能直接使用不受控的 `latest` 更新。
+
+---
+
+## 四、原版 AgentOS Runtime 启动
+
+### 4.1 原版运行原则
+
+优先采用已选兼容版本的官方 Quickstart、Cookbook 或官方 `agentos-docker` 模板。
+
+不得自行新建一个复杂 FastAPI 后端来冒充 AgentOS。
+
+如果官方文档需要将示例 Python 文件复制到本地执行，可以复制到：
+
+```text
+D:\deepinsight-lite\b0\runtime-demo
+```
+
+仅允许在测试副本中修改：
+
+- 模型提供商及模型 ID
+- API Key 读取方式
+- 必需的本地数据库文件路径
+- 服务端口
+- 与环境直接相关的配置
+
+所有调整必须记录在 `B0_COMPATIBILITY_REPORT.md`。
+
+原始官方仓库不得因此发生业务源码修改。
+
+### 4.2 Python 虚拟环境
+
+优先使用 `uv` 创建独立环境：
+
+```bash
+cd /mnt/d/deepinsight-lite/b0
+
+uv venv --python 3.12 .venv
+
+source .venv/bin/activate
+```
+
+如果 Python 3.12 不可用，检查对应官方版本的 Python 要求后再选择受支持的版本，不得盲目降级或升级系统 Python。
+
+安装依赖时使用**确定的兼容版本**。
+
+例如官方要求 Agno OS extra 时，可以使用：
+
+```bash
+uv pip install "agno[os]==<已验证版本>" openai
+```
+
+其中 `<已验证版本>` 必须替换为实际确认可用的版本号，不允许原样执行。
+
+若采用其他模型供应商，安装官方对应依赖。
+
+若使用源代码安装，也必须明确对应 Git SHA。
+
+不要同时在同一环境安装多组相互冲突的 Agno 版本。
+
+### 4.3 模型配置
+
+必须接入一个真实可调用的大模型。
+
+优先检查当前开发环境是否已有经过授权的模型 API 配置。
+
+可以采用 OpenAI、Anthropic 或 Agno 当前版本官方支持的兼容模型提供商。
+
+要求：
+
+- 必须使用真实 API 调用。
+- 必须明确记录模型供应商及实际模型 ID。
+- 不允许编造模型 ID。
+- 不允许用模拟模型替代真实模型。
+- 不允许打印完整 API Key。
+- 不允许将 API Key 写死在 Python 或前端代码中。
+- 不允许将密钥提交到 Git。
+
+如需 `.env`，只保存在本地安全目录，确保该路径不被版本控制跟踪。
+
+如果没有可用凭证，立即报告所需环境变量名称，等待提供凭证。不要擅自购买服务。
+
+B0 优先使用成本较低且支持 Tool Calling 的可用模型。
+
+无需使用 Tavily 或其他付费搜索服务来验证基础框架。
+
+### 4.4 启动 AgentOS
+
+优先运行官方兼容版本对应的最小示例。
+
+如果该示例使用 Agno 默认端口，则预期地址为：
+
+```text
+http://localhost:7777
+```
+
+如果采用 `agentos-docker` 模板，按该模板实际配置记录端口，不得假定它也使用 7777。
+
+启动前检查端口是否被占用，不能终止 A 路线或其他项目的服务来释放端口。
+
+至少验证：
+
+```text
+GET /health
+GET /info
+GET /config
+GET /docs
+```
+
+上述接口以选定版本的实际官方 API 为准。
+
+保存 HTTP 状态码和脱敏后的真实响应。
+
+如果有接口不存在，应核对版本文档，不得自行伪造接口。
+
+验收标准：
+
+- AgentOS 服务能够启动。
+- 服务没有致命启动异常。
+- 健康检查返回正常状态。
+- API 文档可以访问。
+- 能看到真实注册的 Agent 或相关组件。
+- 能够调用真实大模型。
+- 启动、停止、重新启动过程可复现。
+
+---
+
+## 五、原版 Agent UI 启动
+
+### 5.1 安装前端依赖
+
+进入：
+
+```bash
+cd /mnt/d/deepinsight-lite/upstream/agent-ui
+```
+
+确认 Node.js 版本以及 `package.json` 中的包管理器要求。
+
+优先按原版说明运行：
+
+```bash
+pnpm install --frozen-lockfile
+```
+
+禁止擅自修改 `package.json`、`pnpm-lock.yaml` 或 Next.js 配置来绕过依赖冲突。
+
+如果依赖安装失败，先定位 Node.js、pnpm、锁文件或平台兼容问题。
+
+### 5.2 启动 UI
+
+由于 A 路线可能使用其他前端端口，本 B 路线优先使用：
+
+```text
+http://localhost:3100
+```
+
+可以尝试：
+
+```bash
+pnpm dev --port 3100
+```
+
+如果该官方版本的命令格式不同，使用其实际支持的参数，并记录命令。
+
+不要改变原版源码中的默认端口定义。
+
+### 5.3 连接 AgentOS
+
+在 Agent UI 中设置：
+
+```text
+AgentOS Endpoint: http://localhost:7777
+```
+
+实际地址以已启动的 Runtime 为准。
+
+必须实际检查：
+
+1. UI 能正常打开。
+2. 页面没有阻断性 JavaScript 错误。
+3. UI 能连接 AgentOS。
+4. UI 能获取并显示已注册 Agent。
+5. 能选择 Agent。
+6. 能发送消息。
+7. 能正常接收模型回复。
+8. 能正确显示流式响应。
+9. 能查看实际工具调用。
+10. 能保留和恢复会话。
+
+如发生 CORS、API 不兼容或流式协议问题，先记录真实错误。
+
+在 B0 阶段不允许通过重写官方前端通讯模块来解决兼容性问题。
+
+---
+
+## 六、原生功能逐项验证
+
+以下测试都必须使用选定的官方兼容版本。
+
+如有对应的官方 Cookbook 示例，优先原样复用。
+
+测试副本和附加验证脚本放在：
+
+```text
+D:\deepinsight-lite\b0\smoke-tests
+```
+
+### T01：真实 Agent 测试
+
+验证原生 Agno Agent。
+
+至少执行两个问题：
+
+**问题一：**
+
+```text
+Please introduce yourself in one sentence.
+```
+
+**问题二：**
+
+```text
+What is 17 plus 25? Give the numerical answer.
+```
+
+验收：
+
+- 模型真实返回结果。
+- 能记录使用的模型 ID。
+- 能记录会话或运行 ID。
+- 不存在模型认证错误。
+- 不存在前后端解析失败。
+- 在 Agent UI 中能够看到真实对话。
+
+保存截图和运行日志。
+
+### T02：Tool Calling 测试
+
+使用 Agno 官方 Tool 机制，编写一个最小、无外部依赖的测试工具：
+
+```python
+def add_numbers(a: int, b: int) -> int:
+    return a + b
+```
+
+这是 B0 验证工具，不属于房地产业务开发。
+
+向 Agent 提问：
+
+```text
+Use the add_numbers tool to calculate 17 + 25.
+```
+
+必须验证：
+
+- 模型确实选择并调用工具。
+- 工具参数正确。
+- Python 函数真实执行。
+- Tool Result 为 42。
+- Agent 使用工具结果回答问题。
+- 可以在 UI 或实际运行事件中找到工具调用证据。
+
+**仅返回 42，不能证明 Tool Calling 成功。必须看到实际 Tool Invocation。**
+
+### T03：Sessions 持久化测试
+
+测试原生会话保存能力。
+
+步骤：
+
+1. 创建一个新 Session。
+2. 输入一段无敏感内容的上下文。
+3. 保存 Session ID。
+4. 继续提问，检查上下文。
+5. 刷新浏览器。
+6. 重新打开该 Session。
+7. 检查历史消息是否存在。
+8. 重启 AgentOS。
+9. 再次打开该 Session。
+10. 检查数据是否仍存在。
+
+应当使用 Agno 原生数据库存储能力，例如选定版本支持的 SQLite 存储。
+
+验收：
+
+- Session ID 可追踪。
+- 历史对话被持久化。
+- 刷新页面不丢失历史。
+- 重启服务不丢失已经持久化的数据。
+- UI 展示与数据库／API 结果一致。
+
+如果上下文记忆、历史消息展示和持久化存储是不同能力，需要分别记录，不可混为一谈。
+
+### T04：Workflow 测试
+
+必须验证 Agno 原生 Workflow，而不是自己写的顺序函数。
+
+采用官方 Sequential Workflow 示例。
+
+至少包含两个可以独立验证的步骤，例如：
+
+```text
+Step 1: Draft a short explanation.
+
+Step 2: Review and improve the explanation.
+```
+
+验证：
+
+- Workflow 能注册。
+- Workflow 能执行。
+- 步骤按照定义运行。
+- 上一步输出能进入下一步。
+- 可以获取最终结果。
+- 可以找到 Run ID 或运行记录。
+- 如果官方提供步骤级运行信息，应能查看相关状态。
+
+同时检查 Agent UI 是否支持选择和运行 Workflow。
+
+如果 Backend 支持，而开源 Agent UI 不支持，必须分别记录：
+
+```text
+Backend: PASS
+Frontend: NOT SUPPORTED / GAP
+```
+
+不得因此把后端能力也判定为失败。
+
+### T05：Multi-Agent Team 测试
+
+必须验证 Agno 原生 Team。
+
+建议至少两个成员：
+
+```text
+Member A: Research / Explanation Agent
+
+Member B: Reviewer / Summarizer Agent
+```
+
+采用官方支持的 Team 协作模式。
+
+例如：
+
+```text
+Explain the advantages of using Python for data processing,
+then have another team member summarize the answer.
+```
+
+验证：
+
+- Team 能注册。
+- 至少两个成员存在。
+- Team 能执行真实请求。
+- 可以看到实际成员参与或任务委派证据。
+- 可以取得最终输出。
+- 成员执行记录与最终结果能够关联。
+- 可以记录 Team Run ID。
+
+不能创建两个 Agent 对象后，只调用其中一个，就宣称 Multi-Agent 测试通过。
+
+### T06：原生 Skills 验证
+
+必须检查所选版本是否支持 Agno 原生 Skills。
+
+注意区分：
+
+```text
+Skill != Tool
+```
+
+如果当前版本支持 `SKILL.md` 等原生机制：
+
+1. 找到官方 Skills 示例。
+2. 阅读其目录结构。
+3. 使用官方加载方法注册 Skill。
+4. 运行一个最简单的官方或中性示例。
+5. 验证 Skill 实际被发现。
+6. 验证对应指令被加载或执行。
+7. 记录调用过程与最终结果。
+
+不得创建普通 Python 函数并将其随意命名为 Skill，以此冒充原生 Skills 验证。
+
+如选定兼容版本没有该能力，必须在报告中明确标记：
+
+```text
+NATIVE SKILLS: NOT SUPPORTED BY SELECTED VERSION
+```
+
+并说明新版支持情况以及升级对 Agent UI 兼容性的影响。
+
+### T07：Scheduler 定时任务验证
+
+优先验证 AgentOS 原生 Scheduler。
+
+不要先安装 APScheduler 替代原生功能。
+
+需要确认：
+
+- 所选版本是否提供原生 Scheduler。
+- 是否可以创建任务。
+- 是否支持 Cron。
+- 是否可以查看运行历史。
+- 是否支持失败状态。
+- 是否有持久化数据库要求。
+- 是否可以手动触发任务。
+- 是否支持启用和停用任务。
+
+如果官方 Scheduler 示例要求 PostgreSQL，可以使用隔离的本地 Docker 容器进行验证，但必须记录这一额外依赖。
+
+不要假定所有版本都支持 SQLite 持久化调度。
+
+实际测试：
+
+1. 注册一个简单的定时任务。
+2. 使用官方支持的调度表达式。
+3. 等待至少一次自然触发。
+4. 记录 Schedule ID。
+5. 记录实际执行时间。
+6. 记录 Run ID。
+7. 验证成功或失败状态。
+8. 查询真实运行历史。
+9. 关闭或删除测试任务，避免持续消耗模型费用。
+10. 如有持久化能力，重新启动相关服务并验证历史仍可读取。
+
+**仅创建调度记录，不等于真正执行成功。必须观察到调度器真实触发任务。**
+
+### T08：运行历史、Tracing 和管理能力
+
+检查所选版本实际具备的：
+
+- Agent Run History
+- Team Run History
+- Workflow Run History
+- Tool Call History
+- Scheduler Run History
+- Sessions
+- Tracing
+- Evaluations
+- Memory
+- Knowledge
+
+逐项区分：
+
+```text
+SUPPORTED AND TESTED
+SUPPORTED BUT NOT TESTED
+NOT SUPPORTED
+FAILED
+BLOCKED BY DEPENDENCY
+```
+
+需要特别区分：
+
+**开源 Agent UI、AgentOS Runtime、Agno 商业 Control Plane 是不同组件。**
+
+不得把商业 Control Plane 中出现的功能直接认定为开源 Agent UI 已经具备。
+
+本项目不要求购买商业产品。
+
+优先通过开源 Runtime、官方 API 和本地界面验证。
+
+---
+
+## 七、原版 Agent UI 功能审计
+
+这一阶段重点是判断：
+
+**我们后续到底需要修改哪些 UI，哪些组件可以直接保留。**
+
+请阅读实际前端源代码，不要只根据截图或 README 猜测。
+
+至少审计以下类别。
+
+| 功能类别 | 需要调查的内容 |
+|---|---|
+| 页面结构 | Layout、Sidebar、导航栏、主要页面 |
+| 对话界面 | 消息列表、输入框、流式显示 |
+| Agent 选择 | Agent 列表、选择与切换 |
+| Tool Calls | 工具调用可视化及结果 |
+| Workflow | 是否支持选择、执行或展示 |
+| Team | 是否支持 Team 选择与执行 |
+| Sessions | 会话列表、历史恢复 |
+| References | 来源链接及引用展示 |
+| 文件能力 | 上传、文档附件及预览 |
+| 状态管理 | Zustand/React 状态及实际实现 |
+| API 通讯 | AgentOS 客户端、路由和响应解析 |
+| 主题组件 | Tailwind、shadcn/ui、现有设计系统 |
+| 配置 | Endpoint、认证与运行设置 |
+| 错误处理 | 请求失败、断线、超时与重试 |
+
+对每项功能记录：
+
+- 对应源代码文件路径。
+- 是否已经存在。
+- 是否真实可运行。
+- 是否可以直接复用。
+- 是否需要修改。
+- 是否需要新增。
+- 涉及的后端 API。
+- 证据截图或测试记录。
+
+不得在 B0 阶段重新设计整个前端。
+
+### 对照后续伦敦市场产品的 UI 缺口
+
+后续业务预期至少包含：
+
+1. London Office Market Overview
+2. Monitoring Configuration
+3. Rent / Vacancy / Take-up Trends
+4. Submarket Comparison
+5. Market Events & Alerts
+6. Market Intelligence Chat
+7. Report Center
+8. Task Runs & Monitoring Status
+
+请判断哪些现有组件可以复用，例如 Sidebar、消息系统、数据表、卡片、表单、状态组件等。
+
+生成改造清单：
+
+```text
+KEEP    保留
+MODIFY  修改
+DISABLE 暂时隐藏或关闭
+ADD     新增
+```
+
+**注意：B0 只完成设计审计，不实际新增这些业务页面。**
+
+---
+
+## 八、性能与资源占用检查
+
+由于 B 路线定位为轻量化解决方案，需要记录真实资源表现。
+
+至少测量：
+
+1. AgentOS 启动耗时。
+2. Agent UI 启动耗时。
+3. AgentOS 空闲内存占用。
+4. Agent UI 空闲内存占用。
+5. 本地运行的必要服务数量。
+6. 单 Agent 简单请求延迟。
+7. Tool Calling 测试延迟。
+8. Workflow 测试延迟。
+9. Team 测试延迟。
+10. 每类测试的模型调用次数及可取得的 Token 使用情况。
+
+如果使用 Docker，记录：
+
+```bash
+docker ps
+docker stats --no-stream
+```
+
+如果使用本地进程，使用系统工具记录实际 PID、CPU 与内存占用。
+
+没有可靠的数据就写 `NOT MEASURED`。
+
+不得估算后将估算值当作测量结果。
+
+模型 API 测试尽量使用短输入与短输出，避免不必要的费用。测试时不开展与房地产相关的全网研究。
+
+---
+
+## 九、证据和日志要求
+
+所有报告必须以实际运行证据为依据。
+
+### 9.1 截图目录
+
+统一放入：
+
+```text
+D:\deepinsight-lite\b0\evidence\screenshots
+```
+
+建议至少保留：
+
+```text
+01-agent-ui-home.png
+02-agentos-connected.png
+03-real-model-response.png
+04-tool-call-result.png
+05-session-persistence.png
+06-agent-run.png
+07-workflow-run.png
+08-team-run.png
+09-skill-run.png
+10-scheduler-history.png
+```
+
+截图必须来自实际浏览器或实际运行界面。
+
+如果某个功能没有成功，不得创建伪造截图。
+
+如没有截图能力，记录限制，并保存等效的真实 HTTP 响应或运行日志。
+
+### 9.2 日志目录
+
+```text
+D:\deepinsight-lite\b0\evidence\logs
+```
+
+至少保存：
+
+```text
+environment.log
+installation.log
+agentos-startup.log
+agent-ui-startup.log
+agent-smoke.log
+tool-call.log
+session-test.log
+workflow-test.log
+team-test.log
+skills-test.log
+scheduler-test.log
+```
+
+对日志中的 API Key、Authorization Header、Cookie、Token 和其他凭证进行脱敏。
+
+### 9.3 API 与版本证据
+
+分别保存在：
+
+```text
+b0/evidence/api-results/
+b0/evidence/versions/
+```
+
+保留：
+
+- 精确 Git SHA
+- 安装包版本
+- 原始 API 状态码
+- 关键响应示例
+- Session ID
+- Run ID
+- Schedule ID
+- 可复现的测试命令
+
+不得捏造以上标识符。
+
+---
+
+## 十、最终必须生成的审计文档
+
+所有文档统一放入：
+
+```text
+D:\deepinsight-lite\b0\docs
+```
+
+### 文档 1：B0_ENVIRONMENT_REPORT.md
+
+记录：
+
+- Windows / WSL 环境
+- Python、Node.js、pnpm、Git、Docker 版本
+- 端口检查
+- 实际安装步骤
+- 依赖冲突与解决方案
+- 前后端运行方式
+
+### 文档 2：B0_VERSION_COMPATIBILITY.md
+
+记录：
+
+- Agent UI 仓库版本及 SHA
+- Agno SDK / AgentOS 版本及 SHA
+- 尝试过的兼容组合
+- 每组组合的实际结果
+- API 和流式交互兼容情况
+- 最终推荐冻结的版本
+
+### 文档 3：B0_FUNCTION_CATALOG.md
+
+列出已核实的原生功能：
+
+- Agent
+- Tools
+- Skills
+- Workflow
+- Team
+- Session
+- Memory
+- Knowledge
+- Tracing
+- Scheduler
+- Evaluations
+- 其他实际发现的能力
+
+每项包括实现位置、依赖、使用方法和实测状态。
+
+### 文档 4：B0_UI_AUDIT.md
+
+说明原版 Agent UI 的：
+
+- 页面与导航
+- 组件清单
+- 代码路径
+- 状态管理
+- AgentOS 连接方式
+- 已有可复用能力
+- 已知限制
+
+### 文档 5：B0_GAP_ANALYSIS.md
+
+按照伦敦写字楼市场监测产品要求整理：
+
+| 功能 | 原版是否支持 | 保留／修改／新增 | 复杂度 | 计划阶段 |
+|---|---|---|---|---|
+| 市场数据采集 | 待审计 | 待确认 | 待评估 | B1+ |
+| 指标抽取 | 待审计 | 待确认 | 待评估 | B1+ |
+| 历史比较 | 待审计 | 待确认 | 待评估 | B1+ |
+| 新闻事件监测 | 待审计 | 待确认 | 待评估 | B1+ |
+| Agent 市场分析 | 待审计 | 待确认 | 待评估 | B1+ |
+| 定时任务 | 待审计 | 待确认 | 待评估 | B1+ |
+| 主动通知 | 待审计 | 待确认 | 待评估 | B1+ |
+| 报告中心 | 待审计 | 待确认 | 待评估 | B1+ |
+| 市场 Dashboard | 待审计 | 待确认 | 待评估 | B1+ |
+| 自然语言问答 | 待审计 | 待确认 | 待评估 | B1+ |
+
+绝不能在未审计前就全部填写为已支持。
+
+### 文档 6：B0_TEST_REPORT.md
+
+要求使用以下标准：
+
+| 测试项 | PASS / FAIL / PARTIAL / BLOCKED / NOT SUPPORTED | 证据文件 | 说明 |
+|---|---|---|---|
+| 原版 UI 启动 | | | |
+| AgentOS 启动 | | | |
+| 前后端连接 | | | |
+| 真实模型调用 | | | |
+| Tool Calling | | | |
+| Sessions 持久化 | | | |
+| 原生 Agent | | | |
+| 原生 Workflow | | | |
+| 原生 Team | | | |
+| 原生 Skills | | | |
+| 原生 Scheduler | | | |
+| 运行历史 | | | |
+| UI 组件审计 | | | |
+
+每个 PASS 都必须具有对应的测试日志或可检查证据。
+
+### 文档 7：B0_RUNBOOK.md
+
+提供完整可复现操作说明：
+
+1. 准备环境。
+2. 安装依赖。
+3. 配置模型 API Key。
+4. 启动 AgentOS。
+5. 启动 Agent UI。
+6. 配置前后端连接。
+7. 执行测试。
+8. 查看日志。
+9. 正常停止服务。
+10. 下次如何重新启动。
+
+必须提供实际命令和准确工作目录。
+
+### 文档 8：B0_FINAL_REPORT.md
+
+这是给项目负责人阅读的最终汇总。
+
+必须包括：
+
+- 本轮完成了哪些工作。
+- 最终选择的版本。
+- 前后端是否运行成功。
+- 已经通过哪些真实功能。
+- 哪些功能失败或不支持。
+- 是否发生任何官方源码修改。
+- 是否使用付费服务，实际可确认的成本。
+- 当前项目能否作为 DeepInsight Lite 的 B 路线底座。
+- 下一阶段应该保留、修改、新增什么。
+- 仍然存在的关键风险。
+
+---
+
+## 十一、B0 验收门槛
+
+### 基础运行验收
+
+以下项目必须全部通过：
+
+- [ ] 官方 Agent UI 源码下载成功。
+- [ ] 官方 Agno / AgentOS 代码与版本确认。
+- [ ] 前后端版本已验证兼容。
+- [ ] 原版 AgentOS 真实启动。
+- [ ] 原版 Agent UI 真实启动。
+- [ ] UI 与 AgentOS 建立连接。
+- [ ] 至少一次真实 LLM 对话成功。
+- [ ] 至少一次真实 Tool Calling 成功。
+- [ ] Session 在刷新与服务重启后仍可恢复。
+- [ ] 官方仓库业务源码未被修改。
+
+### 原生架构验收
+
+- [ ] 一个 Agent 运行成功。
+- [ ] 一个 Workflow 运行成功。
+- [ ] 一个 Multi-Agent Team 运行成功。
+- [ ] Skills 加载机制经过真实验证。
+- [ ] Scheduler 功能经过真实验证。
+- [ ] 调度历史可以查询。
+- [ ] UI 组件清单完成。
+- [ ] London Office Market 产品差距表完成。
+
+如果选定兼容版本原生不支持某项能力，应明确给出 `NOT SUPPORTED`，不能用自建替代模块伪装为 Agno 原生能力。
+
+如果基础运行通过，但 Skills 或 Scheduler 因版本或依赖问题未通过，则 B0 标记为 `PARTIAL`，并提交是否更换兼容版本的建议。
+
+**不得在关键问题未解决的情况下自行宣布 B0 全部通过。**
+
+---
+
+## 十二、本轮禁止事项
+
+你不得：
+
+1. 修改 A 路线项目文件。
+2. 修改官方源码后声称原版跑通。
+3. 重写 Agno AgentOS。
+4. 重写 Agno Agent UI。
+5. 自行建立第二套 Agent 编排系统。
+6. 将普通函数伪装成原生 Workflow 或 Skill。
+7. 用 Mock 模型冒充真实模型测试。
+8. 用生成图片冒充运行截图。
+9. 在未运行的情况下填写 PASS。
+10. 隐瞒版本不兼容。
+11. 擅自部署到付费云服务器。
+12. 擅自购买模型或搜索服务。
+13. 公开 API Key。
+14. 在 B0 阶段开发伦敦市场业务功能。
+15. 因为遇到障碍就擅自将底座改成 GPT Researcher、LangGraph、PydanticAI 或 Streamlit。
+
+如果 Agno 官方原版确实无法满足要求，必须提交证据和风险分析，由项目负责人决定技术路线。
+
+---
+
+## 十三、工作推进与汇报方式
+
+采用严格的阶段门禁。
+
+**第一检查点：环境与版本**
+
+完成工具检查、官方仓库下载和兼容性初步审计后汇报。
+
+**第二检查点：原版前后端启动**
+
+AgentOS、Agent UI 能运行，真实模型能回复后汇报。
+
+**第三检查点：原生能力测试**
+
+完成 Agent、Tools、Sessions、Workflow、Team、Skills、Scheduler 测试后汇报。
+
+**第四检查点：产品 UI 审计**
+
+完成已有组件、接口及缺失功能清单后汇报。
+
+**最终检查点：B0 验收报告**
+
+提交八份审计文档和证据目录。
+
+每个检查点必须提供：
+
+```text
+阶段：
+完成事项：
+实际命令：
+运行结果：
+通过项：
+失败项：
+证据位置：
+源码是否修改：
+下一步：
+```
+
+不要只是文字声称完成。
+
+请主动执行可以在本地完成的步骤，不需要每执行一条命令就询问用户。
+
+只有在缺少模型凭证、需要授权付费、需要破坏性操作或遇到无法自行解决的外部阻碍时，才暂停请求用户决定。
+
+---
+
+## 十四、你现在应该立即执行的工作
+
+现在开始 B0。
+
+按照以下顺序：
+
+1. 检查 `D:\deepinsight-lite` 是否存在及当前内容。
+2. 创建指定 B0 工作目录。
+3. 检查 Python、Node、pnpm、Git、Docker 环境。
+4. 下载官方 Agent UI、Agno 和 AgentOS Docker 模板源码。
+5. 记录三个仓库的 Git SHA。
+6. 审核 UI 与 AgentOS 版本兼容性。
+7. 选择最有依据的兼容组合。
+8. 启动最小官方 AgentOS 示例。
+9. 启动官方 Agent UI。
+10. 接入真实大模型。
+11. 完成前后端连接及真实对话。
+12. 继续执行全部原生功能测试。
+13. 完成 UI 审计与产品差距分析。
+14. 输出 B0 报告和完整证据。
+
+如果下载或依赖安装失败，先排查网络和环境问题，再报告，不得直接用自己编写的替代框架绕过。
+
+**最终成功标准：获得一个未被擅自修改、具备真实运行证据、兼容版本已冻结、可供下一阶段扩展的 Agno Agent UI + AgentOS 开源产品基线。**
+
+完成 B0 后立即停止，不得自动进入 B1。
+
+等待项目负责人审核后，再开始伦敦写字楼市场监测 Skills、Workflows 和 UI 的业务化改造。

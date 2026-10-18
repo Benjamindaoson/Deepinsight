@@ -1,0 +1,45 @@
+{
+  "model": "claude-sonnet-4-6",
+  "endpoint": "https://api.jingziai.club/v1",
+  "multiplier": 2.238647114474929,
+  "safety_margin": 1.25,
+  "samples": [
+    {
+      "run_id": "43b3cb6b-ad58-45a1-b910-0aa0abbf8871",
+      "message_index": 2,
+      "evidence_path": "app/data/product/evidence/ai-qa-single-run-20261018/native-run.json",
+      "evidence_sha256": "394c386d8def077ae3f9760748e520675edb3070dc012e42379c4e92f8f02ea9",
+      "message_character_units": 1057,
+      "provider_input_tokens": 1893,
+      "ratio": 1.7909176915799432
+    },
+    {
+      "run_id": "43b3cb6b-ad58-45a1-b910-0aa0abbf8871",
+      "message_index": 4,
+      "evidence_path": "app/data/product/evidence/ai-qa-single-run-20261018/native-run.json",
+      "evidence_sha256": "394c386d8def077ae3f9760748e520675edb3070dc012e42379c4e92f8f02ea9",
+      "message_character_units": 7767,
+      "provider_input_tokens": 8534,
+      "ratio": 1.0987511265610919
+    },
+    {
+      "run_id": "1c2061ac-4b1e-4c73-a0fc-562185b325f0",
+      "message_index": 2,
+      "evidence_path": "app/data/product/evidence/qa-context-repair-20261018/live-native-run.json",
+      "evidence_sha256": "2b9ab9197cb41e1d645a422de53488451dd49a030b9c74c01318aa3254a597fc",
+      "message_character_units": 1166,
+      "provider_input_tokens": 1453,
+      "ratio": 1.2461406518010292
+    },
+    {
+      "run_id": "1c2061ac-4b1e-4c73-a0fc-562185b325f0",
+      "message_index": 4,
+      "evidence_path": "app/data/product/evidence/qa-context-repair-20261018/live-native-run.json",
+      "evidence_sha256": "2b9ab9197cb41e1d645a422de53488451dd49a030b9c74c01318aa3254a597fc",
+      "message_character_units": 4891,
+      "provider_input_tokens": 4648,
+      "ratio": 0.9503169086076467
+    }
+  ],
+  "limitation": "Historical complete tool schema payload unavailable; actual usage divided by message-only units gives a conservative factor. Applies to full new payload. Four observations are not exact tokenization or an invoice."
+}

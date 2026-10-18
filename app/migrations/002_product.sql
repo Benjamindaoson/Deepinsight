@@ -1,0 +1,16 @@
+CREATE TABLE IF NOT EXISTS product_schema(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+INSERT OR IGNORE INTO product_schema(version) VALUES(1);
+CREATE TABLE IF NOT EXISTS sources(id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS facts(id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS extractions(id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS comparisons(id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS events(id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS notifications(id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS settings(id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS reviews(id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, payload TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS fact_lookup ON facts(json_extract(payload,'$.metric'), json_extract(payload,'$.geography'), json_extract(payload,'$.period'));
+CREATE INDEX IF NOT EXISTS document_source ON documents(json_extract(payload,'$.source_id'));
+CREATE INDEX IF NOT EXISTS job_status ON jobs(json_extract(payload,'$.status'));

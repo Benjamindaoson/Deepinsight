@@ -1,0 +1,2 @@
+Authority: ../../../.. / docs/superpowers/specs/2026-10-17-b1-market-data-foundation-design.md at workspace root.
+Python 3.12 project at app with .venv. Modules: contracts, documents, store, comparison, extraction, pipeline, runtime, CLI. B1 assets and evidence at ../b1. Native Workflow has seven explicit steps. Native Skills expose extraction and comparison instructions. LLM access is bounded and uses existing secrets/model.json read-only; secrets never returned. Reuse B0 Python dependency pins in an isolated environment.

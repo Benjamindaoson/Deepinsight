@@ -1,0 +1,9 @@
+{
+  "runtime": "http://127.0.0.1:7778",
+  "ui": "http://localhost:3100",
+  "secret_file": "../secrets/model.json",
+  "business_database": "../b1/data/market.db",
+  "agno_database": "../b1/data/agno.db",
+  "limits": {"provider_requests":4,"input_tokens":60000,"output_tokens":8000,"request_timeout_seconds":180,"document_timeout_seconds":480,"max_pdf_pages":40},
+  "note": "Limits are enforced in code; this file documents paths and contains no credentials."
+}
