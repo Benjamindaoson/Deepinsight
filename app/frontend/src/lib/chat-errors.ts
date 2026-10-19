@@ -1,4 +1,14 @@
+import { englishDisplay } from './english-output.ts'
+
 export function chatFailureCopy(raw: string) {
+  if (
+    /PROVIDER_QUOTA_EXHAUSTED|insufficient_user_quota|账户余额或套餐额度不足/i.test(
+      raw
+    )
+  )
+    return 'The configured AI provider rejected this request because its account balance or plan quota is exhausted. No model analysis was produced and there is no automatic retry. Saved evidence reports remain available.'
+  if (/MODEL_RESPONSE_TOO_LARGE/.test(raw))
+    return 'The response exceeded the local size limit and its stream was closed. The partial draft was withheld; final provider usage may be unknown. No automatic retry.'
   if (/PROVIDER_REPORTED_TOKEN_LIMIT_EXCEEDED/.test(raw))
     return 'The provider reported usage above a configured limit. Further requests were stopped; any draft is unaccepted. No automatic retry.'
   if (/PROVIDER_USAGE_MISSING/.test(raw))
@@ -21,6 +31,15 @@ export function chatFailureCopy(raw: string) {
 }
 
 export function explainChatError(raw: string) {
+  if (
+    /PROVIDER_QUOTA_EXHAUSTED|insufficient_user_quota|账户余额或套餐额度不足/i.test(
+      raw
+    )
+  )
+    return 'PROVIDER_QUOTA_EXHAUSTED: The configured provider rejected the request for insufficient account balance or plan quota. No model analysis was accepted. There is no automatic retry.'
+  raw = englishDisplay(raw)
+  if (/MODEL_RESPONSE_TOO_LARGE/.test(raw))
+    return 'MODEL_RESPONSE_TOO_LARGE: The response exceeded the local UTF-8 size limit. The stream was closed and the partial draft was withheld. This is separate from provider token accounting; final remote usage or charges may be unknown. No automatic retry.'
   if (/PROVIDER_REPORTED_TOKEN_LIMIT_EXCEEDED/.test(raw))
     return 'PROVIDER_REPORTED_TOKEN_LIMIT_EXCEEDED: Provider reported usage exceeded a configured limit. Retrieval or a draft may exist, but final analysis was not accepted. Further requests stopped. No automatic retry; already incurred usage cannot be undone.'
   if (/PROVIDER_USAGE_MISSING/.test(raw))

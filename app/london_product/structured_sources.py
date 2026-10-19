@@ -14,6 +14,13 @@ from .sources import _segment
 from .store import now
 
 
+def current_event(event):
+    """Old adapter versions mislabeled last_updated as publication; project safely."""
+    if str(event.get('source_id','')).startswith('planning-api-'):
+        return dict(event,published_at=None,source_updated_at=event.get('source_updated_at') or event.get('published_at'))
+    return event
+
+
 def segments(source, content):
     if source['id'].startswith('planning-api-'):
         data = json.loads(content)
@@ -68,7 +75,7 @@ def planning_events(store, doc, source, content):
                        summary=excerpt, importance='high', status='pending_review',
                        human_review_status='pending_review', geography=council,
                        source_id=source['id'], document_id=doc['id'], url=doc['url'],
-                       published_at=record.get('last_updated'), application_id=identifier,
+                       published_at=None, source_updated_at=record.get('last_updated'), application_id=identifier,
                        application_status=status, application_reference=record.get('lpa_app_no'),
                        application_url=record.get('url_planning_app'),
                        evidence=dict(quote=excerpt, page=None,

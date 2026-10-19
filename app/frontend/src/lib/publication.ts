@@ -1,5 +1,6 @@
 /** Read-only publication view. Never submits or retries a native Run. */
 export interface Publication {
+  report_id?: string
   answer: string
   answer_origin: 'deterministic_evidence_fallback' | 'ai_limited_checks'
   publication_review: {
@@ -11,8 +12,8 @@ export interface Publication {
 
 export const publicationLabel = (origin?: string) =>
   origin === 'deterministic_evidence_fallback'
-    ? 'AI 草稿已拦截 · 现展示基于证据的安全回答 · 未新增模型调用 · REVIEW_REQUIRED'
-    : 'AI 分析通过有限自动检查 · 不代表语义或人工审核通过 · REVIEW_REQUIRED'
+    ? 'Model conclusions withheld · verified source records shown · human review required'
+    : 'Model findings passed limited automated checks · human review still required'
 
 export async function getPublication(
   endpoint: string,
@@ -29,7 +30,7 @@ export async function getPublication(
   )
   if (!response.ok)
     throw new Error(
-      `发布检查未完成 (${response.status})。原始草稿未展示；没有重新调用模型。`
+      `Publication check did not complete (${response.status}). The raw draft remains hidden. No model retry was made; inspect Job Status before retrying.`
     )
   const result = await response.json()
   if (
@@ -38,6 +39,8 @@ export async function getPublication(
       result.answer_origin
     )
   )
-    throw new Error('发布结果不完整。原始草稿未展示；没有重新调用模型。')
+    throw new Error(
+      'The publication result is incomplete. The raw draft remains hidden. No model retry was made; inspect Job Status.'
+    )
   return result
 }

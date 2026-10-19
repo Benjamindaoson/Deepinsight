@@ -25,14 +25,15 @@ type JobRecord = {
 }
 export function retryableJob(job: JobRecord) {
   return (
-    ['refresh', 'extract'].includes(job.kind) &&
+    ['refresh', 'extract', 'research'].includes(job.kind) &&
     ['failed', 'interrupted', 'partial'].includes(job.status)
   )
 }
 export function jobPresentation(job: JobRecord) {
   const succeeded = ['succeeded', 'completed'].includes(job.status)
   const active = ['running', 'queued'].includes(job.status)
-  const reportId = succeeded ? job.result?.report_id : undefined
+  const reportId =
+    succeeded || job.status === 'partial' ? job.result?.report_id : undefined
   return {
     title:
       (
@@ -41,6 +42,7 @@ export function jobPresentation(job: JobRecord) {
           extract: 'Extract document observations',
           report: 'Prepare market briefing',
           report_analysis: 'Prepare AI analysis',
+          research: 'Research saved market evidence',
           ask: 'Research a market question'
         } as Record<string, string>
       )[job.kind] || job.kind.replaceAll('_', ' '),

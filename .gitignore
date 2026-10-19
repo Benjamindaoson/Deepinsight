@@ -4,6 +4,7 @@ secrets/
 **/.venv*/
 **/node_modules/
 **/.next/
+**/.next-*/
 **/__pycache__/
 **/.codegraph/
 b0/runtime-demo/*.db*
@@ -38,6 +39,9 @@ docs/audit/
 **/artifacts/
 **/originals/
 **/.pytest_cache/
+**/.coverage
+**/coverage.xml
+**/htmlcov/
 **/.mypy_cache/
 **/.ruff_cache/
 **/.cache/
@@ -63,3 +67,15 @@ docs/audit/
 .vscode/
 .idea/
 .workbuddy/
+
+# Local acceptance snapshots and development tooling are not release assets.
+docs/delivery/
+docs/audit/
+docs/superpowers/
+docs/ux/
+app/acceptance_tests_*/
+**/node_modules.failed/
+archive/
+data/
+reports/*
+!reports/RELEASE_ACCEPTANCE.md

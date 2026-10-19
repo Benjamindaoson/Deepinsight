@@ -48,6 +48,7 @@ def test_candidate_series_cannot_release_unverified_model_trend(tmp_path):
     for year, value in [('2023', '5778000'), ('2024', '5887000')]:
         store.put('facts', year, dict(id=year, metric='employment', geography='London (workplace)',
             definition='All-industry workplace employment', unit='jobs', period=year,
+            source_id='synthetic',series='synthetic-jobs',method='synthetic-method',basis='annual',grade='all',currency=None,
             value=value, status='pending_review', human_review_status='pending_review'))
     raw = 'London office supply declined and prime rent increased this quarter.'
     result = review_analysis(raw, store)

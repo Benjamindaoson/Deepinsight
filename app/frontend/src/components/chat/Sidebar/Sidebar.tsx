@@ -201,13 +201,7 @@ const Endpoint = () => {
   )
 }
 
-const Sidebar = ({
-  hasEnvToken,
-  envToken
-}: {
-  hasEnvToken?: boolean
-  envToken?: string
-}) => {
+const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { clearChat, focusChatInput, initialize } = useChatActions()
   const {
@@ -271,7 +265,7 @@ const Sidebar = ({
         {isMounted && (
           <>
             <Endpoint />
-            <AuthToken hasEnvToken={hasEnvToken} envToken={envToken} />
+            <AuthToken />
             {isEndpointActive && (
               <>
                 <motion.div

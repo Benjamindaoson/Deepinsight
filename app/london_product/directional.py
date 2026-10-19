@@ -14,26 +14,26 @@ Rules are intentionally narrow:
   * no causal, forward-looking or investment language is generated here.
 """
 import re
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from .qa_context import verified
 
-VERSION = 'directional-v1'
+VERSION = 'directional-v2-series-identity'
 
 # Direction of the number is not the direction of the market. Keep both.
 SIGNAL = {
-    'rent': ('firmer', 'softer', '租金'),
-    'vacancy': ('looser', 'tighter', '空置'),
-    'availability': ('looser', 'tighter', '可用'),
-    'takeup': ('stronger', 'weaker', '成交'),
-    'supply': ('more_pipeline', 'less_pipeline', '供应'),
-    'prelet': ('more_pipeline', 'less_pipeline', '预租'),
-    'prelet_share': ('more_pipeline', 'less_pipeline', '预租占比'),
-    'grade_a_share': ('higher_share', 'lower_share', 'A 级占比'),
-    'interest_rate': ('tighter_money', 'looser_money', '利率'),
-    'inflation_rate': ('higher', 'lower', '通胀'),
-    'inflation_cpih': ('higher', 'lower', '通胀'),
-    'employment': ('stronger', 'weaker', '就业'),
+    'rent': ('firmer', 'softer', 'Rent'),
+    'vacancy': ('looser', 'tighter', 'Vacancy'),
+    'availability': ('looser', 'tighter', 'Availability'),
+    'takeup': ('stronger', 'weaker', 'Leasing take-up'),
+    'supply': ('more_pipeline', 'less_pipeline', 'Supply'),
+    'prelet': ('more_pipeline', 'less_pipeline', 'Pre-let'),
+    'prelet_share': ('more_pipeline', 'less_pipeline', 'Pre-let share'),
+    'grade_a_share': ('higher_share', 'lower_share', 'Grade A share'),
+    'interest_rate': ('tighter_money', 'looser_money', 'Interest rate'),
+    'inflation_rate': ('higher', 'lower', 'Inflation'),
+    'inflation_cpih': ('higher', 'lower', 'Inflation'),
+    'employment': ('stronger', 'weaker', 'Employment'),
 }
 
 FLAT_BAND = {
@@ -53,6 +53,7 @@ def _group_key(fact):
         fact.get('normalized_geography') or fact.get('geography') or '',
         fact.get('definition') or '',
         fact.get('normalized_unit') or fact.get('unit') or '',
+        *(fact.get(k) for k in ['source_id', 'series', 'method', 'basis', 'grade', 'currency']),
     )
 
 
@@ -87,24 +88,40 @@ def _confidence(rows):
 def assess(store):
     """Return a directional assessment for every comparable candidate series."""
     from .qa_context import period_order
+    from .normalization import current_fact
+    facts=[]
+    for fact in store.all('facts'):
+        try:facts.append(current_fact(fact))
+        except (ValueError,TypeError,InvalidOperation):
+            # Malformed candidates cannot participate in arithmetic. Their
+            # originals remain stored; report/state verification audits them.
+            continue
     facts = [
-        f for f in store.all('facts')
+        f for f in facts
         if f.get('status') not in ['rejected', 'superseded']
         and f.get('human_review_status') != 'rejected'
-        and (f.get('metric') != 'rent' or f.get('annualization') in ('explicit', 'industry_convention'))
+        and (f.get('metric') != 'rent' or f.get('annualization') == 'explicit')
         and _value(f) is not None
     ]
     groups = {}
     for fact in facts:
+        if any(fact.get(k) in (None,'','unknown') for k in ['source_id','series','method','basis','grade','definition']):
+            continue
         groups.setdefault(_group_key(fact), []).append(fact)
 
     series = []
-    for (metric, geography, definition, unit), rows in groups.items():
+    for key, rows in groups.items():
+        metric, geography, definition, unit = key[:4]
         rows = sorted(rows, key=period_order)
         # Deduplicate the same period; a later collection replaces nothing.
-        by_period = {}
+        by_period = {}; conflicts = set()
         for row in rows:
-            by_period.setdefault(row.get('normalized_period') or row.get('period'), row)
+            period = row.get('normalized_period') or row.get('period')
+            if period in by_period and _value(by_period[period]) != _value(row):
+                conflicts.add(period)
+            by_period.setdefault(period, row)
+        if conflicts:
+            continue
         ordered = [by_period[p] for p in sorted(by_period, key=lambda p: period_order({'normalized_period': p}))]
         ordered = [r for r in ordered if _value(r) is not None]
         if len(ordered) < 2:
@@ -147,50 +164,35 @@ def assess(store):
     if not series:
         return dict(version=VERSION, status='insufficient', series=[],
                     reviewed_series=0, candidate_series=0,
-                    summary='没有同一口径、同一地域、可排序的两期候选记录，无法给出方向性判断。')
+                    summary='Insufficient comparable two-period observations to determine direction.')
 
     reviewed = sum(s['basis'] == 'human_approved' for s in series)
     upside = [s for s in series if s['direction'] == 'up']
     downside = [s for s in series if s['direction'] == 'down']
     if len(upside) and len(downside):
-        stance = '混合'
+        stance = 'mixed'
     elif len(upside):
-        stance = '偏上行'
+        stance = 'upward'
     elif len(downside):
-        stance = '偏下行'
+        stance = 'downward'
     else:
-        stance = '基本持平'
+        stance = 'unchanged'
     core = [s for s in series if s['metric'] in ['rent', 'vacancy', 'takeup']]
-    summary = (
-        f"候选记录显示{stance}：{len(core)} 组核心指标中有 {len([s for s in core if s['direction']=='up'])} 组上行、"
-        f"{len([s for s in core if s['direction']=='down'])} 组下行、{len([s for s in core if s['direction']=='flat'])} 组基本持平。"
-        f"以上均基于未审核候选记录（{len(series)-reviewed}/{len(series)} 组未获人工批准），不构成已确认的市场变化。"
-    )
+    summary = (f"Saved candidate direction: {stance}. {len(core)} core series; "
+        f"{len(series)-reviewed}/{len(series)} series lack human approval. "
+        "Arithmetic differences are not confirmed market changes.")
     return dict(version=VERSION, status='available', series=series,
                 reviewed_series=reviewed, candidate_series=len(series) - reviewed,
                 stance=stance, summary=summary)
 
 
-def render(assessment, lang='zh'):
-    """Render the assessment as a Markdown section. Deterministic text only."""
-    if not assessment or assessment.get('status') != 'available':
-        return ''
-    lines = ['## 方向性判断（确定性计算 · 未经人工复核）', assessment['summary'], '',
-             '| 指标 | 地域 | 对比期 | 变化 | 方向 | 依据记录 | 审核状态 |', '|---|---|---|---|---|---|---|']
-    for s in assessment['series'][:12]:
-        change = s['absolute_change']
-        unit = s['change_unit'] or ''
-        pct = s['relative_change_pct']
-        shown = f"{change} {unit}" if unit else change
-        if pct and unit not in ['pp', 'percent']:
-            shown += f"（{pct}%）"
-        arrow = {'up': '↑', 'down': '↓', 'flat': '→'}[s['direction']]
-        periods = f"{s['from_period']} → {s['to_period']}"
-        state = '已人工审核' if s['basis'] == 'human_approved' else '待审核'
-        lines.append(f"| {s['metric_label']} | {s['geography'] or '未标注'} | {periods} | "
-                     f"{shown} {arrow} {s['signal']} | {arrow} {s['direction']} | "
-                     f"{', '.join(str(i)[:8] for i in s['fact_ids'])} | {state} |")
-    lines += ['', '计算口径：同一 metric、同一地域、同一定义、同一归一化单位下，取最新两期候选记录做减法；'
-              '空置率与利率按百分点，其余按相对变化。置信度：两点为 low，三点以上且同向为 medium。',
-              '本段由 Python 计算，不使用模型生成文本，不代表审核通过，不得作为投资或决策依据。']
+def render(assessment, lang='en'):
+    """English presentation of deterministic candidate arithmetic."""
+    if not assessment or assessment.get('status') != 'available':return ''
+    lines=['## Candidate direction — deterministic calculation; human review required',assessment['summary'],
+        '| Metric | Area | Periods | Change | Direction | Evidence IDs | Review |','|---|---|---|---|---|---|---|']
+    for row in assessment['series'][:12]:
+        state='Human reviewed' if row['basis']=='human_approved' else 'Pending review'
+        lines.append(f"| {row['metric']} | {row['geography']} | {row['from_period']} to {row['to_period']} | {row['absolute_change']} {row.get('change_unit') or ''} | {row['direction']} | {', '.join(row['fact_ids'])} | {state} |")
+    lines += ['Only compatible saved series are subtracted. Conflicting periods are excluded. This calculation does not approve a fact or establish a causal or investment conclusion.']
     return '\n'.join(lines)

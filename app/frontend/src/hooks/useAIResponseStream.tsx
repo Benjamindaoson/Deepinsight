@@ -13,7 +13,8 @@ function processChunk(
   onChunk(chunk)
 }
 
-// TODO: Make new format the default and phase out legacy format
+// Both wire formats remain supported because AgentOS deployments can emit
+// either shape; removal requires an upstream protocol-version guarantee.
 
 /**
  * Detects if the incoming data is in the legacy format (direct RunResponseContent)

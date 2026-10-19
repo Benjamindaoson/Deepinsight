@@ -83,7 +83,9 @@ def test_saved_real_response_replay_and_idempotency(service, monkeypatch):
 
 
 def test_existing_success_cache_remains_usable_without_model(service, monkeypatch):
-    service.store.put('extractions', 'historical-success', REAL)
+    import hashlib
+    current = dict(REAL, version='product-extract-v2-'+hashlib.sha256((intelligence.APP/'product_skills/fact-extraction/SKILL.md').read_bytes()).hexdigest()[:12])
+    service.store.put('extractions', 'current-version-cache-control', current)
     monkeypatch.setattr(intelligence, 'configured_model', lambda *a, **k: pytest.fail('historical cache invoked model'))
     result = intelligence.extract_document(service, REAL['document_id'], 'offline-cache')
     assert result['cached'] and result['model_requests'] == 0

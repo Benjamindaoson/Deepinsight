@@ -57,17 +57,65 @@ def _fact(document, fact_id, metric, value, unit, geography, period, page, quote
                 eligible_for_comparison=False)
 
 
+def _offline_fixture_records(root: Path, product_root: Path) -> dict:
+    """Load distributable evidence receipts without embedding answers in code.
+
+    The fixture contains public-source metadata and short evidence excerpts, not
+    publisher PDFs.  Each document becomes a deterministic local receipt whose
+    own bytes are hash-checked by the normal evidence pipeline.  The upstream
+    document hash remains separately available as ``source_document_sha256``.
+    """
+    fixture_path = root / 'app' / 'fixtures' / 'offline_evidence.json'
+    if not fixture_path.is_file():
+        return dict(sources=catalog(), documents=[], facts=[], events=[])
+    payload = json.loads(fixture_path.read_text(encoding='utf-8'))
+    if payload.get('schema_version') != 1:
+        raise ValueError('OFFLINE_FIXTURE_SCHEMA_UNSUPPORTED')
+    required = {'sources', 'documents', 'facts', 'events', 'provenance'}
+    if not required <= payload.keys():
+        raise ValueError('OFFLINE_FIXTURE_INCOMPLETE')
+    documents = []
+    receipt_root = product_root / 'offline-receipts'
+    receipt_root.mkdir(parents=True, exist_ok=True)
+    for source_document in payload['documents']:
+        document = dict(source_document)
+        receipt = json.dumps({
+            'provenance': payload['provenance'],
+            'source_document_sha256': document.get('source_document_sha256'),
+            'source_id': document.get('source_id'),
+            'title': document.get('title'),
+            'url': document.get('url'),
+            'published_at': document.get('published_at'),
+            'collected_at': document.get('collected_at'),
+            'segments': document.get('segments', []),
+        }, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode('utf-8')
+        receipt_sha = _hash(receipt)
+        receipt_path = receipt_root / f'{document["id"]}-{receipt_sha[:12]}.json'
+        if not receipt_path.exists():
+            receipt_path.write_bytes(receipt)
+        elif _hash(receipt_path.read_bytes()) != receipt_sha:
+            raise ValueError('OFFLINE_FIXTURE_RECEIPT_HASH_MISMATCH')
+        document.update(path=str(receipt_path.resolve()), sha256=receipt_sha,
+                        receipt_sha256=receipt_sha, media='application/json')
+        documents.append(document)
+    fixture_sources = {source['id']: source for source in payload['sources']}
+    sources = [dict(source, **fixture_sources.pop(source['id'], {})) for source in catalog()]
+    sources.extend(fixture_sources.values())
+    return dict(sources=sources, documents=documents,
+                facts=list(payload['facts']), events=list(payload['events']))
+
+
 def seed_records(root: Path) -> dict:
     root = Path(root).resolve()
     if not (root / 'b1').is_dir() and root.name == 'app':
         root = root.parent
     product_root = root / 'app' / 'data' / 'product'
     packet = root / 'b1' / 'g0-review' / '2026-10-17'
-    supplement = root / 'b1' / 'g0-review' / '2026-10-17-supplement' / 'alternatives'
+    fixture = _offline_fixture_records(root, product_root)
     result = dict(sources=catalog(), documents=[], facts=[], events=[])
     gold_path = packet / 'GOLDEN_FACTS.json'
     if not gold_path.exists():
-        return result
+        return fixture
     annotated = json.loads(gold_path.read_text(encoding='utf-8'))['facts']
     by_path = {}
     for old in annotated:
@@ -107,62 +155,12 @@ def seed_records(root: Path) -> dict:
                     basis='quarter' if old['temporal_basis'] == 'single_quarter_flow' else old['temporal_basis'],
                     human_review_status=old['human_review_status'], method=old.get('method_version') or 'unknown')
         result['facts'].append(fact)
-    bnp_q2 = by_path['bnp-q2-2026.pdf']
-    specifications = [
-        ('westend-takeup', 'takeup', '1000000', 'sqft', 'West End', 5,
-         'with take-up reaching approximately 1.0 million sq ft', 'West End quarterly take-up, approximate narrative value', '100000'),
-        ('westend-vacancy', 'vacancy', '6.7', 'percent', 'West End', 5,
-         'Overall vacancy held at a low 6.7%', 'West End overall vacancy; source-defined market', '0.1'),
-        ('westend-supply', 'supply', '6200000', 'sqft', 'West End', 5,
-         'to 6.2 million sq ft', 'West End available office supply, rounded narrative value', '100000'),
-        ('midtown-takeup', 'takeup', '207000', 'sqft', 'Midtown', 7,
-         'take-up reaching approximately 207,000 sq ft', 'Midtown quarterly take-up, approximate narrative value', '1000'),
-        ('midtown-vacancy', 'vacancy', '7.0', 'percent', 'Midtown', 7,
-         'As a result, vacancy reduced to 7.0%', 'Midtown vacancy; original narrative retained without reconciling direction versus Q1', '0.1'),
-        ('canary-rent', 'rent', '58.50', 'GBP/sqft, time denominator not stated', 'Canary Wharf', 9,
-         'Prime rents across Canary Wharf remained stable during the quarter at £58.50 psf', 'Canary Wharf prime rent; annual denominator unconfirmed', '0.01'),
-        ('docklands-vacancy', 'vacancy', '9.7', 'percent', 'Canary Wharf & Docklands', 9,
-         'vacancy has continued to fall, reaching 9.7% at the end of Q2 2026', 'Combined Canary Wharf and Docklands overall vacancy', '0.1'),
-        ('docklands-takeup', 'takeup', '166000', 'sqft', 'Canary Wharf & Docklands', 9,
-         'take-up reaching approximately 166,000 sq ft', 'Combined submarket narrative take-up; key card states 167k, unresolved discrepancy', '1000'),
-    ]
-    for suffix, metric, value, unit, geography, page, quote, definition, precision in specifications:
-        fact = _fact(bnp_q2, f'seed-bnp-2026Q2-{suffix}', metric, value, unit, geography,
-                     '2026Q2', page, quote, definition, precision, status='needs_review' if metric == 'rent' or suffix == 'docklands-takeup' else 'pending_review',
-                     normalized_value=None if metric == 'rent' else value)
-        if suffix == 'docklands-takeup':
-            fact['issues'] = ['NARRATIVE_166K_VS_KEY_CARD_167K']
-        if suffix == 'midtown-vacancy':
-            fact['issues'] = ['SOURCE_DIRECTION_NARRATIVE_REQUIRES_REVIEW']
-        result['facts'].append(fact)
-    # The JLL report is an additional publisher with explicit quarter/YTD labels.
-    jll_path = supplement / 'jll_2026q2.pdf'
-    if jll_path.exists():
-        jll = _document(jll_path, 'jll', 'https://www.jll.com/content/dam/jllcom/en/uk/documents/reports/research-reports/26-insights-central-london-office-q2-2026.pdf', product_root,
-                        collected_at='2026-10-17T13:03:57.635946+00:00',
-                        expected_sha='e2eaadc6049e717d5ebc1375630fae9424b6ba9f463e2040fea00343316a6cc9')
-        jll['publisher'] = 'JLL'
-        result['documents'].append(jll)
-        for suffix, metric, value, unit, geography, page, quote, definition in [
-            ('takeup', 'takeup', '2600000', 'sqft', 'Central London', 1, 'Take-up reached 2.6 million sq.ft. in Q2 2026', 'Quarterly narrative take-up; not YTD Fundamentals card'),
-            ('vacancy', 'vacancy', '8.6', 'percent', 'Central London', 1, 'resulting in a vacancy rate of 8.6%', 'Overall source-defined vacancy, full methodology unconfirmed'),
-            ('supply', 'supply', '21600000', 'sqft', 'Central London', 1, 'Supply contracted for a third consecutive quarter to 21.6 million sq.ft.', 'Available supply at quarter end'),
-            ('prelet', 'prelet_share', '80', 'percent', 'Central London', 1, '80% of delivered space pre-let or under offer', 'Share of delivered space pre-let or under offer; not solely pre-let'),
-            ('westend-rent', 'rent', '190.00', 'GBP/sqft, time denominator not stated', 'West End', 1, 'Prime rents rose to £190.00 per sq.ft. in the West End', 'West End prime rent, annual denominator unconfirmed'),
-        ]:
-            result['facts'].append(_fact(jll, f'seed-jll-2026Q2-{suffix}', metric, value, unit, geography, '2026Q2', page, quote, definition,
-                                         status='needs_review' if metric == 'rent' else 'pending_review', normalized_value=None if metric == 'rent' else value))
-    savills_path = packet / 'raw' / 'savills-q2-2026.pdf'
-    if savills_path.exists():
-        savills = _document(savills_path, 'savills', 'https://pdf.euro.savills.co.uk/uk/office-reports/central-london-q2-2026-report.pdf', product_root,
-                           collected_at='2026-10-17T12:33:28.407043+00:00',
-                           expected_sha='1a03080fb582af334a74bb8239cb299581022ef1f81acb9200219bf1561853e3')
-        savills['publisher'] = 'Savills'
-        result['documents'].append(savills)
-        result['facts'].append(_fact(savills, 'seed-savills-2026H1-gradea', 'grade_a_share', '94', 'percent', 'Central London', '2026H1', 3,
-            'Grade A office space, which accounted for 94% of H1 take -up', 'Grade A share of H1 take-up; half-year period retained', grade='Grade A', normalized_value='94'))
-        result['facts'].append(_fact(savills, 'seed-savills-2026Q2-westend-vacancy', 'vacancy', '7.5', 'percent', 'West End', '2026Q2', 6,
-            'West End vacancy rate 7.5%', 'Source-defined West End vacancy; do not equate with BNP/JLL definitions', '0.1', normalized_value='7.5'))
+    # Merge distributable receipts by identity. When a full licensed original
+    # is present, its document record wins; otherwise the receipt supplies the
+    # clean-checkout fallback. Business values live in the fixture, not code.
+    for key in ('sources', 'documents', 'facts', 'events'):
+        existing = {item['id'] for item in result[key]}
+        result[key].extend(item for item in fixture[key] if item['id'] not in existing)
     qualification = product_root / 'source-qualification' / 'manifest.json'
     if qualification.exists():
         acquired = json.loads(qualification.read_text(encoding='utf-8'))

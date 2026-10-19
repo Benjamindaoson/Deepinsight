@@ -1,6 +1,0 @@
-- [x] Confirm official endpoints, access, fields, publication period and licence; keep EPC live access gated on its government token.
-- [x] Add bounded planning and London workplace employment adapters.
-- [x] Add optional EPC adapter with explicit missing-token status. Live EPC acquisition remains untested without a token.
-- [x] Route ordinary saved-data questions deterministically; analytical questions through native Agent.
-- [x] Verify concurrent refresh, source failure isolation, history/review state and API response latency.
-- [x] Run regression, live source acquisition, browser smoke and document limits. Full AI latency and EPC live schema are disclosed as unverified.

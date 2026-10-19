@@ -9,14 +9,14 @@ import hashlib
 import html
 import re
 
-VERSION = 'publication-guard-v5-directional'
+VERSION = 'publication-guard-v6-no-metric-only-release'
 HEADING = '## Optional AI interpretation — REVIEW_REQUIRED'
 
 # Hard codes mean the draft makes a claim we cannot let through in any form.
 HARD_CODES = {'LEASE_STATUS_QUANTITY', 'UNVERIFIED_PLANNING_STATUS', 'MODEL_SOURCE_COUNT',
-              'NO_VERIFIABLE_RETRIEVED_EVIDENCE'}
-# Soft codes are acceptable only when a deterministic series for the *same*
-# metric exists, so a reader can check the stated direction against data.
+              'NO_VERIFIABLE_RETRIEVED_EVIDENCE', 'UNVERIFIED_QUANTITATIVE_CLAIM'}
+# Trend claims remain withheld. Deterministic compatible series are rendered
+# independently; they never grant semantic approval to a model paragraph.
 SOFT_CODES = {'UNVERIFIED_MARKET_TREND', 'UNVERIFIED_INDICATOR_TREND', 'NO_VERIFIED_FACTS'}
 
 PROSE_METRICS = {
@@ -37,9 +37,9 @@ def prose_metrics(prose):
     return {metric for metric, words in PROSE_METRICS.items() if any(word in lowered for word in words)}
 
 
-DIRECTIONAL_BANNER = ('## 倾向性判断（AI 生成 · 未经人工复核）',
-    '以下为模型基于本次检索证据给出的**倾向性判断**，不是已确认的市场变化，不得作为决策依据。'
-    '确定性计算与完整证据见本回答后续部分。')
+DIRECTIONAL_BANNER = ('## Model interpretation — human review required',
+    'The following model interpretation uses retrieved evidence; it is not a confirmed market change or a basis for investment decisions.'
+    'Deterministic calculations and source evidence follow.')
 
 
 def source_inventory(store):
@@ -81,6 +81,11 @@ def review_analysis(raw, store, evidence_packs=None):
     # Strip URLs before pattern checks: years/slugs must not count as quantities.
     prose = re.sub(r'https?://\S+', '', raw).replace('**', '')
     codes = []
+    # A regex trend vocabulary is not a semantic checker. Numeric market claims
+    # need record-level adjudication; show source quotations through safe_evidence
+    # instead of accepting unrecognized paraphrases such as "doubled to 25%".
+    if re.search(r'\d[\d,.]*\s*(?:%|percent\b|percentage\s+points?\b|per\s+cent\b|sq\.?\s*ft\b|sqft\b|sqm\b|million\b|billion\b|平方|亿|万)|[£$]\s*\d',prose,re.I):
+        codes.append('UNVERIFIED_QUANTITATIVE_CLAIM')
     if re.search(r'pre[\s‐‑–-]?let|under[\s-]+offer|预租|洽谈', prose, re.I) and re.search(r'\d[\d,.]*\s*(?:sq\s*ft|sq\.?\s*m|sqm|square|平方|%|per\s*cent)', prose, re.I):
         codes.append('LEASE_STATUS_QUANTITY')
     if re.search(r'supply|availability|供应|供给|可供', prose, re.I) and re.search(r'contract|declin|decreas|tighten|shrink|fell|fallen|increas|grew|growth|扩张|收缩|下降|降低|降至|减少|上升|增长|收紧', prose, re.I):
@@ -105,8 +110,6 @@ def review_analysis(raw, store, evidence_packs=None):
     soft = [c for c in codes if c in SOFT_CODES]
     assessment = directional.assess(store)
     directional_block = directional.render(assessment)
-    mentioned = prose_metrics(prose)
-    corroborating = [s for s in assessment.get('series', []) if s.get('metric') in mentioned]
     lines = []
     if hard:
         # Unpublishable claim: keep the deterministic evidence fallback, but no
@@ -115,19 +118,6 @@ def review_analysis(raw, store, evidence_packs=None):
         lines += [render_safe_answer(groups, omitted, codes)]
         if directional_block:
             lines += ['', directional_block]
-    elif soft and corroborating:
-        # Middle tier: publish the draft, explicitly provisional, next to the
-        # deterministic computation a reader can check. Requires a same-metric
-        # candidate pair, so a claim about a metric with no series is withheld.
-        status = 'directional_published'
-        lines += [DIRECTIONAL_BANNER[0], DIRECTIONAL_BANNER[1], raw]
-        lines += ['', '### 发布检查说明',
-                  '草稿包含未经人工复核的趋势表述（' + ', '.join(soft) + '），因此仅以“倾向性判断”发布，未被认定为已确认事实。'
-                  '可核验部分仅为与草稿指标一致的确定性序列：' + ', '.join(sorted({s['metric'] for s in corroborating})) + '。'
-                  '本回答没有批准任何数据，状态仍为 REVIEW_REQUIRED。']
-        if directional_block:
-            lines += ['', directional_block]
-        lines += [''] + render_groups(groups, omitted)
     elif soft:
         status = 'withheld'
         lines += [render_safe_answer(groups, omitted, codes + ['NO_COMPARABLE_CANDIDATE_PAIR'])]

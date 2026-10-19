@@ -41,7 +41,7 @@ def test_unsafe_draft_replaced_not_edited(tmp_path, draft):
     assert result['answer_origin']=='deterministic_evidence_fallback'
     assert result['raw_answer']==draft and draft not in result['answer']
     assert 'pending_review' in result['answer'] and 'https://example.org/report' in result['answer']
-    assert '2.6' in result['answer'] and '证据不足' in result['answer']
+    assert '2.6' in result['answer'] and 'insufficient evidence' in result['answer']
     assert not result['safe_evidence']['verified_fact']
     assert store.all('facts')==before
 
@@ -56,14 +56,14 @@ def test_approved_fact_and_attributed_publisher_change(tmp_path):
     assert len(result['safe_evidence']['publisher_reported_change'])==1
     assert 'up 4% quarter-on-quarter' in result['answer']
     assert not result['safe_evidence']['verified_fact']
-    assert '不是系统计算' in result['answer']
+    assert 'not a system calculation' in result['answer']
 
 
 def test_empty_or_tampered_evidence_is_not_published(tmp_path):
     store, pack = fixture(tmp_path)
     for packs in [[], [dict(facts=[dict(pack['facts'][0], value='999')])]]:
         result=review_analysis('City rents increased.',store,evidence_packs=packs)
-        assert '证据不足' in result['answer']
+        assert 'insufficient evidence' in result['answer']
         assert not result['safe_evidence']['pending_review']
         assert '999' not in result['answer']
     Path(store.get('documents','d')['path']).write_text('changed',encoding='utf-8')
@@ -149,7 +149,7 @@ def test_real_saved_publisher_change_is_attributed_without_calculation(tmp_path)
     assert not result['safe_evidence']['verified_fact']
     for change in changes:
         assert change['reported_change'] in result['answer']
-    assert '不是系统计算' in result['answer']
+    assert 'not a system calculation' in result['answer']
 
 
 def test_combined_transaction_quote_keeps_both_statuses(tmp_path):

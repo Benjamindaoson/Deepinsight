@@ -1,0 +1,278 @@
+{
+  "provenance": "Actual authorized DeepSeek run; tools trimmed to report identity; authoritative report revalidation mocked only at the projection boundary.",
+  "run": {
+    "agent_id": "london-market-agent",
+    "status": "COMPLETED",
+    "content": "{\"key_findings\":[{\"text\":\"West End vacancy in 2026Q2 was 6.7 percent.\",\"classification\":\"inference\",\"evidence_ids\":[\"a44bf53f-2f7c-4103-b04a-6a0e1212c156\"],\"claims\":[{\"kind\":\"observation\",\"metric\":\"vacancy\",\"value\":\"6.7\",\"unit\":\"percent\",\"geography\":\"West End\",\"observation_period\":\"2026Q2\",\"definition\":\"Overall vacancy; submarket narrative\",\"method\":\"publisher_literal_disclosure\",\"evidence_ids\":[\"a44bf53f-2f7c-4103-b04a-6a0e1212c156\"],\"locator\":\"pdf:page:5\"}]},{\"text\":\"West End vacancy fell from 2026Q1 to 2026Q2.\",\"classification\":\"inference\",\"evidence_ids\":[\"07ded13f-ec67-40b8-a87d-faa66d017afe\",\"a44bf53f-2f7c-4103-b04a-6a0e1212c156\"],\"claims\":[{\"kind\":\"change\",\"metric\":\"vacancy\",\"value\":\"6.7\",\"unit\":\"percent\",\"geography\":\"West End\",\"observation_period\":\"2026Q2\",\"definition\":\"Overall vacancy; submarket narrative\",\"method\":\"publisher_literal_disclosure\",\"evidence_ids\":[\"07ded13f-ec67-40b8-a87d-faa66d017afe\",\"a44bf53f-2f7c-4103-b04a-6a0e1212c156\"],\"locator\":\"pdf:page:5\",\"old_id\":\"07ded13f-ec67-40b8-a87d-faa66d017afe\",\"new_id\":\"a44bf53f-2f7c-4103-b04a-6a0e1212c156\",\"old_observation_period\":\"2026Q1\",\"direction\":\"decrease\"}]}],\"risks\":[],\"opportunities\":[],\"outlook\":[]}",
+    "run_id": "93ed089d-583f-4f40-9527-534a6400bd96",
+    "session_id": "24bbe134-4997-4e7e-9ee1-e6f2f5e3d311",
+    "tools": [
+      {
+        "tool_name": "search_market_evidence",
+        "result": "{\"report_id\": \"f9209186-901c-43cc-9f5b-6cc80df2fe99\"}"
+      }
+    ]
+  },
+  "report": {
+    "report_id": "f9209186-901c-43cc-9f5b-6cc80df2fe99",
+    "generation_status": "partial",
+    "ai_analysis": {
+      "status": "published",
+      "run_id": "93ed089d-583f-4f40-9527-534a6400bd96",
+      "accepted": [
+        {
+          "category": "key_findings",
+          "text": "West End vacancy in 2026Q2 was 6.7 percent.",
+          "classification": "inference",
+          "evidence_ids": [
+            "a44bf53f-2f7c-4103-b04a-6a0e1212c156"
+          ],
+          "claims": [
+            {
+              "kind": "observation",
+              "metric": "vacancy",
+              "value": "6.7",
+              "unit": "percent",
+              "geography": "West End",
+              "observation_period": "2026Q2",
+              "definition": "Overall vacancy; submarket narrative",
+              "method": "publisher_literal_disclosure",
+              "evidence_ids": [
+                "a44bf53f-2f7c-4103-b04a-6a0e1212c156"
+              ],
+              "locator": "pdf:page:5"
+            }
+          ]
+        },
+        {
+          "category": "key_findings",
+          "text": "West End vacancy fell from 2026Q1 to 2026Q2.",
+          "classification": "inference",
+          "evidence_ids": [
+            "07ded13f-ec67-40b8-a87d-faa66d017afe",
+            "a44bf53f-2f7c-4103-b04a-6a0e1212c156"
+          ],
+          "claims": [
+            {
+              "kind": "change",
+              "metric": "vacancy",
+              "value": "6.7",
+              "unit": "percent",
+              "geography": "West End",
+              "observation_period": "2026Q2",
+              "definition": "Overall vacancy; submarket narrative",
+              "method": "publisher_literal_disclosure",
+              "evidence_ids": [
+                "07ded13f-ec67-40b8-a87d-faa66d017afe",
+                "a44bf53f-2f7c-4103-b04a-6a0e1212c156"
+              ],
+              "locator": "pdf:page:5",
+              "old_id": "07ded13f-ec67-40b8-a87d-faa66d017afe",
+              "new_id": "a44bf53f-2f7c-4103-b04a-6a0e1212c156",
+              "old_observation_period": "2026Q1",
+              "direction": "decrease"
+            }
+          ]
+        }
+      ],
+      "draft": [],
+      "blocked": [],
+      "original_payload": "{\"key_findings\":[{\"text\":\"West End vacancy in 2026Q2 was 6.7 percent.\",\"classification\":\"inference\",\"evidence_ids\":[\"a44bf53f-2f7c-4103-b04a-6a0e1212c156\"],\"claims\":[{\"kind\":\"observation\",\"metric\":\"vacancy\",\"value\":\"6.7\",\"unit\":\"percent\",\"geography\":\"West End\",\"observation_period\":\"2026Q2\",\"definition\":\"Overall vacancy; submarket narrative\",\"method\":\"publisher_literal_disclosure\",\"evidence_ids\":[\"a44bf53f-2f7c-4103-b04a-6a0e1212c156\"],\"locator\":\"pdf:page:5\"}]},{\"text\":\"West End vacancy fell from 2026Q1 to 2026Q2.\",\"classification\":\"inference\",\"evidence_ids\":[\"07ded13f-ec67-40b8-a87d-faa66d017afe\",\"a44bf53f-2f7c-4103-b04a-6a0e1212c156\"],\"claims\":[{\"kind\":\"change\",\"metric\":\"vacancy\",\"value\":\"6.7\",\"unit\":\"percent\",\"geography\":\"West End\",\"observation_period\":\"2026Q2\",\"definition\":\"Overall vacancy; submarket narrative\",\"method\":\"publisher_literal_disclosure\",\"evidence_ids\":[\"07ded13f-ec67-40b8-a87d-faa66d017afe\",\"a44bf53f-2f7c-4103-b04a-6a0e1212c156\"],\"locator\":\"pdf:page:5\",\"old_id\":\"07ded13f-ec67-40b8-a87d-faa66d017afe\",\"new_id\":\"a44bf53f-2f7c-4103-b04a-6a0e1212c156\",\"old_observation_period\":\"2026Q1\",\"direction\":\"decrease\"}]}],\"risks\":[],\"opportunities\":[],\"outlook\":[]}",
+      "validation_audit": [
+        {
+          "category": "key_findings",
+          "original_text": "West End vacancy in 2026Q2 was 6.7 percent.",
+          "evidence_ids": [
+            "a44bf53f-2f7c-4103-b04a-6a0e1212c156"
+          ],
+          "original_claims": [
+            {
+              "kind": "observation",
+              "metric": "vacancy",
+              "value": "6.7",
+              "unit": "percent",
+              "geography": "West End",
+              "observation_period": "2026Q2",
+              "definition": "Overall vacancy; submarket narrative",
+              "method": "publisher_literal_disclosure",
+              "evidence_ids": [
+                "a44bf53f-2f7c-4103-b04a-6a0e1212c156"
+              ],
+              "locator": "pdf:page:5"
+            }
+          ],
+          "verification": {
+            "status": "verified",
+            "reasons": [],
+            "bindings": [
+              {
+                "kind": "observation",
+                "metric": "vacancy",
+                "value": "6.7",
+                "unit": "percent",
+                "geography": "West End",
+                "observation_period": "2026Q2",
+                "definition": "Overall vacancy; submarket narrative",
+                "method": "publisher_literal_disclosure",
+                "evidence_ids": [
+                  "a44bf53f-2f7c-4103-b04a-6a0e1212c156"
+                ],
+                "locator": "pdf:page:5"
+              }
+            ],
+            "state_checks": [],
+            "checked_at": "2026-10-18T20:49:31.207672+00:00",
+            "verifier": "finding-verifier-v3-state-assertions",
+            "origin": "model_interpretation"
+          },
+          "outcome": "accepted",
+          "reason": null
+        },
+        {
+          "category": "key_findings",
+          "original_text": "West End vacancy fell from 2026Q1 to 2026Q2.",
+          "evidence_ids": [
+            "07ded13f-ec67-40b8-a87d-faa66d017afe",
+            "a44bf53f-2f7c-4103-b04a-6a0e1212c156"
+          ],
+          "original_claims": [
+            {
+              "kind": "change",
+              "metric": "vacancy",
+              "value": "6.7",
+              "unit": "percent",
+              "geography": "West End",
+              "observation_period": "2026Q2",
+              "definition": "Overall vacancy; submarket narrative",
+              "method": "publisher_literal_disclosure",
+              "evidence_ids": [
+                "07ded13f-ec67-40b8-a87d-faa66d017afe",
+                "a44bf53f-2f7c-4103-b04a-6a0e1212c156"
+              ],
+              "locator": "pdf:page:5",
+              "old_id": "07ded13f-ec67-40b8-a87d-faa66d017afe",
+              "new_id": "a44bf53f-2f7c-4103-b04a-6a0e1212c156",
+              "old_observation_period": "2026Q1",
+              "direction": "decrease"
+            }
+          ],
+          "verification": {
+            "status": "verified",
+            "reasons": [],
+            "bindings": [
+              {
+                "kind": "change",
+                "metric": "vacancy",
+                "value": "6.7",
+                "unit": "percent",
+                "geography": "West End",
+                "observation_period": "2026Q2",
+                "definition": "Overall vacancy; submarket narrative",
+                "method": "publisher_literal_disclosure",
+                "evidence_ids": [
+                  "07ded13f-ec67-40b8-a87d-faa66d017afe",
+                  "a44bf53f-2f7c-4103-b04a-6a0e1212c156"
+                ],
+                "locator": "pdf:page:5",
+                "old_id": "07ded13f-ec67-40b8-a87d-faa66d017afe",
+                "new_id": "a44bf53f-2f7c-4103-b04a-6a0e1212c156",
+                "old_observation_period": "2026Q1",
+                "direction": "decrease"
+              }
+            ],
+            "state_checks": [],
+            "checked_at": "2026-10-18T20:49:31.278843+00:00",
+            "verifier": "finding-verifier-v3-state-assertions",
+            "origin": "model_interpretation"
+          },
+          "outcome": "accepted",
+          "reason": null
+        }
+      ],
+      "answer": "2 model interpretation finding(s) passed per-finding deterministic verification and are published as labelled evidence-bound proposals; 0 withheld. Publication is not semantic or human approval.",
+      "semantic_approval": false
+    },
+    "publication_review": {
+      "status": "evidence_checked",
+      "semantic_approval": false,
+      "human_review_complete": false,
+      "codes": [],
+      "fact_fingerprints": {
+        "e5ee386a-a480-421d-b7d7-4679bf3a6361": "de3ad5f912e0d562ed70fd7ad0026b35a4a09fee34455f8b0b1811781f0419e4",
+        "89e0794d-7015-4d38-9c8d-4bda428fe575": "7092f498d81ed6690a65dcedafea0e2a1fb23c49bfd3236aee106779d60ac7a3",
+        "3364d652-5402-49b5-8f4e-3214d55c3c4e": "6f2843777774949676945922c7d06c42bbc9471d6b881b2dae4a3ff939ad06d7",
+        "51c686bb-24ce-490c-80e3-5b0d90f6313c": "a8c905471c561744d9e7be8e2da358e3928209768a9badea4fc3eb2260c8624c",
+        "bee11fe9-0098-4625-bcc4-e379ce20fae2": "a28e2f8692961d9483f4a0cb66a7651231b3f92c12899097d727b269aeabdcf4",
+        "dfa6f906-fe56-411d-ac70-6e2ff891d2df": "ed77344ed341930ffb5b2d788cadd0e0ecff3a186b7cc8bcf062bd56c624e5c0",
+        "edba3cd1-af8d-4d34-8e33-764ea2b6ff3e": "dc29a9fda018092b8bd8c9bc58a672db56d50837e0a5f3feb308e1646e79060a",
+        "6fa21b15-887d-4f2b-bd54-af2260edb945": "ffab44bfaec351a4424511c6403d6d2f92e2fa22069d016ce50d2a953696fb2e",
+        "07ded13f-ec67-40b8-a87d-faa66d017afe": "39c81295d6b855d302488579d72caa9ade747de030272f8cf63aa3e9c8d45bcc",
+        "063b5e6f-80d9-47e1-9f23-288ef793b68e": "bbff6da8103f7a364b1f66519a1aa583bcfa27ec14113c9f1c366a9bd1a2b67d",
+        "3a2a6a3c-8f69-4ac4-a45a-716d89eb89ba": "fae15404b9458646027cb0ee1177a786188a016d8e41ba51df83746447748c3c",
+        "fe56c67f-f79e-425f-994a-9cf80732f771": "0b05ec0a81e757e4871e41e1ba6f6d7b537b7a9fde372a87a555e73c82b3b12d",
+        "e4605423-8a02-46c7-bba1-ac7fe6432b59": "ffab44bfaec351a4424511c6403d6d2f92e2fa22069d016ce50d2a953696fb2e",
+        "789dfe36-f1c1-44ad-a5bf-8ef495cf4818": "bbff6da8103f7a364b1f66519a1aa583bcfa27ec14113c9f1c366a9bd1a2b67d",
+        "a61ea674-a658-457c-9895-5983170f4583": "fae15404b9458646027cb0ee1177a786188a016d8e41ba51df83746447748c3c",
+        "f1857f20-73ba-4d14-b097-bd8fd080fc73": "0b05ec0a81e757e4871e41e1ba6f6d7b537b7a9fde372a87a555e73c82b3b12d",
+        "5abd222b-ea94-4539-b6a8-fd82763edc55": "de3ad5f912e0d562ed70fd7ad0026b35a4a09fee34455f8b0b1811781f0419e4",
+        "29ee4400-0916-420a-b849-dc6dffd98ed0": "7092f498d81ed6690a65dcedafea0e2a1fb23c49bfd3236aee106779d60ac7a3",
+        "d1aabf74-bb11-4e89-88a2-dca30d630051": "6f2843777774949676945922c7d06c42bbc9471d6b881b2dae4a3ff939ad06d7",
+        "20c2dee6-49f0-4318-99a6-bd9a4b3df711": "a8c905471c561744d9e7be8e2da358e3928209768a9badea4fc3eb2260c8624c",
+        "4768f854-7487-4482-9ce5-f1082f6dbc81": "a28e2f8692961d9483f4a0cb66a7651231b3f92c12899097d727b269aeabdcf4",
+        "5cc1fadc-1436-403a-ab2f-27e5d920147c": "ed77344ed341930ffb5b2d788cadd0e0ecff3a186b7cc8bcf062bd56c624e5c0",
+        "7d4f6d32-4894-425a-a3aa-5d4cbf904b24": "0c1a2f115d68358478f6eb74a642d90331dc6c5dccac72a6daf7b6f1341ce23d",
+        "3e951bde-8079-4601-9f89-045df173d049": "07e7c5ac9aee759c90cfc93ed3b0acf9e35484943af40f80103c47118eeeae42",
+        "ba1be1aa-498e-4004-a4df-d468732218d9": "01f0a86280b5511ceef963d7a6c8af7992ec66d77312626775558af7eade5802",
+        "e4376471-2da3-458d-8f04-aa84256ae332": "ce6b729cd3f5c11ff81b4ed99e02e94c13145e05b8a79ca08f566bbb939c9c44",
+        "a9d275bb-1ee0-4b64-a8ab-465b030d29a7": "c1c8bb6f8fb790e0d129172d8d62d0281e55cd9f0e647037e858639058959f7f",
+        "bc2cb07e-e67d-47b4-ac0d-1316f9823d90": "9b4392ccefe29cb8114957769fdac0caee9ddaee819e01d51ba55718da0bb811",
+        "a44bf53f-2f7c-4103-b04a-6a0e1212c156": "a2de173ab39c85985c44fe66c91520bcea7f55549b2e07e831465cb37f7dc30e",
+        "ac92ab34-6a84-47fa-abe7-fbacb4e10457": "bec6d6e3603607f098fd31b9b7e54d0da7bcf57c9c50926428404ed2399978f9",
+        "7e08f3f0-0698-4123-a4ec-a3584e753649": "f2f77e8826a2f8db473f6c78cf5a0d936cab045cc212c3d9415c3a2885dbd375",
+        "c9e520aa-1a1c-433f-9251-fb7238d1a748": "85e258cb6ad8b30576107d45fed02eeef696a386980a3167f47d246cf828c6ec",
+        "seed-savills-2026Q2-westend-vacancy": "0d07152c7d70295fe3e96115bb288998d551982938816f634db43c937d95faab",
+        "seed-jll-2026Q2-westend-rent": "debb12832adcfd1d61af101aae57474bc30530b8f920948d2e8dd8cdc0ccd9e6",
+        "seed-bnp-2026Q2-canary-rent": "8ce588454d2142627f9c57247b541bceb586bd30aad77d30d305735d5caeb5a9",
+        "seed-bnp-2026Q2-westend-supply": "e1f6af70d542f9b22d9d7768cb3880044105937615ce5ee02bd88a52f991b63c",
+        "seed-bnp-2026Q2-westend-vacancy": "28d4b908986013061b5d3a105bed4b3dbedfbace1605e44064df999a3853d94d",
+        "seed-bnp-2026Q2-westend-takeup": "c6a1b8c97bafe0b27061c90d6b0e5a6ff12c658d52a004fdc788e95542b4e5d8",
+        "BNP-2026Q2-RENT": "1fce7c1bbb13d7a424f81a1b8b45ff9ef14c238e49c575176ebc5cf34b3ab77d",
+        "BNP-2026Q1-RENT": "c368f3aa348ad4d97255e9ee32307c60af272d0d456534d1a278a4bb3aebb7eb",
+        "34d976c4-eb5a-4864-a8df-280dde2b01e9": "da60b0213e032be185cde97b9d66f473d009cb972901f12c0219b4e5e1a98f12",
+        "4f9e62fe-3227-4e6c-af28-85b8f02cafca": "d43b2db93ff80df983c579a66327c577607bf50f36d81f706f79d1e68226d6cc",
+        "b9988ced-fca4-4982-9a0f-5fc4df7cde33": "a2d7a36f5782e2d5ab00fbdbea0c6f6df414b2b0080cda798937f9ba7f6eb429",
+        "e9aa4691-be4e-42a3-9aeb-c02ed06683d9": "f25cb81136f539fff5186442b234540580be2f9f05be7a8ae2f0814262bec508",
+        "b7372882-9861-4d79-a332-f16912290c60": "af4bdfd2618bc01a9144c24b49bdea6b70512fbdd70657bad09cd258901433e7",
+        "014a2d7f-d9bc-426c-a630-607b50fb11b6": "67a8e5708747e9b79ce2041aad51445ed2f1700d2aca1fcaeb769eb1e5e7cdac",
+        "48ce57a6-504a-4d4f-afed-20799ff515ce": "a0ae31dd7b4cdc69fe16ac1907aa76f612da173b934b1415859d46194b059b2e",
+        "5e5df377-0a30-4edd-b640-604e428c330b": "23be800533591bce34d2f526dd5c303a63e1529f08b02a4cbefcf5a2eb0ad67c",
+        "2aabbb39-387f-4b35-8a6e-b559ef56549c": "89593389fb5a5d8f75cb908f0da693b6bc19715c3a0c0e8a1ac3fa3979eece67",
+        "99add71c-5243-4c8e-9e7a-59afcf1d9abf": "e95246f9609ca3f933fad6b6484b7119530ec9386364abfa15ada8cf1e50f35f",
+        "28232efa-99cf-4c16-b536-2931df8fabad": "6a8f2244949e547412cb25e6efc01296ca65c4d55fd3a2ba0ef5608841a7d9ed",
+        "04d34d7d-9512-429b-882a-7d783b140b71": "9ebafeea5fafd7d46def40d6e787ba8e62d5429a3f0e6d32893ba30bffa5b189",
+        "1bdf2763-3814-43ba-94ac-8247e39f3fe2": "ad615795c6e71016a9a7e93adc4fa946ba915b4e91c341c471d3e66e7244cee4",
+        "e7526fe2-0a72-4c61-a4ea-43212162d01c": "4e2730f45d7273b5948c163ca797a010eadda3b3991f61236e22829a1a030218",
+        "ff0197b8-acde-4424-a35d-4508ca38bf2b": "a4321452605e0f23b3dd27591bd7f26a134480d292ec35eb8f9a576930cec7e6",
+        "faf29d35-81c0-4a81-914f-e3dafa884861": "8733bd9a6415d8e9103e5a44c2c8538c1916c7be646f0b422c0d0aa785e9dd96",
+        "909f183a-ff68-4625-804d-e585946bb7ba": "0b05ec0a81e757e4871e41e1ba6f6d7b537b7a9fde372a87a555e73c82b3b12d",
+        "a35a405e-221f-4154-be79-f5900f8f7162": "fae15404b9458646027cb0ee1177a786188a016d8e41ba51df83746447748c3c",
+        "2b69dab0-c59d-4a31-930d-15bd7541a8f5": "bbff6da8103f7a364b1f66519a1aa583bcfa27ec14113c9f1c366a9bd1a2b67d",
+        "4640977d-9668-44fd-b3da-79a5a0ee9be0": "ffab44bfaec351a4424511c6403d6d2f92e2fa22069d016ce50d2a953696fb2e",
+        "c4234992-dd1c-4064-a716-0c272e5eadbd": "dc107c21b11240f30b15a2e7ad5f47bfcba8236505b601921c8831e730bc019b",
+        "77c080c6-d9ce-4c5d-9454-117569c7e018": "7fec88109bd05b75c6db5d7d825e091f77727dedd37f4a14bf2ac841838ab8dc",
+        "100d8518-00f0-41e5-b087-9234239038a3": "ac5dc4dc5d6976917075b4404707fdf0c11b75c2beb10bcaea645bf40ae77552",
+        "9f93f4f9-3250-44fe-a13e-675270893265": "ac118340c762dd3f0f891a2d760d6fd4f81604528053d63fef3ce33ae623b68e",
+        "6bc2c909-712f-4f4a-b2d5-fa9c11288172": "53833c0b178f6e1aee6f1eb17a08a23bd867981c94c9519693c0c3255d393c9c",
+        "95a88053-5577-46a8-a999-f1ebe17ef785": "217f092de5c786cecc05f9c050d83731094d296ef7336d70a6dbca99411aa217",
+        "0ce92471-fc24-4c7e-a103-b09c4a7472f3": "dabee611af4dd4bfc54ddda0ac78070542372fe52bceff2769d1f6759682ae5d",
+        "seed-bnp-2026Q2-docklands-takeup": "09b1ca10ddf64fe0308ef6a6d53145419872dfa42c1e4a180888a98586e2713b",
+        "seed-bnp-2026Q2-docklands-vacancy": "248f1b10290077f9d65cb152518dd5fd3350cd22b74a4580cb6b99e627b8ebf2",
+        "9f6abc17-8e86-4862-bf8f-dd30a3fb0b0e": "e4c43ef23073542090b762d7a6e5d7f60fdca6dc6d226662b82a949da1c8d2e3",
+        "a67baef2-7568-4184-b76e-2fd93d7845c6": "ca84edde8919615ca11890d88af2cfa9a2af42e81dc21198fc69cca2ff771bb7",
+        "f6faba64-a762-4419-bbdf-67229ddfae28": "939ab3d986062cc51c9a08266fd2729b88b9d9d5f0cfcc81d6c8e9c558ae45af",
+        "099dc680-8a5f-4ca4-b22c-5957ea3883f4": "a56ea8714bf42531a480b8d0342b3632fe0e147dc3712c458ad901b4690f490a"
+      },
+      "ai_status": "published"
+    }
+  }
+}
