@@ -15,6 +15,9 @@ import {
 import { splitResearchInput } from '@/lib/workflow'
 import { chatFailureCopy } from '@/lib/chat-errors'
 import { publicationLabel } from '@/lib/publication'
+import { englishDisplay } from '@/lib/english-output'
+import SavedReport from '@/components/market/ReportArtifact'
+import { reportIdFromTools } from '@/lib/report-artifact'
 
 interface MessageProps {
   message: ChatMessage
@@ -22,6 +25,7 @@ interface MessageProps {
 
 const AgentMessage = ({ message }: MessageProps) => {
   const { streamingErrorMessage } = useStore()
+  const reportId = reportIdFromTools(message.tool_calls)
   const urls = (message.tool_calls || []).flatMap((tool) =>
     evidenceUrls(readEvidencePack(tool.result ?? tool.content))
   )
@@ -38,9 +42,11 @@ const AgentMessage = ({ message }: MessageProps) => {
         </p>
         <details className="mt-2 text-xs">
           <summary>Technical details</summary>
-          {message.errorMessage ||
-            streamingErrorMessage ||
-            'FINAL_ANSWER_MISSING'}
+          {englishDisplay(
+            message.errorMessage ||
+              streamingErrorMessage ||
+              'FINAL_ANSWER_MISSING'
+          )}
         </details>
       </div>
     )
@@ -48,12 +54,14 @@ const AgentMessage = ({ message }: MessageProps) => {
     messageContent = (
       <div className="flex w-full flex-col gap-4">
         <p className="text-xs text-muted">
-          {message.publicationOrigin
-            ? publicationLabel(message.publicationOrigin)
-            : 'AI interpretation · Check each source and reporting period. A completed response does not approve its evidence.'}
+          {message.operation
+            ? `Saved-record operation: ${message.operation.replaceAll('_', ' ')} · no model call`
+            : message.publicationOrigin
+              ? publicationLabel(message.publicationOrigin)
+              : 'AI interpretation · Check each source and reporting period. A completed response does not approve its evidence.'}
         </p>
         <MarkdownRenderer>
-          {delimitEvidenceLinks(message.content, urls)}
+          {delimitEvidenceLinks(englishDisplay(message.content), urls)}
         </MarkdownRenderer>
         {message.videos && message.videos.length > 0 && (
           <Videos videos={message.videos} />
@@ -98,7 +106,15 @@ const AgentMessage = ({ message }: MessageProps) => {
       <div className="flex-shrink-0">
         <Icon type="agent" size="sm" />
       </div>
-      <div className="min-w-0 flex-1">{messageContent}</div>
+      <div className="min-w-0 flex-1 space-y-4">
+        {reportId && (
+          <SavedReport
+            key={`${reportId}:${message.content ? 'final' : 'pending'}:${message.streamingError ? 'failed' : ''}`}
+            reportId={reportId}
+          />
+        )}
+        {messageContent}
+      </div>
     </div>
   )
 }

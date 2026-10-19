@@ -61,6 +61,8 @@ def test_wire_compression_preserves_raw_messages_and_fact_qualifiers():
     ('TOKEN_BUDGET','TOKEN_BUDGET_EXCEEDED'),
     ('MODEL_TIMEOUT','MODEL_TIMEOUT'),('TOOL_ERROR','TOOL_ERROR'),
     ('FINAL_ANSWER_MISSING','FINAL_ANSWER_MISSING'),
+    ('insufficient_user_quota','PROVIDER_QUOTA_EXHAUSTED'),
+    ('MODEL_OUTPUT_TRUNCATED','MODEL_OUTPUT_TRUNCATED'),
     ('secret-provider-error','PROVIDER_ERROR')])
 def test_error_stage_and_final_answer_state(tmp_path, native, expected):
     from fastapi.testclient import TestClient
@@ -142,7 +144,8 @@ def test_evidence_pack_is_topic_limited_and_preserves_statuses(tmp_path):
     assert len(broad['facts'])<=8
     assert broad['notice_code']=='NO_VERIFIED_EVIDENCE'
     for f in broad['facts']:
-        original=service.store.get('facts',f['id'])
+        from london_product.normalization import current_fact
+        original=current_fact(service.store.get('facts',f['id']))
         assert f['status']==original['status'] and f['candidate_only']
         assert len(f['evidence']['quote'])<=700
         assert 'published_at' in broad['documents'][f['document_id']]

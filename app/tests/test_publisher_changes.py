@@ -1,6 +1,7 @@
 """Real saved source replay and negative attribution checks; no provider calls."""
 import hashlib
 import json
+import sqlite3
 from pathlib import Path
 import pytest
 from london_product.store import Store
@@ -12,10 +13,12 @@ DOC_ID = 'doc-jll-e2eaadc6049e717d5ebc'
 
 @pytest.fixture
 def real_service(tmp_path):
-    original = Store(ROOT / 'app/data/product')
     store = Store(tmp_path)
-    store.put('sources', 'jll', original.get('sources', 'jll'))
-    store.put('documents', DOC_ID, original.get('documents', DOC_ID))
+    # A regression fixture must not run live Store migrations or enable WAL.
+    with sqlite3.connect((ROOT/'app/data/product/market.sqlite3').as_uri()+'?mode=ro',uri=True) as db:
+        for table,identity in [('sources','jll'),('documents',DOC_ID)]:
+            raw=db.execute(f'SELECT payload FROM {table} WHERE id=? OR identity=?',(identity,identity)).fetchone()[0]
+            store.put(table,identity,json.loads(raw))
     service = MarketService(store)
     yield service
     service.pool.shutdown(wait=True)
@@ -53,6 +56,26 @@ def test_change_reaches_report_and_compact_evidence_without_approval(real_servic
     assert pack['coverage']['approved_fact_records'] == 0
     assert 'publisher_reported_change' in pack['answer_constraint']
     assert len(json.dumps(pack, ensure_ascii=False).encode()) <= 12000
+
+
+def test_legacy_identity_record_is_not_duplicated(real_service):
+    """A change already saved under an older identity scheme must not re-duplicate."""
+    service = real_service
+    doc = service.store.get('documents', DOC_ID)
+    quote = next(s['text'] for s in doc['segments'] if s['page'] == 1)
+    from london_product.publisher_changes import TAKEUP
+    match = TAKEUP.search(quote)
+    legacy = service.store.put('events', 'legacy-random-id', dict(
+        kind='publisher_reported_change', classification='publisher_reported_change',
+        title='JLL reported Central London take-up up 15% quarter-on-quarter · 2026Q2',
+        status='pending_review', human_review_status='pending_review',
+        document_sha256=doc['sha256'], evidence=dict(quote=match.group())))
+    service.monitor_changes()
+    changes = [e for e in service.store.all('events') if e.get('kind') == 'publisher_reported_change']
+    assert len(changes) == 1
+    assert changes[0]['id'] == legacy['id']
+    service.monitor_changes()
+    assert len([e for e in service.store.all('events') if e.get('kind') == 'publisher_reported_change']) == 1
 
 
 def test_hash_mismatch_never_creates_market_change(real_service, tmp_path):

@@ -33,11 +33,14 @@ def catalog() -> list[dict]:
         ('bnp', 'BNP Paribas Real Estate', 'research', 'https://www.realestate.bnpparibas.co.uk/insights/central-london-office-market-update-q2-2026'),
         ('jll', 'JLL', 'research', 'https://www.jll.com/en-uk/insights/market-dynamics/central-london-office'),
         ('savills', 'Savills', 'research', 'https://pdf.euro.savills.co.uk/uk/office-reports/central-london-q2-2026-report.pdf'),
+        ('savills-html', 'Savills Central London Q2 2026 HTML', 'research', 'https://www.savills.com/research_articles/255800/393427-0'),
         ('cbre', 'CBRE', 'research', 'https://www.cbre.com/insights/figures/central-london-office-figures-q2-2026'),
         ('knightfrank', 'Knight Frank', 'research', 'https://www.knightfrank.co.uk/research/reports/the-london-office-market-report-104'),
         ('boe', 'Bank of England Bank Rate', 'macro', 'https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes&Datefrom=01/Jan/2025&Dateto=now&SeriesCodes=IUDBEDR&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N'),
         ('ons', 'ONS CPIH annual rate', 'macro', 'https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23/data'),
         ('ons-employment', 'ONS employment rate (16-64, seasonally adjusted)', 'macro', 'https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/employmentandemployeetypes/timeseries/lf24/lms/data'),
+        ('ons-gva', 'ONS monthly GVA period-on-period growth', 'macro', 'https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ecyx/mgdp/data'),
+        ('ons-hybrid', 'ONS characteristics of homeworkers, September 2022 to January 2023', 'research', 'https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/employmentandemployeetypes/articles/characteristicsofhomeworkersgreatbritain/september2022tojanuary2023'),
         ('planning', 'London Planning Datahub', 'planning', 'https://data.london.gov.uk/dataset/planning-london-datahub'),
         ('gpe', 'GPE', 'owner', 'https://www.gpe.co.uk/news-media/news/'),
         ('britishland', 'British Land', 'owner', 'https://www.britishland.com/news/'),
@@ -63,6 +66,7 @@ def catalog() -> list[dict]:
 
 
 ALLOWED_HOSTS = frozenset({urlsplit(r['url']).hostname for r in catalog()} | {
+    'www.colliers.com', 'www.carterjonas.co.uk',
     'www.jll.co.uk', 'www.savills.co.uk', 'research.euro.savills.co.uk',
     'www.cbre.com', 'data.london.gov.uk', 'planning.london.gov.uk',
     'api.ons.gov.uk', 'www.bbc.co.uk', 'www.bbc.com', 'www.bankofengland.co.uk',
@@ -312,6 +316,29 @@ def discover_article_sources(content: bytes, base_url: str, max_items: int = 2) 
         if len(rows) == limit:
             break
     return rows
+
+
+def document_metadata(content: bytes, media: str) -> dict:
+    """Explicit publisher metadata only; HTTP dates are not publication dates."""
+    if media.split(';')[0] not in ['text/html','application/xhtml+xml']:return {}
+    soup=BeautifulSoup(content,'html.parser')
+    for node in soup.select('meta[property="article:published_time"], meta[itemprop="datePublished"]'):
+        value=node.get('content','')
+        try:datetime.fromisoformat(value.replace('Z','+00:00'))
+        except ValueError:continue
+        return dict(published_at=value)
+    for script in soup.select('script[type="application/ld+json"]'):
+        try:data=json.loads(script.get_text())
+        except (ValueError,TypeError):continue
+        nodes=data if isinstance(data,list) else [data]
+        for node in nodes:
+            if not isinstance(node,dict):continue
+            value=node.get('datePublished')
+            if not isinstance(value,str):continue
+            try:datetime.fromisoformat(value.replace('Z','+00:00'))
+            except ValueError:continue
+            return dict(published_at=value)
+    return {}
 
 
 def parse_content(content: bytes, media: str) -> list[dict]:

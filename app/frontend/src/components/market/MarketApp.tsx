@@ -69,6 +69,9 @@ import {
   reviewMeaning
 } from '@/lib/workflow'
 import CoveragePicker from './CoveragePicker'
+import IndicatorCoverage from './IndicatorCoverage'
+import SavedReport, { ReportView } from './ReportArtifact'
+import type { ReportArtifact } from '@/lib/report-artifact'
 
 const pages = [
   {
@@ -272,6 +275,22 @@ export default function MarketApp() {
   const params = useSearchParams()
   const page = pages.find((p) => p.path === path) || pages[0]
   const sourceState = useMarket<List<Source>>('/sources')
+  const [runtime, setRuntime] = useState<{
+    mode: 'live' | 'mock'
+    data_asof: string | null
+  } | null>(null)
+  useEffect(() => {
+    const controller = new AbortController()
+    const origin = new URL(MARKET_API).origin
+    void fetch(`${origin}/health`, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error('Health check failed')
+        return response.json()
+      })
+      .then((value) => setRuntime(value))
+      .catch(() => setRuntime(null))
+    return () => controller.abort()
+  }, [])
   const [evidenceId, setEvidenceId] = useState<string | null>(
     params.get('evidence')
   )
@@ -324,6 +343,12 @@ export default function MarketApp() {
             <span className="font-medium text-slate-800">{page.title}</span>
           </div>
           <div className="flex items-center gap-3">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
+              Mode: {runtime?.mode ?? 'unavailable'} · data as of:{' '}
+              {runtime?.data_asof
+                ? time(runtime.data_asof)
+                : 'data insufficient'}
+            </span>
             <span className="text-xs text-slate-500">
               {sourceState.data
                 ? `${sourceState.data.items.filter((s) => ['healthy', 'ok'].includes(s.health)).length}/${sourceState.data.items.length} sources healthy`
@@ -335,12 +360,21 @@ export default function MarketApp() {
               </span>
             </span>
             <Button
-              disabled={Boolean(busy)}
+              disabled={Boolean(busy) || runtime?.mode === 'mock'}
               onClick={() => refresh()}
               className={actionClass}
+              title={
+                runtime?.mode === 'mock'
+                  ? 'External refresh is disabled in credential-free mock mode.'
+                  : undefined
+              }
             >
               <RefreshCw className="size-4" />
-              {busy === 'refresh' ? 'Starting…' : 'Refresh sources'}
+              {busy === 'refresh'
+                ? 'Starting…'
+                : runtime?.mode === 'mock'
+                  ? 'Refresh disabled in mock'
+                  : 'Refresh sources'}
             </Button>
           </div>
         </header>
@@ -395,9 +429,16 @@ export default function MarketApp() {
           {path === '/events' && (
             <EventsPage act={act} busy={busy} notify={setMessage} />
           )}
-          {path === '/ask' && <AskPage evidence={setEvidenceId} />}
+          {path === '/ask' && (
+            <AskPage evidence={setEvidenceId} runtimeMode={runtime?.mode} />
+          )}
           {path === '/reports' && (
-            <ReportsPage act={act} busy={busy} notify={setMessage} />
+            <ReportsPage
+              act={act}
+              busy={busy}
+              notify={setMessage}
+              runtimeMode={runtime?.mode}
+            />
           )}
           {path === '/settings' && (
             <SettingsPage act={act} busy={busy} notify={setMessage} />
@@ -435,11 +476,105 @@ function FactTable({
   evidence: (id: string) => void
 }) {
   const params = useSearchParams()
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [reviewer, setReviewer] = useState('')
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkError, setBulkError] = useState('')
+  const [bulkMessage, setBulkMessage] = useState('')
+  useEffect(() => {
+    setReviewer(window.localStorage.getItem('market-reviewer') || '')
+  }, [])
+  const pending = facts.filter(
+    (f) =>
+      f.human_review_status === 'pending_review' ||
+      f.status === 'pending_review'
+  )
+  const pendingIds = new Set(pending.map((f) => f.id))
+  const allSelected =
+    pending.length > 0 && pending.every((f) => selected.has(f.id))
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set())
+    else setSelected(new Set(pendingIds))
+  }
+  const bulkApprove = async () => {
+    const name = reviewer.trim()
+    if (name.length < 2) {
+      setBulkError('Enter your name (at least 2 characters) for bulk approval.')
+      return
+    }
+    if (selected.size === 0) return
+    setBulkBusy(true)
+    setBulkError('')
+    setBulkMessage('')
+    let ok = 0
+    let fail = 0
+    for (const id of selected) {
+      try {
+        await reviewFact(
+          id,
+          'approve',
+          name,
+          'Bulk approved from observation list.'
+        )
+        ok++
+      } catch {
+        fail++
+      }
+    }
+    window.localStorage.setItem('market-reviewer', name)
+    setBulkMessage(
+      `Approved ${ok} observation(s)${fail ? `, ${fail} failed` : ''}.`
+    )
+    setSelected(new Set())
+    setBulkBusy(false)
+    window.dispatchEvent(new Event('market:refresh'))
+  }
   return (
     <div className="overflow-x-auto">
+      {pending.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg bg-amber-50 px-4 py-3 text-sm">
+          <label className="flex items-center gap-2 text-slate-700">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleAll}
+              className="size-4 accent-teal-800"
+            />
+            Select all {pending.length} pending
+          </label>
+          <input
+            className="w-40 rounded-md border border-slate-300 px-2 py-1 text-sm"
+            placeholder="Reviewer name"
+            value={reviewer}
+            onChange={(e) => setReviewer(e.target.value)}
+            maxLength={80}
+          />
+          <Button
+            size="sm"
+            disabled={bulkBusy || selected.size === 0}
+            onClick={() => void bulkApprove()}
+          >
+            {bulkBusy ? 'Approving…' : `Approve selected (${selected.size})`}
+          </Button>
+          {bulkError && (
+            <span className="text-xs text-red-700">{bulkError}</span>
+          )}
+          {bulkMessage && (
+            <span className="text-xs text-teal-800">{bulkMessage}</span>
+          )}
+        </div>
+      )}
       <table className="w-full text-left text-sm">
         <thead className="bg-slate-50 text-xs text-slate-500">
           <tr>
+            <th className="px-3 py-3"></th>
             {[
               'Metric / geography',
               'Reported value',
@@ -459,51 +594,66 @@ function FactTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {facts.map((f) => (
-            <tr key={f.id} className="hover:bg-slate-50">
-              <td className="px-5 py-4">
-                <span className="font-medium">{human(f.metric)}</span>
-                <span className="mt-1 block text-xs text-slate-500">
-                  {human(f.geography)}
-                </span>
-              </td>
-              <td className="min-w-48 px-5 py-4 font-semibold tabular-nums">
-                {f.value ?? 'Unknown'}{' '}
-                <span className="font-normal text-slate-500">
-                  {human(f.unit)}
-                </span>
-              </td>
-              <td className="whitespace-nowrap px-5 py-4 tabular-nums">
-                {human(f.period)}
-              </td>
-              <td className="px-5 py-4">
-                <Badge value={f.status} />
-              </td>
-              <td className="px-5 py-4 text-xs text-slate-500">
-                {f.publisher || f.source_id}
-              </td>
-              <td className="px-5 py-4">
-                <button
-                  className="whitespace-nowrap font-medium text-teal-800 underline underline-offset-4"
-                  onClick={() => evidence(f.id)}
-                >
-                  View evidence
-                </button>
-                <Link
-                  className="mt-2 block whitespace-nowrap text-xs text-teal-800 underline"
-                  href={researchLink('fact', f.id, params.toString())}
-                >
-                  Analyze with AI
-                </Link>
-                <Link
-                  className="mt-2 block whitespace-nowrap text-xs text-teal-800 underline"
-                  href={`/market-data?compare=${encodeURIComponent(f.id)}#comparison`}
-                >
-                  Compare observations
-                </Link>
-              </td>
-            </tr>
-          ))}
+          {facts.map((f) => {
+            const isPending =
+              f.human_review_status === 'pending_review' ||
+              f.status === 'pending_review'
+            return (
+              <tr key={f.id} className="hover:bg-slate-50">
+                <td className="px-3 py-4">
+                  {isPending && (
+                    <input
+                      type="checkbox"
+                      checked={selected.has(f.id)}
+                      onChange={() => toggle(f.id)}
+                      className="size-4 accent-teal-800"
+                    />
+                  )}
+                </td>
+                <td className="px-5 py-4">
+                  <span className="font-medium">{human(f.metric)}</span>
+                  <span className="mt-1 block text-xs text-slate-500">
+                    {human(f.geography)}
+                  </span>
+                </td>
+                <td className="min-w-48 px-5 py-4 font-semibold tabular-nums">
+                  {f.value ?? 'Unknown'}{' '}
+                  <span className="font-normal text-slate-500">
+                    {human(f.unit)}
+                  </span>
+                </td>
+                <td className="whitespace-nowrap px-5 py-4 tabular-nums">
+                  {human(f.period)}
+                </td>
+                <td className="px-5 py-4">
+                  <Badge value={f.status} />
+                </td>
+                <td className="px-5 py-4 text-xs text-slate-500">
+                  {f.publisher || f.source_id}
+                </td>
+                <td className="px-5 py-4">
+                  <button
+                    className="whitespace-nowrap font-medium text-teal-800 underline underline-offset-4"
+                    onClick={() => evidence(f.id)}
+                  >
+                    View evidence
+                  </button>
+                  <Link
+                    className="mt-2 block whitespace-nowrap text-xs text-teal-800 underline"
+                    href={researchLink('fact', f.id, params.toString())}
+                  >
+                    Analyze with AI
+                  </Link>
+                  <Link
+                    className="mt-2 block whitespace-nowrap text-xs text-teal-800 underline"
+                    href={`/market-data?compare=${encodeURIComponent(f.id)}#comparison`}
+                  >
+                    Compare observations
+                  </Link>
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>
@@ -566,7 +716,9 @@ function DirectionalPanel({ directional }: { directional?: Directional }) {
                     ) : null}
                   </td>
                   <td className="py-3 pr-4">
-                    <Badge value={s.reviewed ? 'validated' : 'pending_review'} />
+                    <Badge
+                      value={s.reviewed ? 'validated' : 'pending_review'}
+                    />
                     {s.assumption === 'industry_convention' ? (
                       <p className="mt-1 text-xs text-amber-700">
                         Annual rent assumed by convention; confirm the time
@@ -655,7 +807,8 @@ function OverviewPage({ evidence }: { evidence: (id: string) => void }) {
               },
               {
                 label: 'Awaiting review',
-                value: data.counts.pending_human_review ?? data.counts.needs_review,
+                value:
+                  data.counts.pending_human_review ?? data.counts.needs_review,
                 detail: 'Excluded from formal comparisons',
                 icon: ShieldCheck
               },
@@ -1052,7 +1205,7 @@ function EventList({
               </summary>
               <p className="my-2">
                 Institution disclosure; not a system-calculated change or
-                independently verified fact. 人工审核：
+                independently verified fact. Human review:
                 {e.human_review_status || e.status}
               </p>
               <p>
@@ -1836,6 +1989,50 @@ function JobsPage({
                       {j.error}
                     </p>
                   )}
+                  {j.plan && (
+                    <details className="rounded-md border border-slate-200 p-3 text-xs text-slate-600">
+                      <summary className="cursor-pointer font-medium">
+                        Research plan and checkpoints
+                      </summary>
+                      <p className="mt-2">
+                        {j.plan.scope.geographies.join(', ')} ·{' '}
+                        {j.plan.scope.metrics.join(', ')} ·{' '}
+                        {j.plan.scope.requested_periods?.length
+                          ? j.plan.scope.requested_periods.join(', ')
+                          : j.plan.scope.observation_period || 'Period unknown'}
+                      </p>
+                      <p>
+                        Decision: {human(j.plan.decision)} ·{' '}
+                        {j.plan.next_checks.length} next checks
+                      </p>
+                      {j.plan.adaptation && (
+                        <p>
+                          Saved-document follow-up: {j.plan.adaptation.passes}{' '}
+                          pass · {j.plan.adaptation.missing_cells} missing cells
+                          · {j.plan.adaptation.deferred_cells} deferred ·
+                          maximum {j.plan.adaptation.limit} branches. Document
+                          leads do not fill verified coverage.
+                        </p>
+                      )}
+                      <ul className="mt-2 space-y-1">
+                        {j.plan.nodes.map((node) => {
+                          const checkpoint = j.checkpoints?.[node.id]
+                          return (
+                            <li key={node.id}>
+                              {node.id}: {human(node.status)} (
+                              {node.required ? 'required' : 'optional'})
+                              {checkpoint?.reused
+                                ? ' · valid checkpoint reused'
+                                : ''}
+                              {checkpoint?.elapsed_ms != null
+                                ? ` · ${checkpoint.elapsed_ms} ms`
+                                : ''}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </details>
+                  )}
                   <details className="break-all text-xs text-slate-500">
                     <summary>Audit details</summary>Task: {j.id}
                     <br />
@@ -1862,11 +2059,13 @@ function JobsPage({
 function ReportsPage({
   act,
   busy,
-  notify
+  notify,
+  runtimeMode
 }: {
   act: Action
   busy: string | null
   notify: (value: string) => void
+  runtimeMode?: 'live' | 'mock'
 }) {
   const state = useMarket<List<Report>>('/reports')
   const preferences = useMarket<Settings>('/settings')
@@ -1956,8 +2155,50 @@ function ReportsPage({
               </Button>
             ))}
             <Button
-              className="border border-teal-800 bg-white text-teal-800 hover:bg-teal-50"
+              className={actionClass}
               disabled={!!busy}
+              onClick={() =>
+                void act(
+                  'report-monthly',
+                  async () => {
+                    const response = await fetch(
+                      `${new URL(MARKET_API).origin}/report`,
+                      {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: '{}'
+                      }
+                    )
+                    if (!response.ok)
+                      throw new Error('Monthly report generation failed')
+                    const payload = await response.json()
+                    return {
+                      id: payload.report_id,
+                      title: 'Monthly monitoring brief',
+                      created_at: payload.as_of || new Date().toISOString(),
+                      period: 'monthly'
+                    } as Report
+                  },
+                  (r) => {
+                    notify(
+                      'Monthly monitoring brief generated from saved evidence.'
+                    )
+                    void state.reload()
+                    void read(r)
+                  }
+                )
+              }
+            >
+              {busy === 'report-monthly' ? 'Generating…' : 'Generate monthly'}
+            </Button>
+            <Button
+              className="border border-teal-800 bg-white text-teal-800 hover:bg-teal-50"
+              disabled={!!busy || runtimeMode === 'mock'}
+              title={
+                runtimeMode === 'mock'
+                  ? 'Provider-backed analysis is disabled in mock mode.'
+                  : undefined
+              }
               onClick={() =>
                 void act(
                   'report-ai-weekly',
@@ -1975,7 +2216,9 @@ function ReportsPage({
             >
               {busy === 'report-ai-weekly'
                 ? 'Queuing…'
-                : 'Generate AI weekly (model)'}
+                : runtimeMode === 'mock'
+                  ? 'AI weekly disabled in mock'
+                  : 'Generate AI weekly (model)'}
             </Button>
           </div>
         </div>
@@ -2019,6 +2262,9 @@ function ReportsPage({
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-4 text-xs">
+                    {r.generation_status && (
+                      <Badge value={r.generation_status} />
+                    )}
                     <button
                       className="font-medium text-teal-800 underline"
                       onClick={() => void read(r)}
@@ -2114,7 +2360,7 @@ function ReportsPage({
           }
         }}
       >
-        <DialogContent className="max-h-[85dvh] max-w-3xl border-slate-200 bg-white text-slate-900">
+        <DialogContent className="max-h-[90dvh] max-w-6xl border-slate-200 bg-white text-slate-900">
           <DialogTitle className="text-balance pr-6">
             {selected?.title}
           </DialogTitle>
@@ -2156,22 +2402,28 @@ function ReportsPage({
               </button>
             </div>
           )}
-          <div className="market-markdown mt-5 break-words text-sm leading-7 text-slate-700">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                table: ({ children }) => (
-                  <div className="my-4 overflow-x-auto">
-                    <table className="w-full min-w-max border-collapse text-left text-xs">
-                      {children}
-                    </table>
-                  </div>
-                )
-              }}
-            >
-              {content}
-            </ReactMarkdown>
-          </div>
+          {selected?.report_type ? (
+            <div className="mt-5 max-h-[60dvh] overflow-y-auto">
+              <SavedReport reportId={selected.id} />
+            </div>
+          ) : (
+            <div className="market-markdown mt-5 break-words text-sm leading-7 text-slate-700">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  table: ({ children }) => (
+                    <div className="my-4 overflow-x-auto">
+                      <table className="w-full min-w-max border-collapse text-left text-xs">
+                        {children}
+                      </table>
+                    </div>
+                  )
+                }}
+              >
+                {content}
+              </ReactMarkdown>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>
@@ -2293,6 +2545,7 @@ function SettingsPage({
           </Empty>
         )}
       </Panel>
+      <IndicatorCoverage />
       <Stamp updated={state.updated} />
     </>
   )
@@ -2314,6 +2567,9 @@ function SettingsForm({
       settings.notifications_enabled
     ),
     [monitoring, setMonitoring] = useState(settings.monitoring_enabled ?? true),
+    [monitorAnalysis, setMonitorAnalysis] = useState(
+      settings.monitor_analysis_enabled ?? false
+    ),
     [rentThreshold, setRentThreshold] = useState(
       settings.rent_threshold_pct ?? 5
     ),
@@ -2331,6 +2587,7 @@ function SettingsForm({
       market_interval_hours: market,
       notifications_enabled: notifications,
       monitoring_enabled: monitoring,
+      monitor_analysis_enabled: monitorAnalysis,
       rent_threshold_pct: rentThreshold,
       takeup_threshold_pct: takeupThreshold,
       vacancy_threshold_pp: vacancyThreshold,
@@ -2454,11 +2711,46 @@ function SettingsForm({
           />
           Enable report notifications
         </label>
+        <label className="mt-4 flex items-center gap-3 text-sm font-medium">
+          <input
+            className="size-4 accent-teal-800"
+            type="checkbox"
+            checked={monitorAnalysis}
+            onChange={(e) => setMonitorAnalysis(e.target.checked)}
+            aria-describedby="monitor-analysis-help"
+          />
+          Analyze detected changes with the configured model
+        </label>
+        <p id="monitor-analysis-help" className="mt-2 text-xs text-slate-600">
+          Off by default. Enabling permits bounded model calls for new eligible
+          change events. Only interpretations that pass publication checks can
+          trigger notifications; failed analysis is retained without automatic
+          model retries.
+        </p>
         <p className="mt-3 text-xs text-slate-600">
           Server configuration:{' '}
           {settings.notification_configured
             ? 'Configured. Delivery still requires a successful send receipt.'
             : 'Missing. Notifications cannot be sent until server credentials are configured.'}
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          Configure{' '}
+          <code className="rounded bg-slate-100 px-1">
+            LONDON_NOTIFICATION_URL
+          </code>{' '}
+          as an Apprise URL, e.g.{' '}
+          <code className="rounded bg-slate-100 px-1">
+            json://https://hooks.example.com/xxx
+          </code>
+          ,{' '}
+          <code className="rounded bg-slate-100 px-1">
+            mailto://user:pass@host
+          </code>
+          ,{' '}
+          <code className="rounded bg-slate-100 px-1">
+            slack://tokenA/tokenB/tokenC
+          </code>
+          .
         </p>
       </div>
       <Button
@@ -2476,7 +2768,7 @@ type ChatEntry = {
   question: string
   answer: string
   mode: string
-  resolved_mode?: 'saved' | 'agent'
+  resolved_mode?: 'saved' | 'agent' | 'research'
   citations: {
     fact_id?: string
     id?: string
@@ -2489,26 +2781,70 @@ type ChatEntry = {
   error?: string
   run_id?: string
   submission_id?: string
+  research_job_id?: string
+  skill_calls?: { skill: string; datasource: string }[]
+  as_of?: string | null
+  disclaimer?: string
   first_content_at?: number
   completed_at?: number
   created: number
+  report?: ReportArtifact
+  progress?: string
 }
-function AskPage({ evidence }: { evidence: (id: string) => void }) {
-  const [question, setQuestion] = useState(''),
+function AskPage({
+  evidence,
+  runtimeMode
+}: {
+  evidence: (id: string) => void
+  runtimeMode?: 'live' | 'mock'
+}) {
+  const params = useSearchParams()
+  const [refreshSources, setRefreshSources] = useState(false)
+  const [researchBusy, setResearchBusy] = useState(false)
+  const [researchJobId, setResearchJobId] = useState('')
+  const [researchError, setResearchError] = useState('')
+  const [question, setQuestion] = useState(
+      params.get('action') === 'audit'
+        ? 'Perform a rigorous source and evidence audit of the previous report.'
+        : ''
+    ),
     [mode, setMode] = useState('auto'),
     [entries, setEntries] = useState<ChatEntry[]>([]),
     [streaming, setStreaming] = useState(false)
   const guard = useRef(false),
     controller = useRef<AbortController | null>(null)
+  const researchGuard = useRef(false)
+  const startResearch = async () => {
+    if (researchGuard.current || !question.trim()) return
+    researchGuard.current = true
+    setResearchBusy(true)
+    setResearchError('')
+    setResearchJobId('')
+    try {
+      const job = await write<Job>('/research/jobs', {
+        question: question.trim(),
+        refresh_sources: false
+      })
+      setResearchJobId(job.id)
+    } catch (error) {
+      setResearchError(
+        error instanceof Error ? error.message : 'Could not start research.'
+      )
+    } finally {
+      researchGuard.current = false
+      setResearchBusy(false)
+    }
+  }
   const send = async (e: FormEvent) => {
     e.preventDefault()
     if (guard.current || !question.trim()) return
     guard.current = true
     setStreaming(true)
+    const selectedMode = runtimeMode === 'mock' ? 'saved' : mode
     const entry: ChatEntry = {
       question: question.trim(),
       answer: '',
-      mode,
+      mode: selectedMode,
       citations: [],
       created: Date.now()
     }
@@ -2529,7 +2865,15 @@ function AskPage({ evidence }: { evidence: (id: string) => void }) {
           'Content-Type': 'application/json',
           'Idempotency-Key': crypto.randomUUID()
         },
-        body: JSON.stringify({ message: entry.question, mode }),
+        body: JSON.stringify({
+          message: entry.question,
+          mode: selectedMode,
+          refresh_sources: runtimeMode === 'mock' ? false : refreshSources,
+          parent_report_id:
+            [...entries].reverse().find((e) => e.report)?.report?.report_id ||
+            params.get('parent_report') ||
+            null
+        }),
         signal: controller.current.signal
       })
       if (!response.ok) {
@@ -2543,6 +2887,13 @@ function AskPage({ evidence }: { evidence: (id: string) => void }) {
       if (!response.body)
         throw new Error('The service did not return a response stream.')
       await readMarketStream(response.body, (event) => {
+        if (event.type === 'progress') update({ progress: event.message })
+        if (event.type === 'report')
+          update({
+            report: event.report,
+            progress: undefined,
+            first_content_at: Date.now()
+          })
         if (event.type === 'token')
           update({
             answer: entry.answer + String(event.content || ''),
@@ -2550,9 +2901,14 @@ function AskPage({ evidence }: { evidence: (id: string) => void }) {
           })
         if (event.type === 'done')
           update({
+            progress: undefined,
             citations: event.citations || [],
             run_id: event.run_id,
             submission_id: event.submission_id,
+            research_job_id: event.research_job_id,
+            skill_calls: event.skill_calls,
+            as_of: event.as_of,
+            disclaimer: event.disclaimer,
             resolved_mode: event.metrics?.route?.mode,
             completed_at: Date.now()
           })
@@ -2561,7 +2917,7 @@ function AskPage({ evidence }: { evidence: (id: string) => void }) {
       update({
         error:
           error instanceof Error && error.name === 'AbortError'
-            ? 'MODEL_TIMEOUT：网页等待超时或用户停止。最终分析未确认完成；已停止，不自动重试。'
+            ? 'MODEL_TIMEOUT：The browser timed out or the request was stopped. Final analysis is not confirmed complete. No automatic retry was made.'
             : error instanceof Error
               ? error.message
               : 'Unable to contact the market agent.'
@@ -2576,8 +2932,9 @@ function AskPage({ evidence }: { evidence: (id: string) => void }) {
     <>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm text-teal-900">
         <p className="text-pretty">
-          Auto sends saved-data lookups to local evidence and interpretation to
-          the configured Agent. The selected route appears on each answer.
+          {runtimeMode === 'mock'
+            ? 'Credential-free mock mode is fail-closed: questions use only saved evidence, with no provider call or external refresh. The selected Skills and data sources appear on each answer.'
+            : 'Auto sends saved-data lookups to local evidence, interpretation to the configured Agent, and explicit deep research to a background saved-evidence workflow. The selected route appears on each answer.'}
         </p>
         <Link
           href="/chat"
@@ -2641,19 +2998,50 @@ function AskPage({ evidence }: { evidence: (id: string) => void }) {
                       ? 'deterministic saved retrieval'
                       : (entry.resolved_mode || entry.mode) === 'agent'
                         ? 'native Agent + Tools'
-                        : 'routing question…'
+                        : (entry.resolved_mode || entry.mode) === 'research'
+                          ? 'background saved-evidence research'
+                          : 'routing question…'
                   }
                 />
                 <span className="text-xs text-slate-500">
                   {time(entry.created)}
                 </span>
               </div>
-              <p className="whitespace-pre-wrap text-pretty text-sm leading-7 text-slate-700">
-                {entry.answer ||
-                  (streaming && !entry.error
-                    ? 'Waiting for service response…'
-                    : '未生成可发布的最终分析。请查看下方的失败阶段与原因。')}
-              </p>
+              {entry.report && (
+                <ReportView report={entry.report} evidence={evidence} />
+              )}
+              {entry.progress && (
+                <p role="status" className="text-sm text-teal-700">
+                  {entry.progress}
+                </p>
+              )}
+              {!entry.report && (
+                <div className="prose prose-sm max-w-none overflow-x-auto text-slate-700">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      table: ({ children }) => (
+                        <table className="min-w-[1100px] table-auto text-left">
+                          {children}
+                        </table>
+                      ),
+                      th: ({ children }) => (
+                        <th className="whitespace-nowrap p-2 align-top">
+                          {children}
+                        </th>
+                      ),
+                      td: ({ children }) => (
+                        <td className="p-2 align-top">{children}</td>
+                      )
+                    }}
+                  >
+                    {entry.answer ||
+                      (streaming && !entry.error
+                        ? 'Waiting for service response…'
+                        : 'No publishable final analysis was generated. Inspect the failure stage and reason below.')}
+                  </ReactMarkdown>
+                </div>
+              )}
               {entry.error && (
                 <p
                   role="alert"
@@ -2711,6 +3099,37 @@ function AskPage({ evidence }: { evidence: (id: string) => void }) {
                   Run receipt: {entry.run_id}
                 </p>
               )}
+              {!!entry.skill_calls?.length && (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                  <p className="font-semibold text-slate-900">
+                    Skills &amp; data sources
+                  </p>
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {entry.skill_calls.map((call) => (
+                      <li
+                        className="rounded-full border border-teal-200 bg-white px-2 py-1"
+                        key={`${call.skill}-${call.datasource}`}
+                      >
+                        {call.skill} · {call.datasource}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {(entry.as_of || entry.disclaimer) && (
+                <p className="text-xs leading-5 text-slate-500">
+                  {entry.as_of ? `Data as of ${time(entry.as_of)}. ` : ''}
+                  {entry.disclaimer}
+                </p>
+              )}
+              {entry.research_job_id && (
+                <p className="text-sm text-teal-800">
+                  <Link href="/jobs" className="underline">
+                    View research progress and report in Job Status (
+                    {entry.research_job_id})
+                  </Link>
+                </p>
+              )}
             </article>
           ))}
         </div>
@@ -2731,23 +3150,55 @@ function AskPage({ evidence }: { evidence: (id: string) => void }) {
             required
             disabled={streaming}
           />
+          <label className="flex items-center gap-2 text-xs text-slate-600">
+            <input
+              type="checkbox"
+              checked={refreshSources}
+              disabled={streaming || runtimeMode === 'mock'}
+              onChange={(e) => setRefreshSources(e.target.checked)}
+            />
+            {runtimeMode === 'mock'
+              ? 'External source refresh is disabled in mock mode.'
+              : 'Refresh enabled public sources before this answer (uses existing Jobs)'}
+          </label>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <label className="flex items-center gap-3 text-xs text-slate-600">
               Answer mode
               <select
                 className={cn(inputClass, 'w-auto')}
-                value={mode}
+                value={runtimeMode === 'mock' ? 'saved' : mode}
                 disabled={streaming}
                 onChange={(e) => setMode(e.target.value)}
               >
-                <option value="auto">Auto · saved lookup or AI analysis</option>
+                {runtimeMode !== 'mock' && (
+                  <option value="auto">
+                    Auto · saved lookup or AI analysis
+                  </option>
+                )}
                 <option value="saved">Saved evidence · no model</option>
-                <option value="agent">
-                  DeepInsight AI · uses configured model
-                </option>
+                {runtimeMode !== 'mock' && (
+                  <option value="agent">
+                    DeepInsight AI · uses configured model
+                  </option>
+                )}
               </select>
             </label>
             <div className="flex gap-3">
+              <Button
+                type="button"
+                className="border border-slate-300 bg-white text-slate-700"
+                disabled={
+                  streaming ||
+                  researchBusy ||
+                  !question.trim() ||
+                  runtimeMode === 'mock'
+                }
+                onClick={() => void startResearch()}
+              >
+                {researchBusy
+                  ? 'Starting research…'
+                  : 'Research saved evidence in background'}
+              </Button>
               {streaming && (
                 <Button
                   type="button"
@@ -2773,6 +3224,20 @@ function AskPage({ evidence }: { evidence: (id: string) => void }) {
               </Button>
             </div>
           </div>
+          {researchJobId && (
+            <p role="status" className="text-xs text-teal-800">
+              Research queued without a model call.{' '}
+              <Link className="underline" href="/jobs">
+                View Job Status ({researchJobId})
+              </Link>
+              . Findings remain subject to source and review gates.
+            </p>
+          )}
+          {researchError && (
+            <p role="alert" className="text-xs text-red-800">
+              {researchError}
+            </p>
+          )}
         </form>
       </Panel>
       <p className="flex items-center gap-2 text-xs text-slate-500">

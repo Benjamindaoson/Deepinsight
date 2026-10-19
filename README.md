@@ -1,162 +1,56 @@
-# DeepInsight Lite - London Office Market Agent
+# DeepInsight Lite
 
-**B路线：基于 Agno 框架的快速开发**
+London office market intelligence with traceable source evidence, deterministic calculations and explicit publication controls.
 
-项目路径: `D:\deepinsight-lite`
+The application uses FastAPI, Agno/AgentOS, SQLite and Next.js. Saved-evidence mode runs without model or search credentials. It does not claim live research or AI analysis.
 
----
+## Run locally
 
-## 项目状态
+Requires Python 3.12, Node.js 24 and pnpm 10. Install Python packages only in the project environment.
 
-| 项目 | 状态 |
-|------|------|
-| Agno 安装 | ✅ 已完成 |
-| 基础 Agent | ✅ 已创建 |
-| Market Tools | ✅ 已实现 |
-| Market Skills | ✅ 已定义 |
-| Research Team | ✅ 已配置 |
-| Monitor Workflow | ✅ 已定义 |
-
----
-
-## 快速开始
-
-### 1. 配置环境变量
-
-创建 `.env` 文件：
-
-```bash
-# LLM API
-OPENAI_API_KEY=your-openai-api-key
-# 或
-ANTHROPIC_API_KEY=your-anthropic-api-key
-
-# Tavily Search (可选)
-TAVILY_API_KEY=your-tavily-api-key
+```powershell
+uv venv app/.venv --python 3.12
+uv pip install --python app/.venv/Scripts/python.exe -r app/requirements-product.lock.txt
+cd app/frontend
+pnpm install --frozen-lockfile
+$env:NEXT_PUBLIC_AGENT_OS_URL='http://127.0.0.1:8000'
+$env:NEXT_PUBLIC_MARKET_API_URL='http://127.0.0.1:8000/api/market'
+pnpm build
+cd ../..
+powershell -ExecutionPolicy Bypass -File scripts/run.ps1
 ```
 
-### 2. 运行测试
+Open **http://127.0.0.1:3101/ask**. The API is **http://127.0.0.1:8000**. Both ports must be available. The frontend API addresses are compiled at build time: changing a backend port requires rebuilding the frontend with the matching addresses. The launch script does not replace other running services.
 
-```bash
-cd D:\deepinsight-lite
+On Linux/macOS use `./scripts/run.sh` after the equivalent environment setup. Stop only launcher-owned processes with `scripts/stop.ps1` or `scripts/stop.sh`.
 
-# 运行主程序
-python market_agent.py
+## Product paths
 
-# 或直接测试
-python -c "import market_agent; from agno import test; test(market_agent.market_agent)"
+- `/ask`: new market briefings, focused lookups, evidence audits and follow-ups.
+- `/reports`: saved reports, evidence, HTML and Markdown exports; use **Audit evidence** to inspect a report without replacing it.
+- `/market-data`, `/overview`, `/events`: stored market observations, coverage and changes.
+- `/jobs`, `/settings`: actual job records and monitoring configuration.
+- `/chat`: native AgentOS conversations when a provider-backed Agent is configured.
+
+An audit inspects the selected report and its stored evidence. It does not create a replacement report or approve records. Matching an original-file hash, quotation or literal number establishes traceability, not semantic approval. Units, geographic boundaries, periods and review states remain explicit.
+
+## Validation
+
+```powershell
+app/.venv/Scripts/python.exe -m pytest app/tests/test_emergency_intents.py -q
+cd app/frontend
+pnpm test
+pnpm typecheck
+pnpm lint
+pnpm build
 ```
 
-### 3. 启动 Agent UI
+The focused emergency regression is self-contained and uses isolated, explicitly synthetic fault controls. The broader historical replay tests also require local source originals, provider receipts and SQLite snapshots; these private runtime assets are intentionally not committed. A passing local replay suite must not be interpreted as a fresh provider evaluation.
 
-```bash
-# 克隆 Agent UI
-git clone https://github.com/agno-agi/agent-ui.git
-cd agent-ui
+## Limits and credentials
 
-# 安装依赖
-npm install
+See [release acceptance](reports/RELEASE_ACCEPTANCE.md) for observed behavior and current limitations. Pending records remain pending. Current saved periods are not necessarily the latest public release. Missing annual rent denominators are not inferred by convention. Unsupported figures, causal explanations and forecasts cannot be published to make a report appear complete.
 
-# 配置环境
-cp .env.example .env
-# 编辑 .env 填入 API keys
+Optional server configuration is documented in `app/.env.product.example`. Credentials belong in server environment variables or ignored local configuration; never in `NEXT_PUBLIC_*`, source control, logs or screenshots. Enabling external model calls, search or notifications requires explicit configuration and a bounded operating budget. Jev is optional and falls back when no credential is available.
 
-# 启动
-npm run dev
-```
-
----
-
-## 已实现组件
-
-### 1. MarketTools (工具集)
-```python
-from market_agent import MarketTools
-
-tools = MarketTools()
-tools.get_current_date()      # 获取当前日期
-tools.get_london_offices()   # 获取子市场列表
-tools.get_metric_types()     # 获取指标类型
-```
-
-### 2. Market Skills (技能)
-```python
-from market_agent import market_research, market_analysis
-
-# 在 Agent 中使用
-agent = Agent(
-    skills=[market_research, market_analysis]
-)
-```
-
-### 3. Market Agent (单 Agent)
-```python
-from market_agent import market_agent
-
-response = market_agent.run("伦敦金融城最新租金是多少？")
-print(response.content)
-```
-
-### 4. Research Team (多 Agent 团队)
-```python
-from market_agent import research_team
-
-response = research_team.run("比较 City 和 West End 的租金趋势")
-```
-
-### 5. Monitor Workflow (定时监测)
-```python
-from market_agent import MarketMonitorWorkflow
-
-workflow = MarketMonitorWorkflow(areas=["city", "west_end"])
-result = await workflow.run()
-```
-
----
-
-## B0 → B5 开发路线
-
-| 阶段 | 内容 | 状态 |
-|------|------|------|
-| **B0** | Agno 原版跑通 | ✅ 完成 |
-| **B1** | 功能审计与测试 | 🔄 进行中 |
-| **B2** | 市场监测能力开发 | ⏳ 待开始 |
-| **B3** | 智能分析能力 | ⏳ 待开始 |
-| **B4** | Dashboard UI | ⏳ 待开始 |
-| **B5** | 部署与评测 | ⏳ 待开始 |
-
----
-
-## 技术架构
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Agno Framework                            │
-├─────────────────────────────────────────────────────────────┤
-│  Agent    │  Team    │  Workflow  │  Skills  │  Tools     │
-├─────────────────────────────────────────────────────────────┤
-│                    Our Market Modules                        │
-│  MarketAgent  │  MarketTools  │  MarketSkills  │  Monitor  │
-├─────────────────────────────────────────────────────────────┤
-│                    External Services                         │
-│         OpenAI  │  Anthropic  │  Tavily  │  SQLite       │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 与 A 路线对比
-
-| 维度 | A路线 (deepinsight-rader) | B路线 (deepinsight-lite) |
-|------|---------------------------|---------------------------|
-| 框架 | 自研 Python | Agno |
-| 前端 | Next.js | Agent UI |
-| 开发时间 | 13-21 天 | 8-14 天 |
-| 复杂度 | 高 | 中 |
-| 可控性 | 完全自控 | 依赖 Agno |
-
----
-
-## License
-
-MIT License
+Temporary acceptance snapshots, build outputs, databases, developer-tool metadata and private research traces are excluded from this release tree. Runtime source, tests, public source fixtures, dependency locks and licenses are retained.

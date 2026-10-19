@@ -224,10 +224,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           <details className="connection-settings">
             <summary>Connection settings</summary>
             <p className="break-all">{endpoint}</p>
-            <AuthToken
-              hasEnvToken={!!process.env.NEXT_PUBLIC_OS_SECURITY_KEY}
-              envToken={process.env.NEXT_PUBLIC_OS_SECURITY_KEY || ''}
-            />
+            <AuthToken />
           </details>
         </div>
       </aside>

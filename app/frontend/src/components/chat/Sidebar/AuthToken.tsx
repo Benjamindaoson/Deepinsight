@@ -5,13 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import Icon from '@/components/ui/icon'
 
-const AuthToken = ({
-  hasEnvToken,
-  envToken
-}: {
-  hasEnvToken?: boolean
-  envToken?: string
-}) => {
+const AuthToken = () => {
   const { authToken, setAuthToken } = useStore()
   const [isEditing, setIsEditing] = useState(false)
   const [tokenValue, setTokenValue] = useState('')
@@ -19,15 +13,9 @@ const AuthToken = ({
   const [isHovering, setIsHovering] = useState(false)
 
   useEffect(() => {
-    // Initialize with environment variable if available and no token is set
-    if (hasEnvToken && envToken && !authToken) {
-      setAuthToken(envToken)
-      setTokenValue(envToken)
-    } else {
-      setTokenValue(authToken)
-    }
+    setTokenValue(authToken)
     setIsMounted(true)
-  }, [authToken, setAuthToken, hasEnvToken, envToken])
+  }, [authToken])
 
   const handleSave = () => {
     const cleanToken = tokenValue.trim()

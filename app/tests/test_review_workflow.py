@@ -19,6 +19,7 @@ def make_fact(service, identity, **overrides):
         normalized_unit='sqft', geography='Central London', period='2026Q1', normalized_period='2026Q1',
         definition='Central London take-up, deals over 1,000 sq ft', status='pending_review',
         human_review_status='pending_review', source_id='bnp', document_id='doc-1',
+        series='synthetic-quarterly-takeup',method='synthetic-source-method',basis='quarter',grade='all',currency=None,
         annualization='not_applicable', evidence=dict(quote='2.5m sq ft in Q1 2026', page=3, locator='pdf:page:3'),
     )
     payload.update(overrides)
@@ -42,19 +43,18 @@ def test_rent_without_annual_basis_cannot_be_approved(service):
         service.review_fact('rent-unknown', 'approve', 'alice', 'looks fine')
 
 
-def test_convention_rent_requires_an_explicit_reviewer_note(service):
-    """Industry-convention annualisation may be approved, but only in writing."""
+def test_convention_rent_cannot_be_approved_with_a_reviewer_note(service):
+    """A note cannot supply annual wording missing from the original evidence."""
     make_fact(service, 'rent-convention', metric='rent', value='95', unit='GBP/sqft',
               normalized_value='95', normalized_unit='GBP/sqft/year',
               annualization='industry_convention', status='pending_review')
-    with pytest.raises(ValueError, match='note is required'):
+    with pytest.raises(ValueError, match='RENT_ANNUAL_BASIS_UNRESOLVED'):
         service.review_fact('rent-convention', 'approve', 'alice')
     assert service.store.get('facts', 'rent-convention')['human_review_status'] == 'pending_review'
-    approved = service.review_fact('rent-convention', 'approve', 'alice',
-                                   'confirmed the annual quoting convention with the publisher note')
-    assert approved['fact']['status'] == 'validated'
-    assert approved['review']['annualization'] == 'industry_convention'
-    assert 'ANNUAL_BASIS_ASSUMED' in approved['review']['blockers']
+    with pytest.raises(ValueError, match='RENT_ANNUAL_BASIS_UNRESOLVED'):
+        service.review_fact('rent-convention', 'approve', 'alice', 'confirmed annual convention')
+    assert service.store.get('facts','rent-convention')['status']=='pending_review'
+    assert service.store.all('reviews')==[]
 
 
 def test_reject_requires_a_reason_and_removes_the_fact_from_answers(service):

@@ -1,0 +1,3402 @@
+schema_version: 2
+generated_at: '2026-10-18T13:16:46.184805+00:00'
+scope: All 20 indicators across seven confirmed domains. Latest attachment stops within
+  indicator 18; indicators 19 hybrid working and 20 market news follow the prior user-confirmed
+  scope.
+status_enum:
+- api_verified
+- open_data_verified
+- web_monitor_verified
+- report_parsing_verified
+- model_assisted_verified
+- partial
+- blocked
+- unavailable
+- not_tested
+verification_policy: 'Metric status describes verified acquisition of named submetrics
+  or partial coverage. runtime_coverage_status separately includes pending human review
+  and geographic gaps. No model_assisted_verified claim: 4 paid questions yielded
+  2 errors and 2 withheld drafts.'
+source_candidates:
+  jll:
+    name: JLL
+    url: https://www.jll.com/en-uk/insights/market-dynamics/central-london-office
+    kind: web_report
+    status: partial
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: jll
+      status: saved
+      document_id: 018cbc69-5bb7-4bb8-8ccc-14904668fb44
+      articles:
+      - url: https://www.jll.com/content/dam/jllcom/en/uk/documents/reports/research-reports/26-insights-central-london-office-q2-2026.pdf
+        status: saved
+        document_id: doc-jll-e2eaadc6049e717d5ebc
+      structured_records: 22
+      seconds: 1.894
+    failure: null
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    verified_target_fields:
+    - availability
+    - prelet_share
+    - rent
+    - supply
+    - takeup
+    - vacancy
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+  savills:
+    name: Savills
+    url: https://pdf.euro.savills.co.uk/uk/office-reports/central-london-q2-2026-report.pdf
+    kind: web_report
+    status: blocked
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: savills
+      status: failed
+      error: HTTPStatusError (HTTP 403)
+      status_code: 403
+      seconds: 1.051
+    failure: HTTPStatusError (HTTP 403)
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  cbre:
+    name: CBRE
+    url: https://www.cbre.com/insights/figures/central-london-office-figures-q2-2026
+    kind: web_report
+    status: blocked
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: cbre
+      status: failed
+      error: HTTPStatusError (HTTP 403)
+      status_code: 403
+      seconds: 0.917
+    failure: HTTPStatusError (HTTP 403)
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  planning-london:
+    name: Planning London Datahub · City of London
+    url: https://planningdata.london.gov.uk/api-guest/applications/_search?size=5&q=lpa_name%3A%22City%20of%20London%22%20AND%20description%3Aoffice&sort=last_updated%3Adesc
+    kind: official_api
+    status: partial
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: planning-api-city
+      status: saved
+      document_id: f39565ae-6487-4bbb-9370-20b357f53303
+      articles: []
+      structured_records: 0
+      seconds: 2.02
+    failure: null
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  planning-uk:
+    name: Planning Data API documentation
+    url: https://www.planning.data.gov.uk/docs
+    kind: official_api
+    status: partial
+    limitation: Official documentation exists; planning-application dataset reports
+      no providers. Not a verified London office feed.
+    investigation_url: https://www.planning.data.gov.uk/dataset/planning-application
+  nomis-london:
+    name: Nomis BRES London workplace employment
+    url: https://www.nomisweb.co.uk/api/v01/dataset/NM_189_1.data.csv?geography=2013265927&industry=37748736&employment_status=4&measure=1&measures=20100&time=latest,previous&select=date,geography_name,industry_name,employment_status_name,obs_value
+    kind: official_api
+    status: api_verified
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: nomis-london
+      status: saved
+      document_id: d0fecad1-9fcf-489b-a580-b6f68c984903
+      articles: []
+      structured_records: 2
+      seconds: 2.846
+    failure: null
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  boe:
+    name: Bank of England Bank Rate
+    url: https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes&Datefrom=01/Jan/2025&Dateto=now&SeriesCodes=IUDBEDR&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N
+    kind: official_api
+    status: api_verified
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: boe
+      status: saved
+      document_id: doc-boe-92c46b3943d9a30172f1
+      articles: []
+      structured_records: 365
+      seconds: 10.566
+    failure: null
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields:
+    - interest_rate
+  ons:
+    name: ONS CPIH annual inflation
+    url: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23/data
+    kind: official_api
+    status: api_verified
+    request_receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    http_result:
+    - source_id: ons
+      status: saved
+      document_id: doc-ons-5098219bd4a502d4604f
+      articles: []
+      structured_records: 0
+      seconds: 1.039
+    failure: null
+    verified_at: '2026-10-18T12:15:53.717127+00:00'
+  ons-employment:
+    name: ONS employment rate (16-64, seasonally adjusted)
+    url: https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/employmentandemployeetypes/timeseries/lf24/lms/data
+    kind: official_api
+    status: api_verified
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: ons-employment
+      status: saved
+      document_id: doc-ons-employment-4dfa634f22c322b79d68
+      articles: []
+      structured_records: 23
+      seconds: 2.69
+    failure: null
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields:
+    - employment
+  gpe:
+    name: GPE
+    url: https://www.gpe.co.uk/news-media/news/
+    kind: web_report
+    status: partial
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: gpe
+      status: saved
+      document_id: 48515c83-6bb9-460c-a44a-0eb2efdb68d6
+      articles:
+      - url: https://www.gpe.co.uk/news-media/news/2026/q2-business-update/
+        status: saved
+        document_id: 9789d32a-1aa6-4f44-beee-6e931e143810
+      - url: https://www.gpe.co.uk/news-media/news/2026/gpe-secures-fully-managed-pre-lets-at-city-tower-ec2-ahead-of-launch/
+        status: saved
+        document_id: aad7e2d1-7914-40f1-9a5a-1f9413a6b39d
+      structured_records: 7
+      seconds: 10.073
+    failure: null
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  britishland:
+    name: British Land
+    url: https://www.britishland.com/news/
+    kind: web_report
+    status: partial
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: britishland
+      status: saved
+      document_id: 51ff7bbd-485d-4a07-843d-351c5727903e
+      articles:
+      - url: https://www.britishland.com/news/q2-trading-update/
+        status: saved
+        document_id: 3cca82ef-32dd-4c24-b9d2-ceb66df34fd1
+      - url: https://www.britishland.com/news/more-than-a-fit-out-20-triton-street/
+        status: saved
+        document_id: 29620d57-9a14-4cca-acea-8671d5f6c51f
+      structured_records: 6
+      seconds: 5.96
+    failure: null
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  epc-nondomestic:
+    name: Official non-domestic EPC · City of London
+    url: https://api.get-energy-performance-data.communities.gov.uk/api/non-domestic/search?council%5B%5D=City%20of%20London&page_size=5&current_page=1
+    kind: official_api
+    status: blocked
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result: null
+    failure: configuration_missing
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  bbc-rss:
+    name: BBC Business RSS
+    url: https://feeds.bbci.co.uk/news/business/rss.xml
+    kind: web_report
+    status: partial
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: bbc-rss
+      status: saved
+      document_id: 325e6777-9db1-488c-9268-cac55c3a240b
+      articles: []
+      structured_records: 1
+      seconds: 1.596
+    failure: null
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  bnp:
+    name: BNP Paribas Real Estate
+    url: https://www.realestate.bnpparibas.co.uk/insights/central-london-office-market-update-q2-2026
+    kind: web_report
+    status: partial
+    limitation: Existing hash-bound PDF originals; no fresh BNP request in this run.
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: bnp
+      status: saved
+      document_id: abdf347e-5e67-4100-b8ab-5dc023ecd584
+      articles:
+      - url: https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-08/Q22026CentralLondonMarketUpdate.pdf
+        status: saved
+        document_id: doc-bnp-3dd8de05ccb26ce235df
+      structured_records: 36
+      seconds: 17.482
+    failure: null
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields:
+    - availability
+    - rent
+    - takeup
+    - vacancy
+  savills-html:
+    name: Savills Central London Q2 2026 HTML
+    url: https://www.savills.com/research_articles/255800/393427-0
+    status: blocked
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: savills-html
+      status: failed
+      error: HTTPStatusError (HTTP 403)
+      status_code: 403
+      seconds: 1.983
+    failure: HTTPStatusError (HTTP 403)
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  ons-cpih:
+    name: ONS CPIH annual rate
+    url: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23/data
+    status: api_verified
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: ons
+      status: saved
+      document_id: doc-ons-5098219bd4a502d4604f
+      articles: []
+      structured_records: 23
+      seconds: 2.343
+    failure: null
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields:
+    - inflation_cpih
+  ons-gva:
+    name: ONS monthly GVA period-on-period growth
+    url: https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ecyx/mgdp/data
+    status: partial
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: ons-gva
+      status: saved
+      document_id: d6c6875c-e511-4eea-a3c5-9cb78886c92a
+      articles: []
+      structured_records: 24
+      seconds: 2.735
+    failure: null
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields:
+    - gva_growth
+  ons-hybrid:
+    name: ONS characteristics of homeworkers, September 2022 to January 2023
+    url: https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/employmentandemployeetypes/articles/characteristicsofhomeworkersgreatbritain/september2022tojanuary2023
+    status: partial
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: ons-hybrid
+      status: saved
+      document_id: 088b0c61-862d-433f-bb6d-13a74f2254a8
+      articles: []
+      structured_records: 2
+      seconds: 2.135
+    failure: null
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  citylondon:
+    name: City of London Corporation
+    url: https://news.cityoflondon.gov.uk/
+    status: partial
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: citylondon
+      status: saved
+      document_id: 44dde2c8-fcbc-4fd6-ad58-848fc3fc14cc
+      articles:
+      - url: https://news.cityoflondon.gov.uk/government-clears-path-for-city-plan-2040-as-inspectors-back-heritage-approach/
+        status: saved
+        document_id: 89323633-2a55-45ad-a255-12b58d13d1b8
+      structured_records: 2
+      seconds: 12.227
+    failure: null
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  planning-api-westminster:
+    name: Planning London Datahub · Westminster
+    url: https://planningdata.london.gov.uk/api-guest/applications/_search?size=5&q=lpa_name%3AWestminster%20AND%20description%3Aoffice&sort=last_updated%3Adesc
+    status: partial
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: planning-api-westminster
+      status: saved
+      document_id: 1f319cab-4a67-4f1f-877a-ece8efbded19
+      articles: []
+      structured_records: 0
+      seconds: 1.319
+    failure: null
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  planning-api-tower-hamlets:
+    name: Planning London Datahub · Tower Hamlets
+    url: https://planningdata.london.gov.uk/api-guest/applications/_search?size=5&q=lpa_name%3A%22Tower%20Hamlets%22%20AND%20description%3Aoffice&sort=last_updated%3Adesc
+    status: partial
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: planning-api-tower-hamlets
+      status: saved
+      document_id: 7e83efe2-0cfa-4b8c-bcaf-a58c02983999
+      articles: []
+      structured_records: 0
+      seconds: 1.483
+    failure: null
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  planning-api-camden:
+    name: Planning London Datahub · Camden
+    url: https://planningdata.london.gov.uk/api-guest/applications/_search?size=5&q=lpa_name%3ACamden%20AND%20description%3Aoffice&sort=last_updated%3Adesc
+    status: partial
+    verified_at: '2026-10-18T13:16:46.184805+00:00'
+    request_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    http_result:
+    - source_id: planning-api-camden
+      status: saved
+      document_id: 4296d6dc-7433-420a-9242-0efa061c8892
+      articles: []
+      structured_records: 3
+      seconds: 1.187
+    failure: null
+    fact_receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    verified_target_fields: []
+  bco-grade-a-investigation:
+    name: BCO Beyond Grade A
+    url: https://www.bco.org.uk/wp-content/uploads/2025/09/2025-09-03-BCO-Redefining-the-Market_Beyond-Grade-A_Final.pdf
+    status: blocked
+    investigation_receipt: docs\delivery\poc-20261018-205425\bco-investigation.json
+    http_status: 200
+    sha256: 077a33e63a96d80d8875f51a36090d8419a88de34847a40a512915f04a7270e6
+    blocker: Explicit prior written permission requirement on PDF page 2; no automatic
+      source enabled. Historical chart does not expose exact target values in extracted
+      text.
+  savills-alternative-hosts:
+    status: blocked
+    investigation_receipt: docs\delivery\poc-20261018-205425\new-source-investigation.json
+    blocker: Global, UK and HK public HTML variants returned HTTP 403 in actual guarded
+      environment; no bypass attempted.
+metrics:
+- id: M01
+  domain: D01
+  key: prime_rent
+  name: Prime office rents
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: &id001
+  - raw_value
+  - raw_unit
+  - geography
+  - statistical_period
+  - definition
+  - published_at
+  - collected_at
+  - source_url
+  - original_sha256
+  - page_or_locator
+  - normalization_basis
+  units_and_definition: GBP/area; annual only with source text
+  guardrail: Do not infer annual denominator; preserve raw and derived fields separately.
+  candidates: &id002
+  - jll
+  - savills
+  - cbre
+  - bnp
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage:
+  - 2026Q1
+  - 2026Q2
+  - unknown
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids:
+    - BNP-2026Q1-RENT
+    - BNP-2026Q2-RENT
+    - seed-bnp-2026Q2-canary-rent
+    - seed-jll-2026Q2-westend-rent
+    - 3d9a5fdd-74b3-441c-838d-8436602a247a
+    - b677e639-7829-4c4f-a6ed-3acadefbd8e1
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: JLL/BNP real raw prime rents are available; annual denominator remains
+    unconfirmed. Source definitions and publisher differences stay separate; no annual
+    rent trend is approved.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids: &id003
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - 8729082c-416f-47b5-bc73-a339a09eafbd
+    - 8f873ada-ac93-47b0-bc33-8bb41e874579
+    - 15895d97-8a9f-446f-b8ce-628a542d8d46
+    - b677e639-7829-4c4f-a6ed-3acadefbd8e1
+    - 3d9a5fdd-74b3-441c-838d-8436602a247a
+    - seed-jll-2026Q2-westend-rent
+    - seed-bnp-2026Q2-canary-rent
+    - BNP-2026Q2-RENT
+    - BNP-2026Q1-RENT
+    event_ids: []
+    exact_geography_fact_ids:
+    - 8729082c-416f-47b5-bc73-a339a09eafbd
+    - 8f873ada-ac93-47b0-bc33-8bb41e874579
+    - 15895d97-8a9f-446f-b8ce-628a542d8d46
+    - b677e639-7829-4c4f-a6ed-3acadefbd8e1
+    - 3d9a5fdd-74b3-441c-838d-8436602a247a
+    - seed-jll-2026Q2-westend-rent
+    - seed-bnp-2026Q2-canary-rent
+    - BNP-2026Q2-RENT
+    - BNP-2026Q1-RENT
+    source_geographies:
+    - Canary Wharf
+    - City
+    - City (BNP source-defined office submarket)
+    - West End
+    periods:
+    - 2026Q1
+    - 2026Q2
+    - unknown
+    approved_fact_count: 0
+- id: M02
+  domain: D01
+  key: grade_a_rent
+  name: Grade A office rents
+  status: blocked
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: GBP/area; separately published Grade A rent
+  guardrail: Prime rent and Grade A share are not substitutes.
+  candidates: *id002
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage: No verified structured target series
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids: []
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - independent_numeric_grade_a_rent
+  - statistical_period
+  - annual_basis
+  - exact_submarket
+  - reusable_source_permission
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: No independent numeric Grade A rent observation is verified. Savills
+    PDF/HTML and UK/HK alternatives returned 403. BCO alternative PDF was actually
+    fetched and contains historical charts, but its page 2 requires prior written
+    permission for copying/storage/transmission; no automatic ingestion or chart-derived
+    values. Prime rents and Grade A share are excluded.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids: *id003
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: blocked
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids: []
+    event_ids: []
+    exact_geography_fact_ids: []
+    source_geographies: []
+    periods: []
+    approved_fact_count: 0
+- id: M03
+  domain: D02
+  key: vacancy
+  name: Vacancy rates
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: percent; overall versus Grade A explicit
+  guardrail: No rate from available area without source denominator.
+  candidates: *id002
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage:
+  - 2026Q1
+  - 2026Q2
+  - Q1 2026
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids:
+    - BNP-2026Q1-VACANCY
+    - BNP-2026Q2-VACANCY
+    - seed-bnp-2026Q2-westend-vacancy
+    - seed-bnp-2026Q2-midtown-vacancy
+    - seed-bnp-2026Q2-docklands-vacancy
+    - seed-jll-2026Q2-vacancy
+    - seed-savills-2026Q2-westend-vacancy
+    - d099114d-9a53-48a4-9cc5-89a804cf670a
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: Numeric overall vacancy exists, but full independent quarterly history
+    for all four requested areas and Grade A vacancy remains incomplete. Combined
+    Canary Wharf & Docklands is not standalone Canary Wharf.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids: *id003
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - 7bac2771-1b1d-4f08-8f5d-8e333de61f5b
+    - 7abbd7cf-e3ba-45a8-9e54-a37aa33f31d6
+    - 4e5ae8c6-9110-4c00-b019-5a6eed36f2fa
+    - d099114d-9a53-48a4-9cc5-89a804cf670a
+    - seed-savills-2026Q2-westend-vacancy
+    - seed-jll-2026Q2-vacancy
+    - seed-bnp-2026Q2-docklands-vacancy
+    - seed-bnp-2026Q2-midtown-vacancy
+    - seed-bnp-2026Q2-westend-vacancy
+    - BNP-2026Q2-VACANCY
+    - BNP-2026Q1-VACANCY
+    event_ids: []
+    exact_geography_fact_ids:
+    - 7bac2771-1b1d-4f08-8f5d-8e333de61f5b
+    - 7abbd7cf-e3ba-45a8-9e54-a37aa33f31d6
+    - 4e5ae8c6-9110-4c00-b019-5a6eed36f2fa
+    - d099114d-9a53-48a4-9cc5-89a804cf670a
+    - seed-savills-2026Q2-westend-vacancy
+    - seed-jll-2026Q2-vacancy
+    - seed-bnp-2026Q2-docklands-vacancy
+    - seed-bnp-2026Q2-midtown-vacancy
+    - seed-bnp-2026Q2-westend-vacancy
+    - BNP-2026Q2-VACANCY
+    - BNP-2026Q1-VACANCY
+    source_geographies:
+    - Canary Wharf & Docklands
+    - Central London
+    - Central London (BNP source-defined office market)
+    - City
+    - Midtown
+    - West End
+    periods:
+    - 2026Q1
+    - 2026Q2
+    - Q1 2026
+    approved_fact_count: 0
+- id: M04
+  domain: D02
+  key: availability
+  name: Availability rates / available space
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: percent OR sqft/sqm, separate definitions
+  guardrail: Availability, vacancy and available floor area must remain distinct.
+  candidates: *id002
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage:
+  - 2026Q2
+  - Q1 2026
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids:
+    - seed-bnp-2026Q2-westend-supply
+    - seed-jll-2026Q2-supply
+    - e7faf176-f462-48c4-8bd5-827085d81420
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: Available floor area is projected separately from vacancy rates. No
+    availability rate is inferred from area. Complete source methodology and all submarket
+    histories remain missing.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids: *id003
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - 0345b0f6-ae01-4301-a26e-7950ad3448d1
+    - cb9911e6-bc73-4181-8ce9-67e78a98b673
+    - 8dc257ec-64e3-433f-aa64-b9d40ef8916a
+    - 00bd694c-67b8-4962-98ff-9e26b8d63a8a
+    event_ids: []
+    exact_geography_fact_ids:
+    - 0345b0f6-ae01-4301-a26e-7950ad3448d1
+    - cb9911e6-bc73-4181-8ce9-67e78a98b673
+    - 8dc257ec-64e3-433f-aa64-b9d40ef8916a
+    - 00bd694c-67b8-4962-98ff-9e26b8d63a8a
+    source_geographies:
+    - Canary Wharf & Docklands
+    - Central London
+    - City
+    - Southbank
+    periods:
+    - 2026Q2
+    approved_fact_count: 0
+- id: M05
+  domain: D03
+  key: takeup
+  name: Leasing take-up
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: sqft/sqm; quarter/YTD/year explicit
+  guardrail: No quarterly flow from YTD; YoY only as disclosed or compatible calculation.
+  candidates: *id002
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage:
+  - 2026Q1
+  - 2026Q2
+  - Q1 2026
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids:
+    - BNP-2026Q1-TAKEUP
+    - BNP-2026Q2-TAKEUP
+    - seed-bnp-2026Q2-westend-takeup
+    - seed-bnp-2026Q2-midtown-takeup
+    - seed-bnp-2026Q2-docklands-takeup
+    - seed-jll-2026Q2-takeup
+    - 8c52ee20-aff1-4019-b93c-514c4895e3e0
+    - e78280fb-c773-4ecc-8678-9a8d7bb4c284
+    - b5f87a82-44b9-4cce-a4d0-7c7a69ce1b4f
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: Real quarterly take-up is projected from JLL/BNP; H1, YTD, individual
+    deals and under-offer quantities are not interchangeable. Old and current publisher
+    methodologies differ.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids: *id003
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - d365aa57-9804-462d-a77a-1afdf5fc1261
+    - 5a4fbd8d-e90e-4ba8-8053-4f415bc3bb8d
+    - 046db542-d698-43f0-8a39-f2d901b7864c
+    - 4010f998-6a5f-49b7-bbdd-e708db791cad
+    - 8a8469cb-0c34-4d6d-88f3-5efe05810e27
+    - e18797c0-76b9-46d3-b471-5e3891d35ac3
+    - e930c5ae-148b-4244-b0ad-c78f0225b6a6
+    - b5f87a82-44b9-4cce-a4d0-7c7a69ce1b4f
+    - e78280fb-c773-4ecc-8678-9a8d7bb4c284
+    - 8c52ee20-aff1-4019-b93c-514c4895e3e0
+    - seed-jll-2026Q2-takeup
+    - seed-bnp-2026Q2-docklands-takeup
+    - seed-bnp-2026Q2-midtown-takeup
+    - seed-bnp-2026Q2-westend-takeup
+    - BNP-2026Q2-TAKEUP
+    - BNP-2026Q1-TAKEUP
+    event_ids: []
+    exact_geography_fact_ids:
+    - d365aa57-9804-462d-a77a-1afdf5fc1261
+    - 5a4fbd8d-e90e-4ba8-8053-4f415bc3bb8d
+    - 046db542-d698-43f0-8a39-f2d901b7864c
+    - 4010f998-6a5f-49b7-bbdd-e708db791cad
+    - 8a8469cb-0c34-4d6d-88f3-5efe05810e27
+    - e18797c0-76b9-46d3-b471-5e3891d35ac3
+    - e930c5ae-148b-4244-b0ad-c78f0225b6a6
+    - b5f87a82-44b9-4cce-a4d0-7c7a69ce1b4f
+    - e78280fb-c773-4ecc-8678-9a8d7bb4c284
+    - 8c52ee20-aff1-4019-b93c-514c4895e3e0
+    - seed-jll-2026Q2-takeup
+    - seed-bnp-2026Q2-docklands-takeup
+    - seed-bnp-2026Q2-midtown-takeup
+    - seed-bnp-2026Q2-westend-takeup
+    - BNP-2026Q2-TAKEUP
+    - BNP-2026Q1-TAKEUP
+    source_geographies:
+    - Canary Wharf & Docklands
+    - Central London
+    - Central London (BNP source-defined office market)
+    - City
+    - Midtown
+    - Southbank
+    - West End
+    periods:
+    - 2026Q1
+    - 2026Q2
+    - Q1 2026
+    approved_fact_count: 0
+- id: M06
+  domain: D03
+  key: leasing_activity
+  name: Leasing activity
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: deal count/area OR individual event
+  guardrail: Public announcements are incomplete; under offer is not signed or pre-let.
+  candidates:
+  - jll
+  - savills
+  - cbre
+  - gpe
+  - britishland
+  - bnp
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage: No verified structured target series
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids: []
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: Source-located leasing narrative candidates exist. No complete signed
+    transaction database, complete transaction count, structured tenant/date/status
+    pipeline or exhaustive market coverage is claimed.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  - gpe
+  - britishland
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids: []
+    event_ids:
+    - 1770739d-fdb1-4370-ba35-3ac477fbdd7e
+    - b401850f-151f-4141-9ba4-0e37ff291c15
+    - 46bf2b08-e263-412c-afa0-caaa5ac6f8ee
+    - 31e489fa-3a49-47e0-a568-f582780979cb
+    - 63c355fb-696e-44f5-86c2-2409b323c975
+    - f504b73a-e6cd-48e0-8b97-2fdf9492c3f4
+    - bee5e51f-61da-4174-9879-44d33f45641b
+    - ec5c9027-3c0a-44a6-b97b-2a37914e714a
+    - 7bb94695-41f4-4fb4-a315-5d1fdc72019e
+    - ea79a641-3033-4596-a7b6-544b7726e0b5
+    - 76983801-e5b2-456f-ae38-c2b332ff07c1
+    - 7cd6ac8d-827e-43c9-a41b-513b1511389f
+    - 62a6f8f1-d7cf-42b7-aaec-f9cdab3bb709
+    - cf6608fe-1f0e-4cc7-9b2c-c15fdb0668f7
+    - 6244b171-b1a8-45c1-9d2c-c3ee896bb968
+    - 805c5d64-e957-4431-aabe-5f9ca5cfeb1b
+    - 1540a7c4-25ba-44f7-abf6-95ef4eff85f7
+    - ba74a43c-a0db-42e4-871b-0179bccd8f48
+    - 29e024bc-587d-490a-bacc-211d5e41638f
+    - 30e9726d-6c91-4109-87dd-c8d2528781fc
+    - d978da96-2ff0-4084-b876-ceb493fa1388
+    - 9cc5f3ea-9bd5-457a-b9b7-91cf6a30dccf
+    - c584c1a9-4ad5-4360-85f2-ed34d6736ae2
+    - ef12ba83-324a-45f1-bc5a-a09f796a14b6
+    - 8cf9f263-8c20-4a77-9772-5efca736681c
+    exact_geography_fact_ids: []
+    source_geographies: []
+    periods: []
+    approved_fact_count: 0
+- id: M07
+  domain: D04
+  key: development
+  name: New developments
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: application status/date and disclosed floor area
+  guardrail: Approved is not started/completed. Borough is not exact submarket.
+  candidates:
+  - planning-london
+  - planning-uk
+  - gpe
+  - britishland
+  - bnp
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage: No verified structured target series
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids: []
+    saved_event_candidates: 21
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: Official Planning London API samples and source-reported construction/completion
+    totals exist. Planning samples do not prove construction or completion. JLL City
+    narrative and table construction totals require reconciliation; no complete project
+    pipeline.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  - planning-api-city
+  - planning-api-westminster
+  - planning-api-tower-hamlets
+  - planning-api-camden
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - 6dfb3a8a-b83a-4eaa-9b94-b2919d4585cc
+    - 53c7730f-9190-46f1-864b-49cf9520a5b6
+    - 7d609d53-7b84-43a8-9f0b-50321fd6fb77
+    event_ids:
+    - 71cc3908-b36b-4ee4-8372-93d24cef057f
+    - ee6eb1c9-5d6c-49b4-9077-8abcf46094fb
+    - e8c9c828-de19-4051-ad12-fe1187d2c68b
+    - 73a4cc5b-5e56-4742-9737-4252cc5d8dae
+    - d95bf6d1-3396-4cd3-a635-591c24d4d83e
+    - a79671af-459a-4d6f-a557-6966c4155a21
+    exact_geography_fact_ids:
+    - 6dfb3a8a-b83a-4eaa-9b94-b2919d4585cc
+    - 53c7730f-9190-46f1-864b-49cf9520a5b6
+    - 7d609d53-7b84-43a8-9f0b-50321fd6fb77
+    source_geographies:
+    - Central London
+    - City
+    periods:
+    - 2026Q2
+    approved_fact_count: 0
+- id: M08
+  domain: D04
+  key: refurbishment
+  name: Refurbishments
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: project classification with exact supporting text
+  guardrail: Keyword hit alone is insufficient; retain unknown project type.
+  candidates:
+  - planning-london
+  - planning-uk
+  - gpe
+  - britishland
+  - bnp
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage: No verified structured target series
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids: []
+    saved_event_candidates: 21
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: Actual refurbishment text is saved as candidate evidence; keyword classification
+    is not confirmed project classification. Structured project status, area and completion
+    date remain incomplete.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  - gpe
+  - britishland
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids: []
+    event_ids:
+    - b44cb3c1-3208-4bbe-8925-6b2dc5a29899
+    - ae315916-762c-431e-948c-9e0a492d7052
+    - 3126cae9-77bf-487e-94c2-304cb465f6f5
+    - 977f827e-a069-4c81-9a8b-8df3d53a3fba
+    exact_geography_fact_ids: []
+    source_geographies: []
+    periods: []
+    approved_fact_count: 0
+- id: M09
+  domain: D04
+  key: prelet
+  name: Pre-lets
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: tenant/project/pre-let area/date/delivery when disclosed
+  guardrail: No inferred pre-let split/share from combined under-offer total or total
+    area.
+  candidates:
+  - jll
+  - savills
+  - cbre
+  - gpe
+  - britishland
+  - bnp
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage:
+  - 2026Q2
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids:
+    - seed-jll-2026Q2-prelet
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: JLL explicitly reported U/C preleased shares are saved as percentages.
+    Mixed pre-let/under-offer wording stays combined; no pre-let area, tenant or ratio
+    is inferred from total area.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  - gpe
+  - britishland
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - 732cda02-1f6a-4e8d-8f75-284051db579f
+    - 881b9db3-cb13-4d3e-8372-6139279ac421
+    - seed-jll-2026Q2-prelet
+    event_ids:
+    - e022b754-2e2a-4334-a117-326e89a202f4
+    - ec398fdf-1403-4f0a-bc4f-d2185bff9131
+    - fa0c7317-3c79-438e-b0c7-e7bc0ab4e97e
+    - 78df16ac-7ef2-4ac5-a88d-e9ce1c95a26b
+    - 0c83fc67-99ad-4593-9b5e-45a5c2c76b53
+    - 17f05021-6aa2-48b7-b770-238657152423
+    - 6f9c3fc6-59c1-4869-b00f-22c6d37aa1c6
+    - b4eb4ac2-c23f-450a-b442-5cd3a085aad4
+    - 73ae793e-238e-4fd9-8aec-d37a75ede15c
+    - a90b17cf-80cc-499d-b7ba-b0f644a6a2da
+    - 37e361e9-3c37-448d-b018-eb0df1748768
+    - 680e229f-089d-4e52-81c9-c328c732e014
+    - 0b7a2da4-6a39-4e74-9ac4-bc846e9c02e9
+    - 791e8069-4366-45b7-8e89-4311e399da20
+    - 9b1776cb-216c-473e-b150-3313f3bc7cd7
+    exact_geography_fact_ids:
+    - 732cda02-1f6a-4e8d-8f75-284051db579f
+    - 881b9db3-cb13-4d3e-8372-6139279ac421
+    - seed-jll-2026Q2-prelet
+    source_geographies:
+    - Central London
+    - City
+    periods:
+    - 2026Q2
+    approved_fact_count: 0
+- id: M10
+  domain: D05
+  key: city
+  name: City
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: rent/vacancy/availability/take-up/supply/events
+  guardrail: Publisher City boundary/method must be preserved.
+  candidates:
+  - jll
+  - savills
+  - cbre
+  - planning-london
+  - bnp
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage:
+  - 2026Q1
+  - 2026Q2
+  - Q1 2026
+  - unknown
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids:
+    - BNP-2026Q1-RENT
+    - BNP-2026Q2-RENT
+    - b677e639-7829-4c4f-a6ed-3acadefbd8e1
+    - e78280fb-c773-4ecc-8678-9a8d7bb4c284
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: City source-defined market observations are available. Administrative
+    City of London planning records remain separate in their original geography.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  - planning-api-city
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - 4010f998-6a5f-49b7-bbdd-e708db791cad
+    - 732cda02-1f6a-4e8d-8f75-284051db579f
+    - 7abbd7cf-e3ba-45a8-9e54-a37aa33f31d6
+    - 6dfb3a8a-b83a-4eaa-9b94-b2919d4585cc
+    - 53c7730f-9190-46f1-864b-49cf9520a5b6
+    - 8dc257ec-64e3-433f-aa64-b9d40ef8916a
+    - e18797c0-76b9-46d3-b471-5e3891d35ac3
+    - 8f873ada-ac93-47b0-bc33-8bb41e874579
+    - e78280fb-c773-4ecc-8678-9a8d7bb4c284
+    - b677e639-7829-4c4f-a6ed-3acadefbd8e1
+    event_ids: []
+    exact_geography_fact_ids:
+    - 4010f998-6a5f-49b7-bbdd-e708db791cad
+    - 732cda02-1f6a-4e8d-8f75-284051db579f
+    - 7abbd7cf-e3ba-45a8-9e54-a37aa33f31d6
+    - 6dfb3a8a-b83a-4eaa-9b94-b2919d4585cc
+    - 53c7730f-9190-46f1-864b-49cf9520a5b6
+    - 8dc257ec-64e3-433f-aa64-b9d40ef8916a
+    - e18797c0-76b9-46d3-b471-5e3891d35ac3
+    - 8f873ada-ac93-47b0-bc33-8bb41e874579
+    - e78280fb-c773-4ecc-8678-9a8d7bb4c284
+    - b677e639-7829-4c4f-a6ed-3acadefbd8e1
+    source_geographies:
+    - City
+    periods:
+    - 2026Q2
+    - Q1 2026
+    - unknown
+    approved_fact_count: 0
+- id: M11
+  domain: D05
+  key: west_end
+  name: West End
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: rent/vacancy/availability/take-up/supply/events
+  guardrail: Westminster borough is not West End boundary.
+  candidates:
+  - jll
+  - savills
+  - cbre
+  - planning-london
+  - bnp
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage:
+  - 2026Q2
+  - Q1 2026
+  - unknown
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids:
+    - seed-bnp-2026Q2-westend-takeup
+    - seed-bnp-2026Q2-westend-vacancy
+    - seed-bnp-2026Q2-westend-supply
+    - seed-jll-2026Q2-westend-rent
+    - seed-savills-2026Q2-westend-vacancy
+    - 3d9a5fdd-74b3-441c-838d-8436602a247a
+    - b5f87a82-44b9-4cce-a4d0-7c7a69ce1b4f
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: West End raw rents, vacancy and take-up exist. Missing annual basis
+    and publisher methodology prevent approved cross-source annual rent comparison.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  - planning-api-westminster
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - 8a8469cb-0c34-4d6d-88f3-5efe05810e27
+    - 8729082c-416f-47b5-bc73-a339a09eafbd
+    - 15895d97-8a9f-446f-b8ce-628a542d8d46
+    - b5f87a82-44b9-4cce-a4d0-7c7a69ce1b4f
+    - 3d9a5fdd-74b3-441c-838d-8436602a247a
+    - seed-savills-2026Q2-westend-vacancy
+    - seed-jll-2026Q2-westend-rent
+    - seed-bnp-2026Q2-westend-supply
+    - seed-bnp-2026Q2-westend-vacancy
+    - seed-bnp-2026Q2-westend-takeup
+    event_ids: []
+    exact_geography_fact_ids:
+    - 8a8469cb-0c34-4d6d-88f3-5efe05810e27
+    - 8729082c-416f-47b5-bc73-a339a09eafbd
+    - 15895d97-8a9f-446f-b8ce-628a542d8d46
+    - b5f87a82-44b9-4cce-a4d0-7c7a69ce1b4f
+    - 3d9a5fdd-74b3-441c-838d-8436602a247a
+    - seed-savills-2026Q2-westend-vacancy
+    - seed-jll-2026Q2-westend-rent
+    - seed-bnp-2026Q2-westend-supply
+    - seed-bnp-2026Q2-westend-vacancy
+    - seed-bnp-2026Q2-westend-takeup
+    source_geographies:
+    - West End
+    periods:
+    - 2026Q2
+    - Q1 2026
+    - unknown
+    approved_fact_count: 0
+- id: M12
+  domain: D05
+  key: canary_wharf
+  name: Canary Wharf
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: rent/vacancy/availability/take-up/supply/events
+  guardrail: Docklands/Tower Hamlets is not interchangeable with Canary Wharf.
+  candidates:
+  - jll
+  - savills
+  - cbre
+  - planning-london
+  - bnp
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage:
+  - 2026Q2
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids:
+    - seed-bnp-2026Q2-canary-rent
+    - seed-bnp-2026Q2-docklands-vacancy
+    - seed-bnp-2026Q2-docklands-takeup
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: A separate reported Canary Wharf rent exists, but vacancy/take-up/availability
+    mostly cover Canary Wharf & Docklands. No split is inferred; full standalone multi-metric
+    comparison is incomplete.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  - planning-api-tower-hamlets
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - 0345b0f6-ae01-4301-a26e-7950ad3448d1
+    - d365aa57-9804-462d-a77a-1afdf5fc1261
+    - seed-bnp-2026Q2-docklands-takeup
+    - seed-bnp-2026Q2-docklands-vacancy
+    - seed-bnp-2026Q2-canary-rent
+    event_ids: []
+    exact_geography_fact_ids:
+    - seed-bnp-2026Q2-canary-rent
+    source_geographies:
+    - Canary Wharf
+    - Canary Wharf & Docklands
+    periods:
+    - 2026Q2
+    approved_fact_count: 0
+- id: M13
+  domain: D05
+  key: midtown_fringe
+  name: Midtown / Fringe
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: rent/vacancy/availability/take-up/supply/events
+  guardrail: Retain Midtown and Fringe separately when the source separates them.
+  candidates:
+  - jll
+  - savills
+  - cbre
+  - planning-london
+  - bnp
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage:
+  - 2026Q2
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids:
+    - seed-bnp-2026Q2-midtown-takeup
+    - seed-bnp-2026Q2-midtown-vacancy
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - independent_fringe_numeric_series
+  - full_submarket_history
+  - common_definition
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: Midtown numeric evidence is available. Fringe is not silently merged
+    with Midtown; independent Fringe indicators remain missing.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  - planning-api-camden
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - 7bac2771-1b1d-4f08-8f5d-8e333de61f5b
+    - 046db542-d698-43f0-8a39-f2d901b7864c
+    - seed-bnp-2026Q2-midtown-vacancy
+    - seed-bnp-2026Q2-midtown-takeup
+    event_ids: []
+    exact_geography_fact_ids:
+    - 7bac2771-1b1d-4f08-8f5d-8e333de61f5b
+    - 046db542-d698-43f0-8a39-f2d901b7864c
+    - seed-bnp-2026Q2-midtown-vacancy
+    - seed-bnp-2026Q2-midtown-takeup
+    source_geographies:
+    - Midtown
+    periods:
+    - 2026Q2
+    approved_fact_count: 0
+- id: M14
+  domain: D06
+  key: interest_rate
+  name: Interest rates
+  status: api_verified
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: Bank Rate percent/date; UK
+  guardrail: Macro context is not direct London office demand evidence.
+  candidates:
+  - boe
+  geography:
+  - UK
+  - London
+  historical_coverage:
+  - '2026-10-15'
+  frequency: official dated observations; bounded history
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids:
+    - seed-boe-2026-10-15
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: BoE IUDBEDR actual structured download and last 366 observations are
+    available; UK Official Bank Rate, not London rent yield or a different interest
+    series. Publication timestamp may be unknown; effective observation dates are
+    preserved.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics:
+  - BoE IUDBEDR last 366 observations
+  source_ids:
+  - boe
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - bebd0a42-fa72-46f5-9eec-d2ecf56d22bb
+    - da8d4609-9796-4182-89ec-5afca4cadffe
+    - 8dc82b3e-a763-44cf-99ce-9bf3b0597865
+    - be8bec1f-49c4-433a-989b-c0c28170186b
+    - f9c3af57-8a97-46c8-a9b8-0a66b7da1b17
+    - c140a15c-aebc-41b1-b159-284095458138
+    - ef8c470c-0e91-456f-aa5b-9715c111fa1e
+    - 5f7d04c5-91d8-47cf-ab98-8029f3f1f7b2
+    - 6447b199-492d-4cee-a9b4-ad80337baaa7
+    - 0c3ca588-a7f7-41aa-9e2a-de4e019b23e4
+    - b94943cf-2d34-4d0f-9259-92e3336b1166
+    - 24ad9cce-5db2-4f49-9076-f2259268d77c
+    - 7fb55fbd-a898-4a20-8d54-9b243a6b232e
+    - 1f16c67a-5d0e-45c7-adbc-f916f384cc54
+    - cd4444d3-0912-490b-929a-c3275d38be5b
+    - 4c63408c-ed80-4a31-8c9e-e8af83194f5e
+    - e6a2df9d-85a5-46ee-996e-e7f10c5a1f67
+    - 0e6e6ca2-4e21-4dbb-8df1-2128afcfaa50
+    - 22ff0d7c-f5d5-471e-830e-1a19f03d99fe
+    - 12d736c2-517f-40c8-b1ef-da0c5fbe7159
+    - 4bc0aec9-d2a6-4038-9842-68a69432b228
+    - 0c4f653f-757f-4d0c-bae5-f3549f8397b2
+    - ce23d541-2b53-438d-a95c-ebadc308de27
+    - ef26ceea-dfff-43fb-9eea-23d3e0b92844
+    - 54613aee-9467-4853-83f9-94be2cd3aaeb
+    - d5c64fbd-cb9f-4dc8-96dd-dce01d0dd53f
+    - 63609c6f-8bd5-41df-8697-7b6fc3c28a02
+    - 351f262d-4ef9-4b74-b1ef-2f313745064f
+    - bc578e30-b714-4772-8836-54a2248d129d
+    - e93c0d7d-a113-4852-b58f-02f1f1163bf8
+    - 90ce469e-4a6a-430a-8b5e-5404125765a7
+    - a9768b2e-40f5-447b-97a7-f8515d1f0425
+    - 916af088-91f5-49ed-b9f2-bd7accdb071e
+    - 959742ec-c43d-4d45-a3ac-d275571eee85
+    - 35829571-8346-4d9a-9a0d-48464b51f951
+    - 052b2764-7fb5-403f-b402-374fb6dcb055
+    - 469557ed-9def-4ada-9290-57022fe89b8e
+    - feca4b25-e4b3-47b1-bfe8-7a8e35f65732
+    - bd8de45f-f9bc-4e3d-a663-df6d5aa3b9a2
+    - 95c5bdf2-e037-4ca4-88a1-9b28d2435c1c
+    - 26c7bc49-c3a4-41f1-87de-9e4f1a024d1a
+    - 34804222-4ed9-43a5-b162-2f06e87f6693
+    - 7e558223-ccfd-4355-86f6-6a43a544ff84
+    - cb928556-6e67-4308-b738-4172624e305a
+    - 23153e5f-ee52-4835-8ff4-faee1203c1a9
+    - 4d666625-6c6d-4c75-910d-6137c98d29f9
+    - 11c76b4b-3989-4150-b7f9-900560366961
+    - 87c2eab1-77a7-4984-9086-666f13c51085
+    - f11cd0ae-6a50-45a0-9f4e-d90655c81790
+    - 2634ee62-3e30-4fb6-834d-7effe3dcc3fa
+    - 3a8f81ad-5bc7-4f32-aa55-55baf2df5af2
+    - 12975416-84b6-42cf-819f-a1c44130405b
+    - d7eddfad-1cd7-4c73-98b0-09570e88e156
+    - fbabef1b-8427-42b5-8d21-4fb446d2f113
+    - ae28f2af-317e-4046-bf84-3aa72158da45
+    - 76309fe2-905d-46b9-baea-996b8ca71399
+    - 0b9a8e72-964d-42bb-8599-a0cd1cc8c1cd
+    - 12264a9d-4b3e-4e98-8713-de5a66e19262
+    - e48b5a8f-5e0e-44b8-b4c3-61036905f470
+    - 3b37d012-11bc-42da-8abb-6674bf6347fa
+    - 4bcd738e-7483-4a96-9203-1784716c6bb2
+    - acc6858b-d2f7-49e1-838a-71913f5f90a9
+    - 1dbb40d6-b799-4981-b042-86c516443c07
+    - 32c73ad9-7d3c-494c-b39e-6696d878f9fd
+    - c38b5769-66aa-409f-acaa-afa9cb57ecf6
+    - 22c8cf7b-91f5-4c6d-824b-d9dfc37d0a71
+    - 3c5bddda-ccf1-472f-93d6-ca4dd0491940
+    - 59f5a646-48ee-4113-bf58-d0e91801ae51
+    - a7021977-18d3-41c8-bc0b-cff325b94ee4
+    - 01d3692f-2ea7-4988-b183-2537da5654b6
+    - db7df3a4-95e3-4c43-8c32-b4a89db7f850
+    - d87cad81-c23b-4bba-9366-5ee813d857da
+    - 776add7f-ec5b-4072-be98-d7045a996e74
+    - 2d685afa-dd0b-4e06-938e-22d7400da0df
+    - a521ee94-fba1-4432-95b1-3da76c4b94b1
+    - dfea8984-765c-4c9a-aae5-9e8c608c28d6
+    - bf73f4e3-5b3a-4583-bb15-544b328bc710
+    - 03e39cf2-1260-4679-9ab6-db13ec1c062d
+    - fd8262cd-220e-443b-815a-030f965d00b8
+    - 43539d1d-79a9-4291-8e8c-173ced0128d1
+    - 04dda138-c047-4449-ad69-0c0e139b1945
+    - aa56f061-de2d-4e5e-9938-fe0044a5974d
+    - 24402a06-621b-4c29-b3ef-a64957e7cd37
+    - 809ee323-9288-4ad6-848f-1f656b83cb71
+    - 391cde03-91ab-40dd-922f-504be1375fb3
+    - f78761c5-f585-4e5f-9fc0-251dc4a5f112
+    - e5b664e8-364b-4b07-b3f8-9be6f1c3ef0e
+    - 27e9bf96-fa87-4169-9ba4-2982c956f4fa
+    - bb807666-1fcf-4539-8ab2-61c45ac2cda0
+    - 7bd733aa-6c3f-4fb0-b4f1-3fe3d84d6475
+    - 75970128-f760-494d-b525-d274a8603efe
+    - be6fac6b-cd3d-4c2f-b5f7-ea31edc74d9a
+    - 56661a0f-8cfc-48c3-917a-6740f7fec236
+    - 8a68e09a-7e5c-4dc8-b326-d424a6363181
+    - 351de740-aa74-4325-b2f2-6e19574ce43a
+    - ddd4299b-706d-482f-89b6-5734130d6420
+    - e65500a0-be4c-4b45-91b8-266a7b02be5a
+    - 0f597e0a-057e-4492-a36e-440328ae67f5
+    - 2a4ac341-e8c1-418b-94f5-a4730d9707d7
+    - 27ec6330-33cf-4393-b7ed-81cbfcd23ce7
+    - 8475f453-ef3a-4307-a27d-7111978fcb4e
+    - 2aea3a82-4269-4189-8669-1640a315a021
+    - fa8bf554-4133-456f-8ca8-bb6d2b09fe26
+    - 05940545-b811-4317-a1a7-fffccfe080bd
+    - e5393d3f-d598-4865-a8fa-61b9a05de4c1
+    - 97cdc810-9858-4fc4-a8ee-0bf0a7674f25
+    - b0aa500a-bb9c-42d9-9e7d-4c2d49d941af
+    - 4eb7b255-0d45-4b10-88f3-1bcdbd74e511
+    - f1b2eede-561c-4280-8acf-fc724ccfa042
+    - f0f8aaf1-563e-4287-9698-e7effedadd8d
+    - 74914c72-38a6-4242-adba-ea1d696c9b13
+    - 3d677b7b-19aa-44ef-ade4-308dce9cf9ba
+    - 7b07f567-b7b9-4912-b49d-abd65dcc885a
+    - 45c1ef23-a3f2-4a4a-8204-7e708e662781
+    - 049ec1d9-99b1-48e5-a063-1e541fd3ff28
+    - 951d218a-f7ab-4e29-9cd2-2dacdf31abe2
+    - 3fef13ba-3e0a-4157-958d-e4239d762e87
+    - f655ccc4-14f5-4d31-97f2-b8e6de31147f
+    - 39e0c23d-cb53-4f45-9c42-246721b343fa
+    - e2366e04-af99-4735-91a7-1a45091d2b3b
+    - 149f94bd-f82d-478f-990a-349ca66090d4
+    - aad0a408-6336-493d-abf0-e599375611a3
+    - 7907e065-edb8-4223-85f9-fe2a0d2c31b6
+    - 55d44866-62d0-4796-b5eb-d7c3e57799f9
+    - 59642d6b-01e2-49ee-a50c-8b98a44f5230
+    - 642bc108-7954-4230-aaae-c0c2c8c4104f
+    - 983db774-2598-4172-abc6-16e3b8794f30
+    - 4539ae12-0eb2-45f7-b24f-c1e41889fe13
+    - d5063048-5566-42fc-94ee-940895876aba
+    - e27ad9a0-cf8b-4d3f-9ef2-da1663aeee54
+    - b5f97c56-5215-4b19-9ceb-fad467efcd92
+    - b811873f-8b67-443b-b6cc-750fb6e7afc7
+    - 05b9f372-56ee-4624-bee3-402837c57048
+    - f16cff44-6651-41c7-940b-41b650d71a0f
+    - 005f4276-6fc1-48cd-978d-f89bd552a746
+    - 3b567a6b-f10e-4ca9-97d4-2f23fa5be5b9
+    - f9160192-7898-4f89-b42f-946604beb544
+    - b437f727-e119-4f2c-9d26-82987ba2231d
+    - b4828cc7-a4ff-487a-b05f-ab42e46a6f26
+    - 383a6e73-a791-4214-9ba9-c7da429aa1b3
+    - ca7af6d6-a17a-4f65-8947-2f1c62b8e538
+    - 8ecfe55f-c7bd-44fd-9066-a1aedee48bd7
+    - 4ea44f66-81cf-44ef-9f1f-d54c39ebfa9b
+    - ed7f198a-e796-4ee1-bad4-170748069352
+    - 1735a8da-23e3-4a32-a55d-095ab23bf700
+    - 1f763711-365a-4d86-865e-b23044050e2d
+    - fcc18621-8b8a-48e8-bec3-2b3ff49a4968
+    - 55fa1254-8c78-4a0a-bf0a-792dbb409290
+    - 265b38a6-688e-4af2-9033-a13fb9442576
+    - e4128cb7-4a80-410a-bc7b-21c420f5a0e9
+    - b9e1101f-444b-4bbb-a1bb-992600a388bb
+    - c3654369-99fb-42dc-aa8a-83f5f718c5d3
+    - 9da0ea27-28e2-4297-aac3-4f307012333a
+    - e5d25bbe-cc6a-442c-9dd0-9c4be8797414
+    - fe9ad58d-7022-4bb9-b1f4-11062bff279b
+    - 36194d56-c791-49c4-b2a8-cbf2339bd612
+    - 6472e97a-3657-4f28-a34d-895843581398
+    - 10948191-5cd2-41c6-acde-d5a1875916e9
+    - 8c85ade7-2421-4f9d-94b0-b89716ed3a24
+    - a7ee2279-ab67-474c-90a2-1849037ad53c
+    - e9fe378c-981f-474f-adcb-0f02f77d8752
+    - 0a4b14dd-8fac-4a13-a862-052af7a4e695
+    - 41c0fa71-e8e6-40ae-aa58-9aa8fffa09e6
+    - 15f60b26-0b49-4b5b-9931-57c9177776ac
+    - e3b0be99-a112-4cfd-97a4-9dec4ba1f5fb
+    - b7b710fe-8c4d-48c4-835c-b877b2ef0320
+    - 598f9534-b877-4690-83f3-72734be0c643
+    - 595bcd77-8c5e-49fe-a9d3-aa1e0f0903ff
+    - 574297b3-fde6-4627-9fec-dc60ee584cbb
+    - 62d6fc4c-1d4a-4e9f-8629-7a66feba3581
+    - 50e45ee0-bc5e-4758-a798-c13fbbb3e164
+    - 73d6c18e-5cb1-4364-a58e-3d624226094d
+    - 417fa608-dd58-4544-89cf-c5bb4e7b43cc
+    - 8f1fa124-0adc-4676-939a-b4935632dbdc
+    - 21eb9c9c-8848-4f00-b50b-1b04f9841396
+    - 7f726e0f-ed46-4ede-ae3f-4abf2c3a7939
+    - 6fe840af-6ad6-4510-97ef-a016212642d2
+    - 1cd00404-8239-4e0e-a351-192d8644b13c
+    - 4544e073-3d03-48b0-af71-80c0e8230f85
+    - c73092ca-7066-47d4-9057-1f25555115d0
+    - 2278fc7e-27f4-47eb-8169-bc8304b22b16
+    - 68ad2d38-dc52-458b-a705-112e4b2d0151
+    - be1b7818-98a2-419f-818d-1100149ee71a
+    - 9c8c6a53-27b6-4caf-be0b-ccd724e939b7
+    - 9d908922-0c90-4f69-99d7-56281a70ef00
+    - 8cf9e3e6-be79-4b52-875f-07eda2075604
+    - cb0b95da-4e4f-49ba-a81d-a963e63e68ca
+    - 53c6b78a-20cd-4486-8ab2-4efaacbfed27
+    - 7966c33e-ad85-40b4-889b-6a9c871f7d07
+    - e7b29a79-00e3-4ec5-84b3-dad6dad62d13
+    - 8eda3449-2c51-4cd7-a822-bdefad72958f
+    - 8ddd9d78-6a83-4588-9a19-df4eaf382b11
+    - 2f758a07-427b-4cf1-98a1-faa0e815b921
+    - 506ac95b-5e1a-4861-aeb1-509b273d89de
+    - 6c1cc472-758c-4fc3-abe5-fa62994d0914
+    - f0ce1649-234d-48d7-80ba-0fd857510ce8
+    - 47bea6ea-a240-4dc7-af94-98016f0075fd
+    - 48b9a20e-7aa6-4d16-ad5c-e1581a7d5726
+    - e60a4aa7-4239-4b5b-9cf8-90d800eb22d9
+    - 2718fd26-4a5b-4810-ad46-237ff88ce610
+    - 4bab183e-ed87-4145-a7b3-0954c2c6cec2
+    - 344ab692-5d43-4751-80da-b0f01a827235
+    - c2094ef5-e369-4ef1-8792-2f4f293a14a1
+    - 09fb39ca-bc57-4f5e-b4b6-58876c7d8919
+    - 44b7e614-e2b5-4d56-9eb5-d9fe6b14a975
+    - 4498f61c-94c7-4e22-851e-b16d958da768
+    - 9465c18d-19d6-4cfc-aee3-1c395e918e17
+    - 79433e7a-22fe-46a0-9c8d-c39c72b78400
+    - a5c4bfb4-1b2d-4b8a-8f04-f7fc57551a63
+    - 86ef5046-f6be-493d-af73-0b1835c1289b
+    - 8e7798c6-e545-4d7c-bbcb-eed9f06166a9
+    - 62a41c45-1728-4f7c-bcd2-3dd02b20fd18
+    - 700d2be7-6ae3-4583-aa1b-0e7d416c6633
+    - 0ee52ca5-fdab-485c-8a30-5988911dd254
+    - 097acfee-22dc-4185-83f9-895620d2b3f1
+    - 1951f061-a365-415a-84a4-c4637ed76d6d
+    - 20aaf944-416f-4469-a901-41a81147db32
+    - 5b850510-f26f-493f-9ee8-0497ea3239e9
+    - 7ac824fc-8af4-4311-bead-3e8da5d7f9f4
+    - be344423-68a9-4929-ad1d-c353ca7e03ec
+    - 691b52b4-c75a-416d-b81f-eacf67a12c5a
+    - 620c4106-9d6f-47c1-bfb2-7ec8753070e9
+    - 0bb9fe28-0bb5-4c8c-a26e-6f6a52d869c9
+    - 965d3a79-4f46-4087-add5-cb96a4a3d0a6
+    - 97613655-20e7-4922-9069-5f2748cebaf4
+    - 2863e845-26ed-4bc4-bd0d-ad181e2c597e
+    - 11a267ab-9118-4b96-910e-ce7336126925
+    - ac0b3b90-bfb6-4372-9cde-545f01ac362d
+    - dd5557e1-4649-4efc-bc14-d26b12e5da85
+    - 968d07ed-3648-439e-ad71-9f9799020355
+    - 10ce7768-58f0-4f9c-9cae-e8d0dab0939c
+    - 3766e47d-3c0e-494f-aa77-49fac4cb057a
+    - de97ab65-9543-4213-96ed-268669a6caac
+    - 4f7e4628-299c-4ac3-aebd-ee1680a97910
+    - 184ef652-dc3f-4932-9112-dd35d83c280a
+    - 22d4c8a4-cc89-41b6-9543-65931ce76b80
+    - 25e2717e-956e-40f6-b452-6b456fc1963d
+    - 8a777905-7064-4133-ac0c-7cc893897e7e
+    - 937f83ba-37e2-4bde-928c-5a09e29ecaa6
+    - 996993b2-a0bf-4172-9d3f-acdd8f95ffd4
+    - 43ee0206-2ea1-4628-b9cb-219f12d05144
+    - ecb6313a-d23a-433c-891a-0e116297fddb
+    - a12c61ca-e703-4119-af6b-45d5d21e323f
+    - e8d0f7b8-f8bc-4c02-835c-5dc909660150
+    - 66464a51-7dd4-4949-b56d-257ea502af80
+    - ce7844a6-e8ed-4b0f-9fa3-e58c2b0a1b29
+    - c92f5923-07e1-4e67-8e96-e1e5ef431271
+    - 4ade356e-cb5d-4483-900b-29e9ebd0aaae
+    - 6358bfe6-2475-4ff4-b2a0-1610c9dafa15
+    - 067b5164-4bbd-43f9-a831-d71a4ad84952
+    - 5bf18333-d824-49a2-8546-de7e5eb28849
+    - 842cc24d-7ceb-4e16-ae30-60f6213e4dbb
+    - 8ac810e9-c6ae-4283-b9ec-a1577115e5f1
+    - 31925acf-0661-4389-97de-b5db7d266ff4
+    - 43ec088c-20d9-47a2-8a91-3b30522318d3
+    - dad740ac-f92d-4193-8784-1e285101beb5
+    - ddea2581-b1b3-40ea-b4cf-f85766baecf7
+    - 231bd5b7-6351-423f-ab05-d6a20037cc8f
+    - 404c3710-1696-4dd0-a954-1908978bed85
+    - 30fd09ac-8352-4cde-bd7e-440a263fc3b8
+    - 95b4e924-fdf0-4f11-bc00-779d3fcd47e3
+    - 168a3686-9e30-4437-ba84-33533d231364
+    - 56614758-7b67-4cee-8c0a-c97a7bfe6ca9
+    - 25b3f26e-78d9-4478-b2ef-fb8ae83a166f
+    - 63a1b3f0-0070-4fd4-a026-522758808a75
+    - 4378eb2f-a19f-4038-9104-e512304c4ca1
+    - 40259193-a7fb-418f-b386-5ee756edd5c1
+    - 189beb0a-6413-4f09-a158-e8a3d6288dab
+    - 739e540a-33f8-40b4-bd7d-b44a60a405fa
+    - c1fc13a1-8b8f-489e-880a-0e7ac1a97c63
+    - d2ef8388-29a2-4c4b-9565-0676bd3cab04
+    - 443cf73b-9242-448e-9017-d67504c393ef
+    - dfc61688-c734-47b3-99c6-5fdb8e7f6f24
+    - 239190aa-63a6-4702-b5e9-3833e59fc4ec
+    - 5723f47f-1534-4320-81a8-212f4524b4f1
+    - baabd14b-fba8-4385-9b89-40469ab1e385
+    - eeccf8e7-e931-4fc6-8c43-ff990f7c4bbb
+    - d05d7127-575c-4012-9bdf-aa4d15683e60
+    - bf8a912f-9a91-4f7d-90c8-7d9b43b696b1
+    - 3f135f12-678e-45c5-b99d-f917c56e3fa3
+    - 924dedd3-32d4-42df-9dc6-a3a7dd440d1b
+    - d1020b41-ecbc-4407-a6d5-9412d4dadc9b
+    - b0f7f323-2055-4aa9-b407-10382a6a33e9
+    - 9050f0bc-3c4d-4983-b058-da8faec6c525
+    - afd965bf-be14-4fdb-bafa-e2471277aba4
+    - 74876fd5-9d08-4d76-a271-a9585e097e77
+    - ba13377c-733e-481f-86ed-115eeb0efd33
+    - 9f3915b7-5f20-4afb-9832-6308cf7f6db6
+    - 8e1b9952-ab4b-4ca1-a10c-3d7ed7334b78
+    - 6805f274-17a8-4a8c-b9af-dea29870584c
+    - 7e46ccac-f773-49d1-8926-8bce910a8e4e
+    - c3a31819-765d-4b30-babd-795f7c7674cd
+    - ccd36952-ffab-48c3-a5c1-d6aba135e67a
+    - fe1c941a-fb8d-497f-b17a-e0093fa902a9
+    - 212339b9-aeea-4231-8e69-56d435f71b8e
+    - 2f5d94cf-59ff-4c07-87eb-f80d428a1fd2
+    - d8aa7663-6470-4f9e-a64e-7b447df0581b
+    - 663ceacc-53d4-4562-94a6-af77e3cf2659
+    - 694bedd1-8c72-469b-8099-4a3fd0641342
+    - b301e1b3-3d00-4812-b6b9-c068b93a7765
+    - eea4e3d3-d2d5-49a7-9139-fcb6a56c6306
+    - 560bf1af-52b9-4eb2-b6c9-0e47af6b53ef
+    - 6184b47b-a0ac-40d7-9917-adb4f5477cdb
+    - 00fad947-9084-4ebb-83d6-b85d1461963b
+    - 2d115bff-798f-4783-8b85-dc5fd3165492
+    - a26b9cc4-4096-42d1-87bc-d71fa7051656
+    - af09e11c-604a-4a58-9a72-1802cc129f82
+    - 793d06c1-314a-4e4d-a621-3b1366e343ef
+    - 42ed89d3-ea8f-4261-af3c-b243e6db4a96
+    - 216fc20c-4c67-4af3-901c-9d020b27b62c
+    - c4e6a9eb-9ae7-43a1-aae5-84f9479d217c
+    - 38b61cd0-6b05-44d0-982c-19daec6f8ede
+    - bf84dca0-a157-421c-90a4-8fe46b2f597a
+    - 32117d7a-f33b-4e48-ba6b-29b37758e24e
+    - 78a8c887-922a-4cc7-bd6a-3cca2f0b70a7
+    - 63be1dc4-2f6a-459f-98ac-6fadaccc7ce3
+    - 20e05d3e-48dc-4c38-9a79-78a942e8496c
+    - 0635c170-0c79-4519-900e-1133a11de04f
+    - 7d58c860-ca85-456b-b6b0-b43679d8052f
+    - e6ea0e63-c899-4415-8768-db9cfb34e5f8
+    - a70585f3-9877-4b7b-a7e0-21db6de7d136
+    - b8abda87-56aa-49ba-bae3-29d86fc8be8a
+    - c43e9de9-0ae1-4866-8178-ddfde0b0f8a6
+    - 7bcd101c-edd7-4b5c-90c6-771cd6f17329
+    - 78bfc824-1127-4bb2-973a-80273ff2469c
+    - 5b26ed8c-d1e1-4c7f-9abc-177b9c8c23f3
+    - 7c217379-27f2-4bc9-8998-91ea42d02cb6
+    - 1dfadc11-eae3-49ff-b1ac-44bda56e75a0
+    - 6cfb5548-7156-4237-92c8-1af103dc49d0
+    - ba695188-fd1b-4902-89d3-2b9fd3d3a533
+    - 161b84a2-3df9-4b27-9f6c-7aa3f9f4a9a0
+    - 3decc74f-3ed0-4b74-86bb-bade19979870
+    - 5eb12026-1064-48b2-84c4-a658e42ce6d8
+    - d4f487f7-3308-43ec-9005-3e08cbe4e3f6
+    - 7bed1ac8-6eeb-474d-a78d-d9ac7c308926
+    - fc7d0e0f-6bed-41b5-8fd0-d2a2c61e64c6
+    - 277ea05f-8697-41d4-87e9-f9698b3afd26
+    - b751846d-4ceb-445b-b595-9054f2c97208
+    - 078ada35-75e2-42b8-bd5d-1d5434e41143
+    - e74511a7-52be-49cd-be9d-11cdfb091117
+    - c36149eb-0121-473e-b34e-0bbda8f2caa2
+    - f0069029-8e1f-4e59-bb93-96cf094366d2
+    - 6cf13b4b-52e2-4507-b89b-273bec1bde84
+    - 8a6fa173-fe60-421f-8af1-a619bc468943
+    - 0055b379-d971-4144-b2d0-94361d1a58f5
+    - a6e5df17-b56d-4fe8-b649-a47490b46d86
+    - 89ee0e8a-a098-452d-bf86-f43262d095e2
+    - 6a708d3f-ad8f-4cd9-8e56-ff8852610343
+    - 0c7addd9-edb8-4512-95b1-11bd1d39da5a
+    - bc9d02e4-ef37-47f9-80a5-23b04142ee9c
+    - 7d5f587c-729f-4051-bdb1-a97f6f3ae313
+    - f563ad30-5b25-426c-bf90-a2d29f9ee82f
+    - b256caed-8398-4602-9b60-5a0dc785c091
+    - 94366343-69f5-43f5-b49a-46c276390d84
+    - 51eab9b9-3f41-4aaf-b1c9-73ae16acce59
+    - 58dbc604-ecac-4e87-b7bf-9ee55d32622f
+    - 5960c464-910a-4b23-843b-63a8a3e02079
+    - c3c1962b-7d5e-4f18-ade1-a034e0b133f5
+    - 92c007fc-1f38-40f5-8e20-14477033ec7e
+    - e7771ad7-b137-4e2e-aa2f-8c05c574da94
+    - f5379619-6d58-4f7c-a8b0-9f81300b7f5a
+    - 3c3fd5f9-2628-4ca1-9b75-c0d6bdafab3d
+    - a0fa2f13-85dd-4819-85c4-64caed482c97
+    - 171e896d-566d-4453-b225-fe7589ff36a7
+    - 593a2423-0c87-4985-8f01-26829d2734ee
+    - seed-boe-2026-10-15
+    event_ids: []
+    exact_geography_fact_ids:
+    - bebd0a42-fa72-46f5-9eec-d2ecf56d22bb
+    - da8d4609-9796-4182-89ec-5afca4cadffe
+    - 8dc82b3e-a763-44cf-99ce-9bf3b0597865
+    - be8bec1f-49c4-433a-989b-c0c28170186b
+    - f9c3af57-8a97-46c8-a9b8-0a66b7da1b17
+    - c140a15c-aebc-41b1-b159-284095458138
+    - ef8c470c-0e91-456f-aa5b-9715c111fa1e
+    - 5f7d04c5-91d8-47cf-ab98-8029f3f1f7b2
+    - 6447b199-492d-4cee-a9b4-ad80337baaa7
+    - 0c3ca588-a7f7-41aa-9e2a-de4e019b23e4
+    - b94943cf-2d34-4d0f-9259-92e3336b1166
+    - 24ad9cce-5db2-4f49-9076-f2259268d77c
+    - 7fb55fbd-a898-4a20-8d54-9b243a6b232e
+    - 1f16c67a-5d0e-45c7-adbc-f916f384cc54
+    - cd4444d3-0912-490b-929a-c3275d38be5b
+    - 4c63408c-ed80-4a31-8c9e-e8af83194f5e
+    - e6a2df9d-85a5-46ee-996e-e7f10c5a1f67
+    - 0e6e6ca2-4e21-4dbb-8df1-2128afcfaa50
+    - 22ff0d7c-f5d5-471e-830e-1a19f03d99fe
+    - 12d736c2-517f-40c8-b1ef-da0c5fbe7159
+    - 4bc0aec9-d2a6-4038-9842-68a69432b228
+    - 0c4f653f-757f-4d0c-bae5-f3549f8397b2
+    - ce23d541-2b53-438d-a95c-ebadc308de27
+    - ef26ceea-dfff-43fb-9eea-23d3e0b92844
+    - 54613aee-9467-4853-83f9-94be2cd3aaeb
+    - d5c64fbd-cb9f-4dc8-96dd-dce01d0dd53f
+    - 63609c6f-8bd5-41df-8697-7b6fc3c28a02
+    - 351f262d-4ef9-4b74-b1ef-2f313745064f
+    - bc578e30-b714-4772-8836-54a2248d129d
+    - e93c0d7d-a113-4852-b58f-02f1f1163bf8
+    - 90ce469e-4a6a-430a-8b5e-5404125765a7
+    - a9768b2e-40f5-447b-97a7-f8515d1f0425
+    - 916af088-91f5-49ed-b9f2-bd7accdb071e
+    - 959742ec-c43d-4d45-a3ac-d275571eee85
+    - 35829571-8346-4d9a-9a0d-48464b51f951
+    - 052b2764-7fb5-403f-b402-374fb6dcb055
+    - 469557ed-9def-4ada-9290-57022fe89b8e
+    - feca4b25-e4b3-47b1-bfe8-7a8e35f65732
+    - bd8de45f-f9bc-4e3d-a663-df6d5aa3b9a2
+    - 95c5bdf2-e037-4ca4-88a1-9b28d2435c1c
+    - 26c7bc49-c3a4-41f1-87de-9e4f1a024d1a
+    - 34804222-4ed9-43a5-b162-2f06e87f6693
+    - 7e558223-ccfd-4355-86f6-6a43a544ff84
+    - cb928556-6e67-4308-b738-4172624e305a
+    - 23153e5f-ee52-4835-8ff4-faee1203c1a9
+    - 4d666625-6c6d-4c75-910d-6137c98d29f9
+    - 11c76b4b-3989-4150-b7f9-900560366961
+    - 87c2eab1-77a7-4984-9086-666f13c51085
+    - f11cd0ae-6a50-45a0-9f4e-d90655c81790
+    - 2634ee62-3e30-4fb6-834d-7effe3dcc3fa
+    - 3a8f81ad-5bc7-4f32-aa55-55baf2df5af2
+    - 12975416-84b6-42cf-819f-a1c44130405b
+    - d7eddfad-1cd7-4c73-98b0-09570e88e156
+    - fbabef1b-8427-42b5-8d21-4fb446d2f113
+    - ae28f2af-317e-4046-bf84-3aa72158da45
+    - 76309fe2-905d-46b9-baea-996b8ca71399
+    - 0b9a8e72-964d-42bb-8599-a0cd1cc8c1cd
+    - 12264a9d-4b3e-4e98-8713-de5a66e19262
+    - e48b5a8f-5e0e-44b8-b4c3-61036905f470
+    - 3b37d012-11bc-42da-8abb-6674bf6347fa
+    - 4bcd738e-7483-4a96-9203-1784716c6bb2
+    - acc6858b-d2f7-49e1-838a-71913f5f90a9
+    - 1dbb40d6-b799-4981-b042-86c516443c07
+    - 32c73ad9-7d3c-494c-b39e-6696d878f9fd
+    - c38b5769-66aa-409f-acaa-afa9cb57ecf6
+    - 22c8cf7b-91f5-4c6d-824b-d9dfc37d0a71
+    - 3c5bddda-ccf1-472f-93d6-ca4dd0491940
+    - 59f5a646-48ee-4113-bf58-d0e91801ae51
+    - a7021977-18d3-41c8-bc0b-cff325b94ee4
+    - 01d3692f-2ea7-4988-b183-2537da5654b6
+    - db7df3a4-95e3-4c43-8c32-b4a89db7f850
+    - d87cad81-c23b-4bba-9366-5ee813d857da
+    - 776add7f-ec5b-4072-be98-d7045a996e74
+    - 2d685afa-dd0b-4e06-938e-22d7400da0df
+    - a521ee94-fba1-4432-95b1-3da76c4b94b1
+    - dfea8984-765c-4c9a-aae5-9e8c608c28d6
+    - bf73f4e3-5b3a-4583-bb15-544b328bc710
+    - 03e39cf2-1260-4679-9ab6-db13ec1c062d
+    - fd8262cd-220e-443b-815a-030f965d00b8
+    - 43539d1d-79a9-4291-8e8c-173ced0128d1
+    - 04dda138-c047-4449-ad69-0c0e139b1945
+    - aa56f061-de2d-4e5e-9938-fe0044a5974d
+    - 24402a06-621b-4c29-b3ef-a64957e7cd37
+    - 809ee323-9288-4ad6-848f-1f656b83cb71
+    - 391cde03-91ab-40dd-922f-504be1375fb3
+    - f78761c5-f585-4e5f-9fc0-251dc4a5f112
+    - e5b664e8-364b-4b07-b3f8-9be6f1c3ef0e
+    - 27e9bf96-fa87-4169-9ba4-2982c956f4fa
+    - bb807666-1fcf-4539-8ab2-61c45ac2cda0
+    - 7bd733aa-6c3f-4fb0-b4f1-3fe3d84d6475
+    - 75970128-f760-494d-b525-d274a8603efe
+    - be6fac6b-cd3d-4c2f-b5f7-ea31edc74d9a
+    - 56661a0f-8cfc-48c3-917a-6740f7fec236
+    - 8a68e09a-7e5c-4dc8-b326-d424a6363181
+    - 351de740-aa74-4325-b2f2-6e19574ce43a
+    - ddd4299b-706d-482f-89b6-5734130d6420
+    - e65500a0-be4c-4b45-91b8-266a7b02be5a
+    - 0f597e0a-057e-4492-a36e-440328ae67f5
+    - 2a4ac341-e8c1-418b-94f5-a4730d9707d7
+    - 27ec6330-33cf-4393-b7ed-81cbfcd23ce7
+    - 8475f453-ef3a-4307-a27d-7111978fcb4e
+    - 2aea3a82-4269-4189-8669-1640a315a021
+    - fa8bf554-4133-456f-8ca8-bb6d2b09fe26
+    - 05940545-b811-4317-a1a7-fffccfe080bd
+    - e5393d3f-d598-4865-a8fa-61b9a05de4c1
+    - 97cdc810-9858-4fc4-a8ee-0bf0a7674f25
+    - b0aa500a-bb9c-42d9-9e7d-4c2d49d941af
+    - 4eb7b255-0d45-4b10-88f3-1bcdbd74e511
+    - f1b2eede-561c-4280-8acf-fc724ccfa042
+    - f0f8aaf1-563e-4287-9698-e7effedadd8d
+    - 74914c72-38a6-4242-adba-ea1d696c9b13
+    - 3d677b7b-19aa-44ef-ade4-308dce9cf9ba
+    - 7b07f567-b7b9-4912-b49d-abd65dcc885a
+    - 45c1ef23-a3f2-4a4a-8204-7e708e662781
+    - 049ec1d9-99b1-48e5-a063-1e541fd3ff28
+    - 951d218a-f7ab-4e29-9cd2-2dacdf31abe2
+    - 3fef13ba-3e0a-4157-958d-e4239d762e87
+    - f655ccc4-14f5-4d31-97f2-b8e6de31147f
+    - 39e0c23d-cb53-4f45-9c42-246721b343fa
+    - e2366e04-af99-4735-91a7-1a45091d2b3b
+    - 149f94bd-f82d-478f-990a-349ca66090d4
+    - aad0a408-6336-493d-abf0-e599375611a3
+    - 7907e065-edb8-4223-85f9-fe2a0d2c31b6
+    - 55d44866-62d0-4796-b5eb-d7c3e57799f9
+    - 59642d6b-01e2-49ee-a50c-8b98a44f5230
+    - 642bc108-7954-4230-aaae-c0c2c8c4104f
+    - 983db774-2598-4172-abc6-16e3b8794f30
+    - 4539ae12-0eb2-45f7-b24f-c1e41889fe13
+    - d5063048-5566-42fc-94ee-940895876aba
+    - e27ad9a0-cf8b-4d3f-9ef2-da1663aeee54
+    - b5f97c56-5215-4b19-9ceb-fad467efcd92
+    - b811873f-8b67-443b-b6cc-750fb6e7afc7
+    - 05b9f372-56ee-4624-bee3-402837c57048
+    - f16cff44-6651-41c7-940b-41b650d71a0f
+    - 005f4276-6fc1-48cd-978d-f89bd552a746
+    - 3b567a6b-f10e-4ca9-97d4-2f23fa5be5b9
+    - f9160192-7898-4f89-b42f-946604beb544
+    - b437f727-e119-4f2c-9d26-82987ba2231d
+    - b4828cc7-a4ff-487a-b05f-ab42e46a6f26
+    - 383a6e73-a791-4214-9ba9-c7da429aa1b3
+    - ca7af6d6-a17a-4f65-8947-2f1c62b8e538
+    - 8ecfe55f-c7bd-44fd-9066-a1aedee48bd7
+    - 4ea44f66-81cf-44ef-9f1f-d54c39ebfa9b
+    - ed7f198a-e796-4ee1-bad4-170748069352
+    - 1735a8da-23e3-4a32-a55d-095ab23bf700
+    - 1f763711-365a-4d86-865e-b23044050e2d
+    - fcc18621-8b8a-48e8-bec3-2b3ff49a4968
+    - 55fa1254-8c78-4a0a-bf0a-792dbb409290
+    - 265b38a6-688e-4af2-9033-a13fb9442576
+    - e4128cb7-4a80-410a-bc7b-21c420f5a0e9
+    - b9e1101f-444b-4bbb-a1bb-992600a388bb
+    - c3654369-99fb-42dc-aa8a-83f5f718c5d3
+    - 9da0ea27-28e2-4297-aac3-4f307012333a
+    - e5d25bbe-cc6a-442c-9dd0-9c4be8797414
+    - fe9ad58d-7022-4bb9-b1f4-11062bff279b
+    - 36194d56-c791-49c4-b2a8-cbf2339bd612
+    - 6472e97a-3657-4f28-a34d-895843581398
+    - 10948191-5cd2-41c6-acde-d5a1875916e9
+    - 8c85ade7-2421-4f9d-94b0-b89716ed3a24
+    - a7ee2279-ab67-474c-90a2-1849037ad53c
+    - e9fe378c-981f-474f-adcb-0f02f77d8752
+    - 0a4b14dd-8fac-4a13-a862-052af7a4e695
+    - 41c0fa71-e8e6-40ae-aa58-9aa8fffa09e6
+    - 15f60b26-0b49-4b5b-9931-57c9177776ac
+    - e3b0be99-a112-4cfd-97a4-9dec4ba1f5fb
+    - b7b710fe-8c4d-48c4-835c-b877b2ef0320
+    - 598f9534-b877-4690-83f3-72734be0c643
+    - 595bcd77-8c5e-49fe-a9d3-aa1e0f0903ff
+    - 574297b3-fde6-4627-9fec-dc60ee584cbb
+    - 62d6fc4c-1d4a-4e9f-8629-7a66feba3581
+    - 50e45ee0-bc5e-4758-a798-c13fbbb3e164
+    - 73d6c18e-5cb1-4364-a58e-3d624226094d
+    - 417fa608-dd58-4544-89cf-c5bb4e7b43cc
+    - 8f1fa124-0adc-4676-939a-b4935632dbdc
+    - 21eb9c9c-8848-4f00-b50b-1b04f9841396
+    - 7f726e0f-ed46-4ede-ae3f-4abf2c3a7939
+    - 6fe840af-6ad6-4510-97ef-a016212642d2
+    - 1cd00404-8239-4e0e-a351-192d8644b13c
+    - 4544e073-3d03-48b0-af71-80c0e8230f85
+    - c73092ca-7066-47d4-9057-1f25555115d0
+    - 2278fc7e-27f4-47eb-8169-bc8304b22b16
+    - 68ad2d38-dc52-458b-a705-112e4b2d0151
+    - be1b7818-98a2-419f-818d-1100149ee71a
+    - 9c8c6a53-27b6-4caf-be0b-ccd724e939b7
+    - 9d908922-0c90-4f69-99d7-56281a70ef00
+    - 8cf9e3e6-be79-4b52-875f-07eda2075604
+    - cb0b95da-4e4f-49ba-a81d-a963e63e68ca
+    - 53c6b78a-20cd-4486-8ab2-4efaacbfed27
+    - 7966c33e-ad85-40b4-889b-6a9c871f7d07
+    - e7b29a79-00e3-4ec5-84b3-dad6dad62d13
+    - 8eda3449-2c51-4cd7-a822-bdefad72958f
+    - 8ddd9d78-6a83-4588-9a19-df4eaf382b11
+    - 2f758a07-427b-4cf1-98a1-faa0e815b921
+    - 506ac95b-5e1a-4861-aeb1-509b273d89de
+    - 6c1cc472-758c-4fc3-abe5-fa62994d0914
+    - f0ce1649-234d-48d7-80ba-0fd857510ce8
+    - 47bea6ea-a240-4dc7-af94-98016f0075fd
+    - 48b9a20e-7aa6-4d16-ad5c-e1581a7d5726
+    - e60a4aa7-4239-4b5b-9cf8-90d800eb22d9
+    - 2718fd26-4a5b-4810-ad46-237ff88ce610
+    - 4bab183e-ed87-4145-a7b3-0954c2c6cec2
+    - 344ab692-5d43-4751-80da-b0f01a827235
+    - c2094ef5-e369-4ef1-8792-2f4f293a14a1
+    - 09fb39ca-bc57-4f5e-b4b6-58876c7d8919
+    - 44b7e614-e2b5-4d56-9eb5-d9fe6b14a975
+    - 4498f61c-94c7-4e22-851e-b16d958da768
+    - 9465c18d-19d6-4cfc-aee3-1c395e918e17
+    - 79433e7a-22fe-46a0-9c8d-c39c72b78400
+    - a5c4bfb4-1b2d-4b8a-8f04-f7fc57551a63
+    - 86ef5046-f6be-493d-af73-0b1835c1289b
+    - 8e7798c6-e545-4d7c-bbcb-eed9f06166a9
+    - 62a41c45-1728-4f7c-bcd2-3dd02b20fd18
+    - 700d2be7-6ae3-4583-aa1b-0e7d416c6633
+    - 0ee52ca5-fdab-485c-8a30-5988911dd254
+    - 097acfee-22dc-4185-83f9-895620d2b3f1
+    - 1951f061-a365-415a-84a4-c4637ed76d6d
+    - 20aaf944-416f-4469-a901-41a81147db32
+    - 5b850510-f26f-493f-9ee8-0497ea3239e9
+    - 7ac824fc-8af4-4311-bead-3e8da5d7f9f4
+    - be344423-68a9-4929-ad1d-c353ca7e03ec
+    - 691b52b4-c75a-416d-b81f-eacf67a12c5a
+    - 620c4106-9d6f-47c1-bfb2-7ec8753070e9
+    - 0bb9fe28-0bb5-4c8c-a26e-6f6a52d869c9
+    - 965d3a79-4f46-4087-add5-cb96a4a3d0a6
+    - 97613655-20e7-4922-9069-5f2748cebaf4
+    - 2863e845-26ed-4bc4-bd0d-ad181e2c597e
+    - 11a267ab-9118-4b96-910e-ce7336126925
+    - ac0b3b90-bfb6-4372-9cde-545f01ac362d
+    - dd5557e1-4649-4efc-bc14-d26b12e5da85
+    - 968d07ed-3648-439e-ad71-9f9799020355
+    - 10ce7768-58f0-4f9c-9cae-e8d0dab0939c
+    - 3766e47d-3c0e-494f-aa77-49fac4cb057a
+    - de97ab65-9543-4213-96ed-268669a6caac
+    - 4f7e4628-299c-4ac3-aebd-ee1680a97910
+    - 184ef652-dc3f-4932-9112-dd35d83c280a
+    - 22d4c8a4-cc89-41b6-9543-65931ce76b80
+    - 25e2717e-956e-40f6-b452-6b456fc1963d
+    - 8a777905-7064-4133-ac0c-7cc893897e7e
+    - 937f83ba-37e2-4bde-928c-5a09e29ecaa6
+    - 996993b2-a0bf-4172-9d3f-acdd8f95ffd4
+    - 43ee0206-2ea1-4628-b9cb-219f12d05144
+    - ecb6313a-d23a-433c-891a-0e116297fddb
+    - a12c61ca-e703-4119-af6b-45d5d21e323f
+    - e8d0f7b8-f8bc-4c02-835c-5dc909660150
+    - 66464a51-7dd4-4949-b56d-257ea502af80
+    - ce7844a6-e8ed-4b0f-9fa3-e58c2b0a1b29
+    - c92f5923-07e1-4e67-8e96-e1e5ef431271
+    - 4ade356e-cb5d-4483-900b-29e9ebd0aaae
+    - 6358bfe6-2475-4ff4-b2a0-1610c9dafa15
+    - 067b5164-4bbd-43f9-a831-d71a4ad84952
+    - 5bf18333-d824-49a2-8546-de7e5eb28849
+    - 842cc24d-7ceb-4e16-ae30-60f6213e4dbb
+    - 8ac810e9-c6ae-4283-b9ec-a1577115e5f1
+    - 31925acf-0661-4389-97de-b5db7d266ff4
+    - 43ec088c-20d9-47a2-8a91-3b30522318d3
+    - dad740ac-f92d-4193-8784-1e285101beb5
+    - ddea2581-b1b3-40ea-b4cf-f85766baecf7
+    - 231bd5b7-6351-423f-ab05-d6a20037cc8f
+    - 404c3710-1696-4dd0-a954-1908978bed85
+    - 30fd09ac-8352-4cde-bd7e-440a263fc3b8
+    - 95b4e924-fdf0-4f11-bc00-779d3fcd47e3
+    - 168a3686-9e30-4437-ba84-33533d231364
+    - 56614758-7b67-4cee-8c0a-c97a7bfe6ca9
+    - 25b3f26e-78d9-4478-b2ef-fb8ae83a166f
+    - 63a1b3f0-0070-4fd4-a026-522758808a75
+    - 4378eb2f-a19f-4038-9104-e512304c4ca1
+    - 40259193-a7fb-418f-b386-5ee756edd5c1
+    - 189beb0a-6413-4f09-a158-e8a3d6288dab
+    - 739e540a-33f8-40b4-bd7d-b44a60a405fa
+    - c1fc13a1-8b8f-489e-880a-0e7ac1a97c63
+    - d2ef8388-29a2-4c4b-9565-0676bd3cab04
+    - 443cf73b-9242-448e-9017-d67504c393ef
+    - dfc61688-c734-47b3-99c6-5fdb8e7f6f24
+    - 239190aa-63a6-4702-b5e9-3833e59fc4ec
+    - 5723f47f-1534-4320-81a8-212f4524b4f1
+    - baabd14b-fba8-4385-9b89-40469ab1e385
+    - eeccf8e7-e931-4fc6-8c43-ff990f7c4bbb
+    - d05d7127-575c-4012-9bdf-aa4d15683e60
+    - bf8a912f-9a91-4f7d-90c8-7d9b43b696b1
+    - 3f135f12-678e-45c5-b99d-f917c56e3fa3
+    - 924dedd3-32d4-42df-9dc6-a3a7dd440d1b
+    - d1020b41-ecbc-4407-a6d5-9412d4dadc9b
+    - b0f7f323-2055-4aa9-b407-10382a6a33e9
+    - 9050f0bc-3c4d-4983-b058-da8faec6c525
+    - afd965bf-be14-4fdb-bafa-e2471277aba4
+    - 74876fd5-9d08-4d76-a271-a9585e097e77
+    - ba13377c-733e-481f-86ed-115eeb0efd33
+    - 9f3915b7-5f20-4afb-9832-6308cf7f6db6
+    - 8e1b9952-ab4b-4ca1-a10c-3d7ed7334b78
+    - 6805f274-17a8-4a8c-b9af-dea29870584c
+    - 7e46ccac-f773-49d1-8926-8bce910a8e4e
+    - c3a31819-765d-4b30-babd-795f7c7674cd
+    - ccd36952-ffab-48c3-a5c1-d6aba135e67a
+    - fe1c941a-fb8d-497f-b17a-e0093fa902a9
+    - 212339b9-aeea-4231-8e69-56d435f71b8e
+    - 2f5d94cf-59ff-4c07-87eb-f80d428a1fd2
+    - d8aa7663-6470-4f9e-a64e-7b447df0581b
+    - 663ceacc-53d4-4562-94a6-af77e3cf2659
+    - 694bedd1-8c72-469b-8099-4a3fd0641342
+    - b301e1b3-3d00-4812-b6b9-c068b93a7765
+    - eea4e3d3-d2d5-49a7-9139-fcb6a56c6306
+    - 560bf1af-52b9-4eb2-b6c9-0e47af6b53ef
+    - 6184b47b-a0ac-40d7-9917-adb4f5477cdb
+    - 00fad947-9084-4ebb-83d6-b85d1461963b
+    - 2d115bff-798f-4783-8b85-dc5fd3165492
+    - a26b9cc4-4096-42d1-87bc-d71fa7051656
+    - af09e11c-604a-4a58-9a72-1802cc129f82
+    - 793d06c1-314a-4e4d-a621-3b1366e343ef
+    - 42ed89d3-ea8f-4261-af3c-b243e6db4a96
+    - 216fc20c-4c67-4af3-901c-9d020b27b62c
+    - c4e6a9eb-9ae7-43a1-aae5-84f9479d217c
+    - 38b61cd0-6b05-44d0-982c-19daec6f8ede
+    - bf84dca0-a157-421c-90a4-8fe46b2f597a
+    - 32117d7a-f33b-4e48-ba6b-29b37758e24e
+    - 78a8c887-922a-4cc7-bd6a-3cca2f0b70a7
+    - 63be1dc4-2f6a-459f-98ac-6fadaccc7ce3
+    - 20e05d3e-48dc-4c38-9a79-78a942e8496c
+    - 0635c170-0c79-4519-900e-1133a11de04f
+    - 7d58c860-ca85-456b-b6b0-b43679d8052f
+    - e6ea0e63-c899-4415-8768-db9cfb34e5f8
+    - a70585f3-9877-4b7b-a7e0-21db6de7d136
+    - b8abda87-56aa-49ba-bae3-29d86fc8be8a
+    - c43e9de9-0ae1-4866-8178-ddfde0b0f8a6
+    - 7bcd101c-edd7-4b5c-90c6-771cd6f17329
+    - 78bfc824-1127-4bb2-973a-80273ff2469c
+    - 5b26ed8c-d1e1-4c7f-9abc-177b9c8c23f3
+    - 7c217379-27f2-4bc9-8998-91ea42d02cb6
+    - 1dfadc11-eae3-49ff-b1ac-44bda56e75a0
+    - 6cfb5548-7156-4237-92c8-1af103dc49d0
+    - ba695188-fd1b-4902-89d3-2b9fd3d3a533
+    - 161b84a2-3df9-4b27-9f6c-7aa3f9f4a9a0
+    - 3decc74f-3ed0-4b74-86bb-bade19979870
+    - 5eb12026-1064-48b2-84c4-a658e42ce6d8
+    - d4f487f7-3308-43ec-9005-3e08cbe4e3f6
+    - 7bed1ac8-6eeb-474d-a78d-d9ac7c308926
+    - fc7d0e0f-6bed-41b5-8fd0-d2a2c61e64c6
+    - 277ea05f-8697-41d4-87e9-f9698b3afd26
+    - b751846d-4ceb-445b-b595-9054f2c97208
+    - 078ada35-75e2-42b8-bd5d-1d5434e41143
+    - e74511a7-52be-49cd-be9d-11cdfb091117
+    - c36149eb-0121-473e-b34e-0bbda8f2caa2
+    - f0069029-8e1f-4e59-bb93-96cf094366d2
+    - 6cf13b4b-52e2-4507-b89b-273bec1bde84
+    - 8a6fa173-fe60-421f-8af1-a619bc468943
+    - 0055b379-d971-4144-b2d0-94361d1a58f5
+    - a6e5df17-b56d-4fe8-b649-a47490b46d86
+    - 89ee0e8a-a098-452d-bf86-f43262d095e2
+    - 6a708d3f-ad8f-4cd9-8e56-ff8852610343
+    - 0c7addd9-edb8-4512-95b1-11bd1d39da5a
+    - bc9d02e4-ef37-47f9-80a5-23b04142ee9c
+    - 7d5f587c-729f-4051-bdb1-a97f6f3ae313
+    - f563ad30-5b25-426c-bf90-a2d29f9ee82f
+    - b256caed-8398-4602-9b60-5a0dc785c091
+    - 94366343-69f5-43f5-b49a-46c276390d84
+    - 51eab9b9-3f41-4aaf-b1c9-73ae16acce59
+    - 58dbc604-ecac-4e87-b7bf-9ee55d32622f
+    - 5960c464-910a-4b23-843b-63a8a3e02079
+    - c3c1962b-7d5e-4f18-ade1-a034e0b133f5
+    - 92c007fc-1f38-40f5-8e20-14477033ec7e
+    - e7771ad7-b137-4e2e-aa2f-8c05c574da94
+    - f5379619-6d58-4f7c-a8b0-9f81300b7f5a
+    - 3c3fd5f9-2628-4ca1-9b75-c0d6bdafab3d
+    - a0fa2f13-85dd-4819-85c4-64caed482c97
+    - 171e896d-566d-4453-b225-fe7589ff36a7
+    - 593a2423-0c87-4985-8f01-26829d2734ee
+    - seed-boe-2026-10-15
+    source_geographies:
+    - United Kingdom
+    periods:
+    - '2025-05-08'
+    - '2025-05-09'
+    - '2025-05-12'
+    - '2025-05-13'
+    - '2025-05-14'
+    - '2025-05-15'
+    - '2025-05-16'
+    - '2025-05-19'
+    - '2025-05-20'
+    - '2025-05-21'
+    - '2025-05-22'
+    - '2025-05-23'
+    - '2025-05-27'
+    - '2025-05-28'
+    - '2025-05-29'
+    - '2025-05-30'
+    - '2025-06-02'
+    - '2025-06-03'
+    - '2025-06-04'
+    - '2025-06-05'
+    - '2025-06-06'
+    - '2025-06-09'
+    - '2025-06-10'
+    - '2025-06-11'
+    - '2025-06-12'
+    - '2025-06-13'
+    - '2025-06-16'
+    - '2025-06-17'
+    - '2025-06-18'
+    - '2025-06-19'
+    - '2025-06-20'
+    - '2025-06-23'
+    - '2025-06-24'
+    - '2025-06-25'
+    - '2025-06-26'
+    - '2025-06-27'
+    - '2025-06-30'
+    - '2025-07-01'
+    - '2025-07-02'
+    - '2025-07-03'
+    - '2025-07-04'
+    - '2025-07-07'
+    - '2025-07-08'
+    - '2025-07-09'
+    - '2025-07-10'
+    - '2025-07-11'
+    - '2025-07-14'
+    - '2025-07-15'
+    - '2025-07-16'
+    - '2025-07-17'
+    - '2025-07-18'
+    - '2025-07-21'
+    - '2025-07-22'
+    - '2025-07-23'
+    - '2025-07-24'
+    - '2025-07-25'
+    - '2025-07-28'
+    - '2025-07-29'
+    - '2025-07-30'
+    - '2025-07-31'
+    - '2025-08-01'
+    - '2025-08-04'
+    - '2025-08-05'
+    - '2025-08-06'
+    - '2025-08-07'
+    - '2025-08-08'
+    - '2025-08-11'
+    - '2025-08-12'
+    - '2025-08-13'
+    - '2025-08-14'
+    - '2025-08-15'
+    - '2025-08-18'
+    - '2025-08-19'
+    - '2025-08-20'
+    - '2025-08-21'
+    - '2025-08-22'
+    - '2025-08-26'
+    - '2025-08-27'
+    - '2025-08-28'
+    - '2025-08-29'
+    - '2025-09-01'
+    - '2025-09-02'
+    - '2025-09-03'
+    - '2025-09-04'
+    - '2025-09-05'
+    - '2025-09-08'
+    - '2025-09-09'
+    - '2025-09-10'
+    - '2025-09-11'
+    - '2025-09-12'
+    - '2025-09-15'
+    - '2025-09-16'
+    - '2025-09-17'
+    - '2025-09-18'
+    - '2025-09-19'
+    - '2025-09-22'
+    - '2025-09-23'
+    - '2025-09-24'
+    - '2025-09-25'
+    - '2025-09-26'
+    - '2025-09-29'
+    - '2025-09-30'
+    - '2025-10-01'
+    - '2025-10-02'
+    - '2025-10-03'
+    - '2025-10-06'
+    - '2025-10-07'
+    - '2025-10-08'
+    - '2025-10-09'
+    - '2025-10-10'
+    - '2025-10-13'
+    - '2025-10-14'
+    - '2025-10-15'
+    - '2025-10-16'
+    - '2025-10-17'
+    - '2025-10-20'
+    - '2025-10-21'
+    - '2025-10-22'
+    - '2025-10-23'
+    - '2025-10-24'
+    - '2025-10-27'
+    - '2025-10-28'
+    - '2025-10-29'
+    - '2025-10-30'
+    - '2025-10-31'
+    - '2025-11-03'
+    - '2025-11-04'
+    - '2025-11-05'
+    - '2025-11-06'
+    - '2025-11-07'
+    - '2025-11-10'
+    - '2025-11-11'
+    - '2025-11-12'
+    - '2025-11-13'
+    - '2025-11-14'
+    - '2025-11-17'
+    - '2025-11-18'
+    - '2025-11-19'
+    - '2025-11-20'
+    - '2025-11-21'
+    - '2025-11-24'
+    - '2025-11-25'
+    - '2025-11-26'
+    - '2025-11-27'
+    - '2025-11-28'
+    - '2025-12-01'
+    - '2025-12-02'
+    - '2025-12-03'
+    - '2025-12-04'
+    - '2025-12-05'
+    - '2025-12-08'
+    - '2025-12-09'
+    - '2025-12-10'
+    - '2025-12-11'
+    - '2025-12-12'
+    - '2025-12-15'
+    - '2025-12-16'
+    - '2025-12-17'
+    - '2025-12-18'
+    - '2025-12-19'
+    - '2025-12-22'
+    - '2025-12-23'
+    - '2025-12-24'
+    - '2025-12-29'
+    - '2025-12-30'
+    - '2025-12-31'
+    - '2026-01-02'
+    - '2026-01-05'
+    - '2026-01-06'
+    - '2026-01-07'
+    - '2026-01-08'
+    - '2026-01-09'
+    - '2026-01-12'
+    - '2026-01-13'
+    - '2026-01-14'
+    - '2026-01-15'
+    - '2026-01-16'
+    - '2026-01-19'
+    - '2026-01-20'
+    - '2026-01-21'
+    - '2026-01-22'
+    - '2026-01-23'
+    - '2026-01-26'
+    - '2026-01-27'
+    - '2026-01-28'
+    - '2026-01-29'
+    - '2026-01-30'
+    - '2026-02-02'
+    - '2026-02-03'
+    - '2026-02-04'
+    - '2026-02-05'
+    - '2026-02-06'
+    - '2026-02-09'
+    - '2026-02-10'
+    - '2026-02-11'
+    - '2026-02-12'
+    - '2026-02-13'
+    - '2026-02-16'
+    - '2026-02-17'
+    - '2026-02-18'
+    - '2026-02-19'
+    - '2026-02-20'
+    - '2026-02-23'
+    - '2026-02-24'
+    - '2026-02-25'
+    - '2026-02-26'
+    - '2026-02-27'
+    - '2026-03-02'
+    - '2026-03-03'
+    - '2026-03-04'
+    - '2026-03-05'
+    - '2026-03-06'
+    - '2026-03-09'
+    - '2026-03-10'
+    - '2026-03-11'
+    - '2026-03-12'
+    - '2026-03-13'
+    - '2026-03-16'
+    - '2026-03-17'
+    - '2026-03-18'
+    - '2026-03-19'
+    - '2026-03-20'
+    - '2026-03-23'
+    - '2026-03-24'
+    - '2026-03-25'
+    - '2026-03-26'
+    - '2026-03-27'
+    - '2026-03-30'
+    - '2026-03-31'
+    - '2026-04-01'
+    - '2026-04-02'
+    - '2026-04-07'
+    - '2026-04-08'
+    - '2026-04-09'
+    - '2026-04-10'
+    - '2026-04-13'
+    - '2026-04-14'
+    - '2026-04-15'
+    - '2026-04-16'
+    - '2026-04-17'
+    - '2026-04-20'
+    - '2026-04-21'
+    - '2026-04-22'
+    - '2026-04-23'
+    - '2026-04-24'
+    - '2026-04-27'
+    - '2026-04-28'
+    - '2026-04-29'
+    - '2026-04-30'
+    - '2026-05-01'
+    - '2026-05-05'
+    - '2026-05-06'
+    - '2026-05-07'
+    - '2026-05-08'
+    - '2026-05-11'
+    - '2026-05-12'
+    - '2026-05-13'
+    - '2026-05-14'
+    - '2026-05-15'
+    - '2026-05-18'
+    - '2026-05-19'
+    - '2026-05-20'
+    - '2026-05-21'
+    - '2026-05-22'
+    - '2026-05-26'
+    - '2026-05-27'
+    - '2026-05-28'
+    - '2026-05-29'
+    - '2026-06-01'
+    - '2026-06-02'
+    - '2026-06-03'
+    - '2026-06-04'
+    - '2026-06-05'
+    - '2026-06-08'
+    - '2026-06-09'
+    - '2026-06-10'
+    - '2026-06-11'
+    - '2026-06-12'
+    - '2026-06-15'
+    - '2026-06-16'
+    - '2026-06-17'
+    - '2026-06-18'
+    - '2026-06-19'
+    - '2026-06-22'
+    - '2026-06-23'
+    - '2026-06-24'
+    - '2026-06-25'
+    - '2026-06-26'
+    - '2026-06-29'
+    - '2026-06-30'
+    - '2026-07-01'
+    - '2026-07-02'
+    - '2026-07-03'
+    - '2026-07-06'
+    - '2026-07-07'
+    - '2026-07-08'
+    - '2026-07-09'
+    - '2026-07-10'
+    - '2026-07-13'
+    - '2026-07-14'
+    - '2026-07-15'
+    - '2026-07-16'
+    - '2026-07-17'
+    - '2026-07-20'
+    - '2026-07-21'
+    - '2026-07-22'
+    - '2026-07-23'
+    - '2026-07-24'
+    - '2026-07-27'
+    - '2026-07-28'
+    - '2026-07-29'
+    - '2026-07-30'
+    - '2026-07-31'
+    - '2026-08-03'
+    - '2026-08-04'
+    - '2026-08-05'
+    - '2026-08-06'
+    - '2026-08-07'
+    - '2026-08-10'
+    - '2026-08-11'
+    - '2026-08-12'
+    - '2026-08-13'
+    - '2026-08-14'
+    - '2026-08-17'
+    - '2026-08-18'
+    - '2026-08-19'
+    - '2026-08-20'
+    - '2026-08-21'
+    - '2026-08-24'
+    - '2026-08-25'
+    - '2026-08-26'
+    - '2026-08-27'
+    - '2026-08-28'
+    - '2026-09-01'
+    - '2026-09-02'
+    - '2026-09-03'
+    - '2026-09-04'
+    - '2026-09-07'
+    - '2026-09-08'
+    - '2026-09-09'
+    - '2026-09-10'
+    - '2026-09-11'
+    - '2026-09-14'
+    - '2026-09-15'
+    - '2026-09-16'
+    - '2026-09-17'
+    - '2026-09-18'
+    - '2026-09-21'
+    - '2026-09-22'
+    - '2026-09-23'
+    - '2026-09-24'
+    - '2026-09-25'
+    - '2026-09-28'
+    - '2026-09-29'
+    - '2026-09-30'
+    - '2026-10-01'
+    - '2026-10-02'
+    - '2026-10-05'
+    - '2026-10-06'
+    - '2026-10-07'
+    - '2026-10-08'
+    - '2026-10-09'
+    - '2026-10-12'
+    - '2026-10-13'
+    - '2026-10-14'
+    - '2026-10-15'
+    approved_fact_count: 0
+- id: M15
+  domain: D06
+  key: economy
+  name: Economy
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: CPIH annual percent/month; UK; GDP remains separate gap
+  guardrail: Inflation is a limited macro proxy, not a GDP implementation.
+  candidates:
+  - ons
+  geography:
+  - UK
+  - London
+  historical_coverage:
+  - 2026-08
+  frequency: monthly source releases
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids:
+    - seed-ons-2026-08
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: 'ONS L55O CPIH has a bounded 24-month series. ECYX is monthly GVA growth,
+    not GDP index. Its JSON unit is empty: raw observations retain source_unit_not_stated,
+    no normalized percent assertion. No London GDP series is claimed.'
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - ons
+  - ons-gva
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - 1703cfbb-e914-4dce-bb7f-522cc2ad757d
+    - c6c7ba77-65dc-4a6b-8e93-60b4223d55cb
+    - ec95c7c5-7265-4328-a0d5-a51cd205f7e5
+    - 2171b692-734b-4a35-9886-bd34761e3a03
+    - a8f01dfa-6809-42f9-b199-97de552f3bea
+    - c2129818-a826-4a41-92dd-c2d74787d677
+    - 88b6658c-7598-4859-af1d-7e8d0b5f278d
+    - 2d2c137b-2e04-4dc1-a87e-f742b6fc2711
+    - b56fd8f5-7bbc-4473-9592-c60d87d7610f
+    - d2dde04b-bb19-4be9-8b45-fdc8a0b74d03
+    - 0b0398bc-c8f1-4b33-80ac-f48e193bf717
+    - 3b94ef44-c1bc-4d91-a90f-23e1a9de4371
+    - 634be19d-1834-4b1e-9860-5f5c5bd84018
+    - e3b4206e-9f35-4d61-9f7e-bbf519da0a11
+    - 30b4751a-cd21-4036-a497-6b2abbd0bbc8
+    - 7b0f612f-b783-40e7-b0ad-4fa5c2110fc6
+    - 83b95a03-f671-4be2-82e6-0b0983ca86f2
+    - ef90ff0b-f54a-45dd-a79a-1b1f45906d76
+    - a833bda6-82b2-4cd5-baa7-85acee565e56
+    - e71ef3b6-c3dc-4ef3-96fd-d687f4b35e8b
+    - 2087c7bb-ff37-4b3d-831f-a2ba02851602
+    - fd4d9788-f9cd-47b8-932a-7a02a49752e7
+    - 4b164f10-234c-4f43-b3ca-44bc4dd480d6
+    - 1d95a19a-9b3c-4a59-9fbd-b20907f34848
+    - 12108838-8409-4a03-ae0a-4eb3805c7ecf
+    - 78252a63-2fdb-4adb-b84f-c9dfa6c241fd
+    - 0e967ae2-50a7-4778-90d6-bc8d0153f2c8
+    - 0d20ecf2-805a-483b-a19b-37d3356c5fcd
+    - 0049c48e-8584-4e54-8006-3191cf89781f
+    - 6226018a-57f7-4a92-9fa8-0816c3986c09
+    - 04205f8c-52d1-433b-a07f-f1e6bae7ed97
+    - 924b3e50-091f-429c-85ff-4fe030aef809
+    - 6e5ad8b6-7a99-48e6-b147-53cb6ef11b92
+    - a5e38ed3-9b84-41ea-8195-fb467b90d198
+    - dd587435-b394-4895-8808-c061e498a30e
+    - 041d1bc5-e561-4aae-843e-8611e6e64db6
+    - 3b4874f2-3b11-4a56-81a3-719f77cbf86f
+    - 366de29e-725f-4fa0-b039-7bc540e8fab5
+    - a8ad3648-96ed-47a8-a5c3-bfdea4591c2e
+    - ece6f28d-9c6f-4bd3-84d4-2edb1a9f44d5
+    - a2e8b7d7-132c-4be2-8f25-410802d7cf4f
+    - a4acc0bf-6303-4e3c-8eed-6680cac3ea43
+    - 3072ac04-b233-40be-9e9c-736f2c0a89bf
+    - 75f92a6b-7034-49cc-aec8-411418f0e6a3
+    - 48f4b1c1-a02c-4051-8270-44f2008a13f1
+    - 803d8897-db26-4c2b-b222-b31cd4dab35e
+    - 2659cd20-ad61-4cdf-a9b2-860e9728a6e6
+    - seed-ons-2026-08
+    event_ids: []
+    exact_geography_fact_ids:
+    - 1703cfbb-e914-4dce-bb7f-522cc2ad757d
+    - c6c7ba77-65dc-4a6b-8e93-60b4223d55cb
+    - ec95c7c5-7265-4328-a0d5-a51cd205f7e5
+    - 2171b692-734b-4a35-9886-bd34761e3a03
+    - a8f01dfa-6809-42f9-b199-97de552f3bea
+    - c2129818-a826-4a41-92dd-c2d74787d677
+    - 88b6658c-7598-4859-af1d-7e8d0b5f278d
+    - 2d2c137b-2e04-4dc1-a87e-f742b6fc2711
+    - b56fd8f5-7bbc-4473-9592-c60d87d7610f
+    - d2dde04b-bb19-4be9-8b45-fdc8a0b74d03
+    - 0b0398bc-c8f1-4b33-80ac-f48e193bf717
+    - 3b94ef44-c1bc-4d91-a90f-23e1a9de4371
+    - 634be19d-1834-4b1e-9860-5f5c5bd84018
+    - e3b4206e-9f35-4d61-9f7e-bbf519da0a11
+    - 30b4751a-cd21-4036-a497-6b2abbd0bbc8
+    - 7b0f612f-b783-40e7-b0ad-4fa5c2110fc6
+    - 83b95a03-f671-4be2-82e6-0b0983ca86f2
+    - ef90ff0b-f54a-45dd-a79a-1b1f45906d76
+    - a833bda6-82b2-4cd5-baa7-85acee565e56
+    - e71ef3b6-c3dc-4ef3-96fd-d687f4b35e8b
+    - 2087c7bb-ff37-4b3d-831f-a2ba02851602
+    - fd4d9788-f9cd-47b8-932a-7a02a49752e7
+    - 4b164f10-234c-4f43-b3ca-44bc4dd480d6
+    - 1d95a19a-9b3c-4a59-9fbd-b20907f34848
+    - 12108838-8409-4a03-ae0a-4eb3805c7ecf
+    - 78252a63-2fdb-4adb-b84f-c9dfa6c241fd
+    - 0e967ae2-50a7-4778-90d6-bc8d0153f2c8
+    - 0d20ecf2-805a-483b-a19b-37d3356c5fcd
+    - 0049c48e-8584-4e54-8006-3191cf89781f
+    - 6226018a-57f7-4a92-9fa8-0816c3986c09
+    - 04205f8c-52d1-433b-a07f-f1e6bae7ed97
+    - 924b3e50-091f-429c-85ff-4fe030aef809
+    - 6e5ad8b6-7a99-48e6-b147-53cb6ef11b92
+    - a5e38ed3-9b84-41ea-8195-fb467b90d198
+    - dd587435-b394-4895-8808-c061e498a30e
+    - 041d1bc5-e561-4aae-843e-8611e6e64db6
+    - 3b4874f2-3b11-4a56-81a3-719f77cbf86f
+    - 366de29e-725f-4fa0-b039-7bc540e8fab5
+    - a8ad3648-96ed-47a8-a5c3-bfdea4591c2e
+    - ece6f28d-9c6f-4bd3-84d4-2edb1a9f44d5
+    - a2e8b7d7-132c-4be2-8f25-410802d7cf4f
+    - a4acc0bf-6303-4e3c-8eed-6680cac3ea43
+    - 3072ac04-b233-40be-9e9c-736f2c0a89bf
+    - 75f92a6b-7034-49cc-aec8-411418f0e6a3
+    - 48f4b1c1-a02c-4051-8270-44f2008a13f1
+    - 803d8897-db26-4c2b-b222-b31cd4dab35e
+    - 2659cd20-ad61-4cdf-a9b2-860e9728a6e6
+    - seed-ons-2026-08
+    source_geographies:
+    - United Kingdom
+    periods:
+    - 2024-09
+    - 2024-10
+    - 2024-11
+    - 2024-12
+    - 2025-01
+    - 2025-02
+    - 2025-03
+    - 2025-04
+    - 2025-05
+    - 2025-06
+    - 2025-07
+    - 2025-08
+    - 2025-09
+    - 2025-10
+    - 2025-11
+    - 2025-12
+    - 2026-01
+    - 2026-02
+    - 2026-03
+    - 2026-04
+    - 2026-05
+    - 2026-06
+    - 2026-07
+    - 2026-08
+    approved_fact_count: 0
+- id: M16
+  domain: D06
+  key: employment
+  name: Employment
+  status: api_verified
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: annual London workplace jobs; UK employment rate separately
+  guardrail: Jobs differ from employed residents, office workers and leasing demand.
+  candidates:
+  - nomis-london
+  - ons-employment
+  geography:
+  - UK
+  - London
+  historical_coverage:
+  - '2023'
+  - '2024'
+  - 2026 MAY-JUL
+  frequency: ONS monthly release / Nomis annual release
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids:
+    - seed-ons-employment-2026-MAY-JUL
+    - d5684843-e38c-469f-9f8e-67bf72be977a
+    - 96aea922-a56c-40bc-b0c7-12eb2bfed9bc
+    saved_event_candidates: 0
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: ONS LF24 retains 24 rolling-three-month UK employment-rate observations;
+    Nomis BRES retains actual London workplace jobs for source years. Annual historical
+    jobs are not 2026 real-time office demand.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics:
+  - ONS LF24 rolling periods
+  - Nomis BRES London workplace jobs
+  source_ids:
+  - ons-employment
+  - nomis-london
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids:
+    - df126b7c-2326-4475-98ae-71fb3f17d9c6
+    - 07d5ccfc-305a-4758-9420-de61cf67ed73
+    - 1fc64ef3-e0ea-4966-9082-8ecc12eeff46
+    - d84b15dd-4ee7-4fbf-a1b0-202bc006b25f
+    - d853293d-ac1f-4c65-93c1-ab48da5ec1fd
+    - b3f36cbd-8bec-4d7c-bb13-d6cbfa900e85
+    - f14e47db-eab8-4363-81c3-25460be34c09
+    - b0cac20e-3fea-4b34-ad30-0caac33920b3
+    - ec1cec7c-b6da-434c-b503-11989046eee9
+    - acc66e9b-9004-40df-bd59-544607c84c36
+    - fe775e99-eee4-4baa-9ba5-9832c6843b35
+    - 55e60e03-8a2a-4559-bfe0-07046be45303
+    - 343a4a1b-9b37-4968-b823-1d744092fe7a
+    - daed4b1a-6dfb-4e8c-91c9-84e107cfa643
+    - f14086ee-4171-48a4-9d8d-e16595c88ec7
+    - 883249d8-aef4-42f0-bb35-c066db9afe93
+    - 03f37e30-63ac-43f5-8220-7e12c6c58695
+    - 8a2f8cc9-901d-4cf6-8630-43645755de99
+    - 8523c37a-f15a-4d09-a4c6-0192da642a87
+    - abfcd0c4-d7ff-421b-9411-59db79f648e1
+    - a7a45bef-d2ff-43e0-a03e-c30591418f72
+    - be02ea3e-92b2-485d-8728-608d267d4e0e
+    - 1787ec4d-c616-476e-9497-ac377f93d3b9
+    - 96aea922-a56c-40bc-b0c7-12eb2bfed9bc
+    - d5684843-e38c-469f-9f8e-67bf72be977a
+    - seed-ons-employment-2026-MAY-JUL
+    event_ids: []
+    exact_geography_fact_ids:
+    - df126b7c-2326-4475-98ae-71fb3f17d9c6
+    - 07d5ccfc-305a-4758-9420-de61cf67ed73
+    - 1fc64ef3-e0ea-4966-9082-8ecc12eeff46
+    - d84b15dd-4ee7-4fbf-a1b0-202bc006b25f
+    - d853293d-ac1f-4c65-93c1-ab48da5ec1fd
+    - b3f36cbd-8bec-4d7c-bb13-d6cbfa900e85
+    - f14e47db-eab8-4363-81c3-25460be34c09
+    - b0cac20e-3fea-4b34-ad30-0caac33920b3
+    - ec1cec7c-b6da-434c-b503-11989046eee9
+    - acc66e9b-9004-40df-bd59-544607c84c36
+    - fe775e99-eee4-4baa-9ba5-9832c6843b35
+    - 55e60e03-8a2a-4559-bfe0-07046be45303
+    - 343a4a1b-9b37-4968-b823-1d744092fe7a
+    - daed4b1a-6dfb-4e8c-91c9-84e107cfa643
+    - f14086ee-4171-48a4-9d8d-e16595c88ec7
+    - 883249d8-aef4-42f0-bb35-c066db9afe93
+    - 03f37e30-63ac-43f5-8220-7e12c6c58695
+    - 8a2f8cc9-901d-4cf6-8630-43645755de99
+    - 8523c37a-f15a-4d09-a4c6-0192da642a87
+    - abfcd0c4-d7ff-421b-9411-59db79f648e1
+    - a7a45bef-d2ff-43e0-a03e-c30591418f72
+    - be02ea3e-92b2-485d-8728-608d267d4e0e
+    - 1787ec4d-c616-476e-9497-ac377f93d3b9
+    - 96aea922-a56c-40bc-b0c7-12eb2bfed9bc
+    - d5684843-e38c-469f-9f8e-67bf72be977a
+    - seed-ons-employment-2026-MAY-JUL
+    source_geographies:
+    - London (workplace)
+    - United Kingdom
+    periods:
+    - '2023'
+    - '2024'
+    - 2024 AUG-OCT
+    - 2024 DEC-FEB
+    - 2024 JUL-SEP
+    - 2024 JUN-AUG
+    - 2024 NOV-JAN
+    - 2024 OCT-DEC
+    - 2024 SEP-NOV
+    - 2025 APR-JUN
+    - 2025 AUG-OCT
+    - 2025 DEC-FEB
+    - 2025 FEB-APR
+    - 2025 JAN-MAR
+    - 2025 JUL-SEP
+    - 2025 JUN-AUG
+    - 2025 MAR-MAY
+    - 2025 MAY-JUL
+    - 2025 NOV-JAN
+    - 2025 OCT-DEC
+    - 2025 SEP-NOV
+    - 2026 APR-JUN
+    - 2026 FEB-APR
+    - 2026 JAN-MAR
+    - 2026 MAR-MAY
+    - 2026 MAY-JUL
+    approved_fact_count: 0
+- id: M17
+  domain: D07
+  key: flight_to_quality
+  name: Flight-to-quality
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: qualitative attributable statement; Grade A share separately
+  guardrail: High Grade A share does not prove rental premium or willingness to pay.
+  candidates:
+  - jll
+  - savills
+  - cbre
+  - gpe
+  - britishland
+  - bnp
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage: No verified structured target series
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids: []
+    saved_event_candidates: 21
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: Real report text supports qualitative flight-to-quality candidates.
+    No invented quality index or premium causality; candidates and interpretations
+    remain unreviewed.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  - gpe
+  - britishland
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids: []
+    event_ids:
+    - 3ce392c9-cbcc-4068-bc0a-271479f8498f
+    - 80291262-760b-4afe-8f79-ba73912ab9d8
+    exact_geography_fact_ids: []
+    source_geographies: []
+    periods: []
+    approved_fact_count: 0
+- id: M18
+  domain: D07
+  key: esg
+  name: ESG
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: property EPC / qualitative market demand separately
+  guardrail: EPC token/license required; building certificate is not market-wide ESG
+    demand.
+  candidates:
+  - jll
+  - savills
+  - cbre
+  - epc-nondomestic
+  - gpe
+  - britishland
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage: No verified structured target series
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids: []
+    saved_event_candidates: 21
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - EPC token
+  - verified_property_records
+  - market_demand_evidence
+  api_key_required: true
+  paid_subscription_required: not established
+  limitation: Real sustainability/BREEAM report and owner text is retrievable. EPC
+    remains blocked without LONDON_EPC_TOKEN; property certificates do not prove market-wide
+    occupier preferences.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - epc-nondomestic
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  - gpe
+  - britishland
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids: []
+    event_ids:
+    - c29add77-2044-466d-9cb6-7ce1af2a2344
+    - 019afe85-d21f-4036-b436-7c62c3aaa330
+    - 49c88971-5536-4892-8e7e-86d354b84be7
+    - e59d1320-c897-4037-8926-eb8a022da72f
+    - 90078a2f-5550-4be9-b135-11aec096f9eb
+    - 1b314f9b-7e79-49e8-b42b-cbadaf08ce3a
+    - 821369f1-cdf7-4572-b238-d40767e45492
+    - 4503bfeb-4cc0-46ed-8c11-cf94cfda642c
+    - e51ba1a1-559b-4fca-8b87-6dfc6160be7e
+    - 4a06c611-3f29-40e8-8be3-4449c33d7453
+    - e110abd4-904e-41f4-b001-e7d289969057
+    - f9d74fad-4626-4951-8c00-f4a1cdf1869f
+    - a62345bb-e387-4309-a59c-87bf50e95273
+    - 8e7fd3f7-31fd-429f-90fe-a9b3869ef1e6
+    - bc2c960e-0f04-41f0-8edb-a86ec59cf0d2
+    - efc979f1-5bfd-4044-9c09-633a5e2141e8
+    - b877aec3-9eb3-40f2-9209-4bb82097aed4
+    - f3d72b63-5825-4959-b932-15e972a6d8c2
+    - 5ee879e8-a059-4ada-8727-07a41b85d08c
+    - b798b8ab-e40d-46f4-834a-1ae784903c65
+    exact_geography_fact_ids: []
+    source_geographies: []
+    periods: []
+    approved_fact_count: 0
+- id: M19
+  domain: D07
+  key: hybrid_working
+  name: Hybrid working
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: qualitative evidence with publication date
+  guardrail: No fabricated occupancy or causal demand estimate.
+  candidates:
+  - jll
+  - savills
+  - cbre
+  - bbc-rss
+  - bnp
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage: No verified structured target series
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids: []
+    saved_event_candidates: 21
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - current_2026_london_series
+  - independent_submarket_measurement
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: ONS source dated 2023-02-13 covers Sep 2022–Jan 2023; owner text is
+    supplementary qualitative evidence. It is historical evidence, not a 2026 London/submarket
+    hybrid-working series.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - ons-hybrid
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids: []
+    event_ids:
+    - ceedaf42-21f5-4fab-9bcf-00c83962c2b6
+    - 1ed99b8c-425c-4327-9786-0add62695ca6
+    - 1ca237fa-8fed-4c49-923a-ab4e1275c096
+    - 1f6c6731-7421-4689-8695-d5f333f06c98
+    exact_geography_fact_ids: []
+    source_geographies: []
+    periods: []
+    approved_fact_count: 0
+- id: M20
+  domain: D07
+  key: market_news
+  name: Market news
+  status: partial
+  priority:
+  - free_official_api_or_open_data
+  - authoritative_web_report
+  - evidence_bound_model
+  - explicit_gap
+  target_fields: *id001
+  units_and_definition: dated attributable relevant London CRE event
+  guardrail: General business news requires relevance filtering; not a complete deal
+    database.
+  candidates:
+  - bbc-rss
+  - gpe
+  - britishland
+  - jll
+  - savills
+  - cbre
+  geography:
+  - City
+  - West End
+  - Canary Wharf
+  - Midtown / Fringe
+  historical_coverage: No verified structured target series
+  frequency: publisher-defined; research typically quarterly; not a guaranteed source
+    SLA
+  verification:
+  - receipt: docs\delivery\poc-20261018-200834\public-sources.json
+    at: '2026-10-18T12:16:10.016667+00:00'
+    kind: current_free_acquisition
+  - saved_fact_ids: []
+    saved_event_candidates: 21
+    kind: saved_source_coverage_not_automatic_approval
+  missing_fields:
+  - full_methodology
+  - complete_submarket_history
+  api_key_required: false
+  paid_subscription_required: not established
+  limitation: Publisher reports, owner articles and RSS provide source-located candidate
+    news. Bounded article discovery and keyword classification are not an exhaustive
+    semantic news/deal database.
+  integration: Existing london_product.sources/service/structured_sources; no replacement
+    framework
+  verified_submetrics: []
+  source_ids:
+  - jll
+  - savills-html
+  - savills
+  - cbre
+  - bnp
+  - gpe
+  - britishland
+  - citylondon
+  - bbc-rss
+  acquisition_entry: MarketService.refresh -> indicator_ingestion / structured_sources;
+    no new monitoring engine
+  coverage_entry: GET /api/market/coverage
+  runtime_coverage_status: partial
+  verified_at: '2026-10-18T13:16:46.184805+00:00'
+  current_evidence:
+    receipt: docs\delivery\poc-20261018-205425\indicator-acceptance.json
+    fact_ids: []
+    event_ids:
+    - c29add77-2044-466d-9cb6-7ce1af2a2344
+    - ceedaf42-21f5-4fab-9bcf-00c83962c2b6
+    - 019afe85-d21f-4036-b436-7c62c3aaa330
+    - 1770739d-fdb1-4370-ba35-3ac477fbdd7e
+    - e022b754-2e2a-4334-a117-326e89a202f4
+    - b401850f-151f-4141-9ba4-0e37ff291c15
+    - ec398fdf-1403-4f0a-bc4f-d2185bff9131
+    - 49c88971-5536-4892-8e7e-86d354b84be7
+    - b44cb3c1-3208-4bbe-8925-6b2dc5a29899
+    - e59d1320-c897-4037-8926-eb8a022da72f
+    - 46bf2b08-e263-412c-afa0-caaa5ac6f8ee
+    - 90078a2f-5550-4be9-b135-11aec096f9eb
+    - 31e489fa-3a49-47e0-a568-f582780979cb
+    - fa0c7317-3c79-438e-b0c7-e7bc0ab4e97e
+    - 78df16ac-7ef2-4ac5-a88d-e9ce1c95a26b
+    - 1b314f9b-7e79-49e8-b42b-cbadaf08ce3a
+    - 63c355fb-696e-44f5-86c2-2409b323c975
+    - 1ed99b8c-425c-4327-9786-0add62695ca6
+    - f504b73a-e6cd-48e0-8b97-2fdf9492c3f4
+    - 71cc3908-b36b-4ee4-8372-93d24cef057f
+    - 0c83fc67-99ad-4593-9b5e-45a5c2c76b53
+    - 821369f1-cdf7-4572-b238-d40767e45492
+    - 4503bfeb-4cc0-46ed-8c11-cf94cfda642c
+    - e51ba1a1-559b-4fca-8b87-6dfc6160be7e
+    - 1ca237fa-8fed-4c49-923a-ab4e1275c096
+    - bee5e51f-61da-4174-9879-44d33f45641b
+    - 17f05021-6aa2-48b7-b770-238657152423
+    - ae315916-762c-431e-948c-9e0a492d7052
+    - 4a06c611-3f29-40e8-8be3-4449c33d7453
+    - ec5c9027-3c0a-44a6-b97b-2a37914e714a
+    - 6f9c3fc6-59c1-4869-b00f-22c6d37aa1c6
+    - e110abd4-904e-41f4-b001-e7d289969057
+    - 7bb94695-41f4-4fb4-a315-5d1fdc72019e
+    - f9d74fad-4626-4951-8c00-f4a1cdf1869f
+    - b4eb4ac2-c23f-450a-b442-5cd3a085aad4
+    - a62345bb-e387-4309-a59c-87bf50e95273
+    - ea79a641-3033-4596-a7b6-544b7726e0b5
+    - 73ae793e-238e-4fd9-8aec-d37a75ede15c
+    - 76983801-e5b2-456f-ae38-c2b332ff07c1
+    - 1f6c6731-7421-4689-8695-d5f333f06c98
+    - 7cd6ac8d-827e-43c9-a41b-513b1511389f
+    - 62a6f8f1-d7cf-42b7-aaec-f9cdab3bb709
+    - ee6eb1c9-5d6c-49b4-9077-8abcf46094fb
+    - cf6608fe-1f0e-4cc7-9b2c-c15fdb0668f7
+    - 3126cae9-77bf-487e-94c2-304cb465f6f5
+    - 8e7fd3f7-31fd-429f-90fe-a9b3869ef1e6
+    - 6244b171-b1a8-45c1-9d2c-c3ee896bb968
+    - bc2c960e-0f04-41f0-8edb-a86ec59cf0d2
+    - 805c5d64-e957-4431-aabe-5f9ca5cfeb1b
+    - a90b17cf-80cc-499d-b7ba-b0f644a6a2da
+    - efc979f1-5bfd-4044-9c09-633a5e2141e8
+    - 1540a7c4-25ba-44f7-abf6-95ef4eff85f7
+    - 37e361e9-3c37-448d-b018-eb0df1748768
+    - b877aec3-9eb3-40f2-9209-4bb82097aed4
+    - 3ce392c9-cbcc-4068-bc0a-271479f8498f
+    - ba74a43c-a0db-42e4-871b-0179bccd8f48
+    - f3d72b63-5825-4959-b932-15e972a6d8c2
+    - 80291262-760b-4afe-8f79-ba73912ab9d8
+    - 29e024bc-587d-490a-bacc-211d5e41638f
+    - 680e229f-089d-4e52-81c9-c328c732e014
+    - 5ee879e8-a059-4ada-8727-07a41b85d08c
+    - 30e9726d-6c91-4109-87dd-c8d2528781fc
+    - 977f827e-a069-4c81-9a8b-8df3d53a3fba
+    - d978da96-2ff0-4084-b876-ceb493fa1388
+    - e8c9c828-de19-4051-ad12-fe1187d2c68b
+    - 0b7a2da4-6a39-4e74-9ac4-bc846e9c02e9
+    - b798b8ab-e40d-46f4-834a-1ae784903c65
+    - 9cc5f3ea-9bd5-457a-b9b7-91cf6a30dccf
+    - c584c1a9-4ad5-4360-85f2-ed34d6736ae2
+    - 73a4cc5b-5e56-4742-9737-4252cc5d8dae
+    - 791e8069-4366-45b7-8e89-4311e399da20
+    - ef12ba83-324a-45f1-bc5a-a09f796a14b6
+    - d95bf6d1-3396-4cd3-a635-591c24d4d83e
+    - 9b1776cb-216c-473e-b150-3313f3bc7cd7
+    - 8cf9f263-8c20-4a77-9772-5efca736681c
+    - a79671af-459a-4d6f-a557-6966c4155a21
+    exact_geography_fact_ids: []
+    source_geographies: []
+    periods: []
+    approved_fact_count: 0
+last_verified_at: '2026-10-18T12:16:10.016667+00:00'

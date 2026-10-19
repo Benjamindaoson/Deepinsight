@@ -1,7 +1,7 @@
 import type { PublisherReportedChange } from './chat-evidence'
 
 export const MARKET_API = (
-  process.env.NEXT_PUBLIC_MARKET_API_URL || 'http://127.0.0.1:7780/api/market'
+  process.env.NEXT_PUBLIC_MARKET_API_URL || 'http://127.0.0.1:8000/api/market'
 ).replace(/\/$/, '')
 export type Fact = {
   id: string
@@ -50,6 +50,33 @@ export type Job = {
   source_id?: string
   document_id?: string
   result?: { report_id?: string; [key: string]: unknown }
+  plan?: {
+    scope: {
+      geographies: string[]
+      metrics: string[]
+      observation_period?: string | null
+      requested_periods?: string[]
+    }
+    decision: string
+    nodes: {
+      id: string
+      status: string
+      required: boolean
+      depends_on: string[]
+    }[]
+    next_checks: unknown[]
+    adaptation?: {
+      missing_cells: number
+      deferred_cells: number
+      passes: number
+      limit: number
+      decision: string
+    }
+  }
+  checkpoints?: Record<
+    string,
+    { status: string; reused?: boolean; elapsed_ms?: number }
+  >
 }
 export type MarketEvent = Partial<PublisherReportedChange> & {
   id: string
@@ -80,6 +107,8 @@ export type Report = {
   created_at: string
   period: string
   status?: string
+  report_type?: string
+  generation_status?: string
   markdown_url?: string
   html_url?: string
 }
@@ -107,6 +136,7 @@ export type Settings = {
   vacancy_threshold_pp?: number
   notification_configured: boolean
   monitoring_enabled?: boolean
+  monitor_analysis_enabled?: boolean
   geographies: string[]
   metrics: string[]
   schedules?: {

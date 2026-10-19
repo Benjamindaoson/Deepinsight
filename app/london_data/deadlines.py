@@ -2,6 +2,7 @@
 import queue
 import threading
 import time
+from contextvars import copy_context
 
 
 def call_until(fn,deadline,on_timeout=None):
@@ -11,7 +12,8 @@ def call_until(fn,deadline,on_timeout=None):
     def work():
         try:result.put((True,fn()))
         except BaseException as exc:result.put((False,exc))
-    threading.Thread(target=work,daemon=True,name='b1-bounded-io').start()
+    context=copy_context()
+    threading.Thread(target=lambda:context.run(work),daemon=True,name='b1-bounded-io').start()
     try:ok,value=result.get(timeout=remaining)
     except queue.Empty:
         if on_timeout:

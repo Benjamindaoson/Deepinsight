@@ -21,7 +21,7 @@ def test_planning_api_requires_office_evidence_and_preserves_status(tmp_path):
     body = json.dumps({'hits': {'hits': [
         {'_id': 'CITY-1', '_source': {'lpa_name': 'City of London',
          'description': 'Additional office floorspace (Use Class E) at 1 Example Street.',
-         'status': 'Pending decision', 'lpa_app_no': '26/0001'}},
+         'status': 'Pending decision', 'lpa_app_no': '26/0001', 'last_updated':'2026-10-18T10:00:00Z'}},
         {'_id': 'CITY-2', '_source': {'lpa_name': 'City of London',
          'description': 'Home office extension on Example Road.', 'status': 'Approved'}},
         {'_id': 'CITY-3', '_source': {'lpa_name': 'Westminster',
@@ -39,6 +39,17 @@ def test_planning_api_requires_office_evidence_and_preserves_status(tmp_path):
     assert event['evidence']['locator'] == 'json:/hits/hits/0/_source/description'
     assert event['document_id'] == doc['id']
     assert event['interpretation_limit'].startswith('Planning status is not')
+    assert event.get('published_at') is None
+    assert event.get('source_updated_at')=='2026-10-18T10:00:00Z'
+
+
+def test_legacy_planning_update_date_is_not_published_date():
+    from london_product.structured_sources import current_event
+    original=dict(source_id='planning-api-city',published_at='2026-10-18T10:00:00Z')
+    shown=current_event(original)
+    assert shown['published_at'] is None
+    assert shown['source_updated_at']=='2026-10-18T10:00:00Z'
+    assert original['published_at']=='2026-10-18T10:00:00Z'
 
 
 def test_nomis_annual_jobs_not_office_demand_and_idempotent(tmp_path):

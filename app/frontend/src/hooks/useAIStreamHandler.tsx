@@ -151,6 +151,49 @@ const useAIChatStreamHandler = () => {
       let completedRun: string | undefined
       try {
         const endpointUrl = constructEndpointUrl(selectedEndpoint)
+        if (guarded) {
+          const previousReport = [...useStore.getState().messages]
+            .reverse()
+            .find((m) => m.reportId)?.reportId
+          const focusedResponse = await fetch(
+            `${endpointUrl}/api/market/conversation`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
+              },
+              body: JSON.stringify({
+                message: formData.get('message'),
+                session_id: sessionId,
+                parent_report_id: previousReport
+              }),
+              signal: controller.current.signal
+            }
+          )
+          if (!focusedResponse.ok)
+            throw new Error(
+              `Conversation operation failed (${focusedResponse.status}). Open the report and use Ask a follow-up.`
+            )
+          const focused = await focusedResponse.json()
+          if (focused.handled) {
+            terminal = true
+            setMessages((prev) =>
+              prev.map((m, i) =>
+                i === prev.length - 1
+                  ? {
+                      ...m,
+                      content: focused.answer,
+                      reportId: focused.report_id,
+                      operation: focused.operation,
+                      streamingError: false
+                    }
+                  : m
+              )
+            )
+            return
+          }
+        }
 
         let RunUrl: string | null = null
 
@@ -460,7 +503,8 @@ const useAIChatStreamHandler = () => {
                 ? {
                     ...message,
                     content: publication.answer,
-                    publicationOrigin: publication.answer_origin
+                    publicationOrigin: publication.answer_origin,
+                    reportId: publication.report_id
                   }
                 : message
             )

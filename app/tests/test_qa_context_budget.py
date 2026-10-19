@@ -51,7 +51,8 @@ def test_real_evidence_search_is_bounded_and_deduplicated_per_run(tmp_path):
     assert not ({e['id'] for e in a['events']} & {e['id'] for e in b['events']})
     for result in [a, b]:
         for fact in result['facts']:
-            saved = service.store.get('facts', fact['id'])
+            from london_product.normalization import current_fact
+            saved = current_fact(service.store.get('facts', fact['id']))
             for key in ['value', 'unit', 'definition', 'status', 'period', 'evidence']:
                 assert fact[key] == saved.get(key)
             assert result['documents'][fact['document_id']]['url'] == service.store.get('documents', fact['document_id'])['url']

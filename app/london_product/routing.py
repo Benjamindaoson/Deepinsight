@@ -6,6 +6,25 @@ ANALYSIS = re.compile(r'为什么|原因|风险|机会|分析|预测|展望|建�
 LOOKUP_VERB = re.compile(r'查看|显示|列出|查找|查询|多少|最新|比较|对比|数据|记录|状态|show|list|find|lookup|what is|latest|compare|data|record|status', re.I)
 
 
+def request_action(question, has_context=False):
+    """Classify explicit operations before model selection; ambiguity stays with the Agent."""
+    if re.search(r'\b(?:new|prepare|generate|create|write|replacement)\b.*\b(?:report|briefing)\b|生成.*报告|新.*报告', question, re.I):
+        return 'new_report'
+    if re.search(r'\baudit\b|核查|审计', question, re.I):
+        return 'evidence_audit'
+    if re.search(r'\b(?:schedule|scheduled)\b|定时|调度', question, re.I) and re.search(r'create|set up|enable|daily|创建',question,re.I):
+        return 'schedule_request'
+    if re.search(r'\b(?:monitoring|monitor|job|scheduled run)\b|监测任务', question, re.I):
+        return 'monitoring_status'
+    if re.search(r'previous (?:report|answer)|this source|pending review|what is missing|evidence (?:for|behind|supporting)|explain.*(?:figure|rent)|上一.*(?:报告|回答)',question,re.I):
+        return 'follow_up'
+    if has_context and re.search(r'\b(?:why|explain|what about)\b',question,re.I):
+        return 'follow_up'
+    if not ANALYSIS.search(question) and LOOKUP.search(question) and re.search(r'what|show|which|latest|多少|最新|查看',question,re.I):
+        return 'data_question'
+    return 'model_analysis'
+
+
 def route_question(question: str) -> dict:
     """Use local snapshots for bounded lookups; reserve AI for interpretation.
 

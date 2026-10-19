@@ -1,26 +1,15 @@
-"""Deterministic derived fields; raw model/source values are never rewritten.
+"""Deterministic derived fields; annual rent requires explicit source wording.
 
-Rent annualisation is the one place where the product accepts an industry
-convention. London office headline rents are quoted per square foot per annum;
-publishers frequently omit the words "per annum" in the headline table. The
-product therefore records *how* the annual basis was established instead of
-silently assuming it:
-
-  explicit            the quotation itself states per annum / per year / p.a.
-  industry_convention the quotation omits it but the unit is an area rent
-  unknown             neither, or the metric is rent with no area unit
-
-Convention-derived values stay `pending_review`, are flagged, and are shown with
-the assumption in the UI and in every answer. They are never silently promoted,
-and a reviewer must write a note to approve one.
+Raw values are preserved. Model-provided units and industry convention cannot
+supply a missing time denominator, including for legacy approved observations.
 """
 import re
 from decimal import Decimal
 from london_data.contracts import source_precision
 
-VERSION = 'product-normalization-v4'
+VERSION = 'product-normalization-v5-explicit-annual'
 
-ANNUAL_PATTERN = re.compile(r'per\s+annum|per\s+year|/\s*year|p\.?\s?a\.?\b|每年|年租金', re.I)
+ANNUAL_PATTERN = re.compile(r'\bper\s+annum\b|\bper\s+year\b|/\s*(?:year|annum)\b|\bp\.?\s?a\.?\b|每年|年租金', re.I)
 AREA_RENT_PATTERN = re.compile(
     r'(?:gbp|£)\s*[0-9.,]*\s*(?:/|per)\s*(?:sq|square)'
     r'|per\s+(?:sq|square)\s*\.?\s*(?:ft|foot|feet|m)\b'
@@ -32,10 +21,8 @@ def annualization(value, unit=None, quote=''):
     """Classify the annual basis of a rent observation; never guesses a number."""
     quote = quote or ''
     unit = unit or ''
-    if ANNUAL_PATTERN.search(quote) or unit in YEAR_UNITS:
+    if ANNUAL_PATTERN.search(quote):
         return 'explicit'
-    if AREA_RENT_PATTERN.search(unit) or AREA_RENT_PATTERN.search(quote):
-        return 'industry_convention'
     return 'unknown'
 
 
@@ -71,13 +58,11 @@ def derive(fact):
     verified = value is not None and precision != 'unknown'
     is_rent = fact.get('metric') == 'rent'
     basis = annualization(value, unit, quote) if is_rent else 'not_applicable'
-    annual = (not is_rent) or basis in ('explicit', 'industry_convention')
+    annual = (not is_rent) or basis == 'explicit'
     if not verified:
         notes.append('NUMERIC_VALUE_NOT_BOUND_TO_QUOTE')
     if is_rent and basis == 'unknown':
         notes.append('ANNUAL_TIME_DENOMINATOR_NOT_CONFIRMED')
-    if is_rent and basis == 'industry_convention':
-        notes.append('ANNUAL_BASIS_ASSUMED_BY_CONVENTION')
     if is_rent and annual:
         lowered = (unit or '').lower()
         per_sqm = 'sqm' in lowered or 'sq m' in lowered or 'sq.m' in lowered
@@ -93,5 +78,16 @@ def derive(fact):
         normalization_version=VERSION, normalization_notes=notes,
         annualization=basis,
         annualization_assumption=('来源原文明确按年' if basis == 'explicit'
-            else '行业惯例：伦敦写字楼租金按每年每平方英尺计，来源未明示，需人工确认' if basis == 'industry_convention'
             else '无法确认年度分母' if is_rent else '不适用'))
+
+
+def current_fact(fact):
+    """Read projection: enforce the current contract without rewriting history."""
+    if fact.get('metric') != 'rent':
+        return fact
+    derived = derive(fact)
+    result = dict(fact, **derived)
+    if derived['annualization'] != 'explicit' and fact.get('status') not in ['rejected', 'superseded']:
+        result.update(status='needs_review', human_review_status='pending_review', annual_basis_blocked=True,
+                      stored_status=fact.get('status'), stored_human_review_status=fact.get('human_review_status'))
+    return result

@@ -100,8 +100,8 @@ export function reviewLabel(status?: string) {
     (
       {
         approved: 'Approved',
-        pending_review: 'Pending review · 待核实',
-        needs_review: 'Needs review · 待核实',
+        pending_review: 'Pending review · unverified',
+        needs_review: 'Needs review · unverified',
         rejected: 'Rejected'
       } as Record<string, string>
     )[status || ''] || 'Unknown review status'

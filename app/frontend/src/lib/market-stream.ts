@@ -1,3 +1,4 @@
+import type { ReportArtifact } from './report-artifact'
 export type Citation = {
   fact_id?: string
   id?: string
@@ -10,11 +11,27 @@ export type Citation = {
 export type MarketStreamEvent =
   | { type: 'token'; content: string }
   | {
+      type: 'progress'
+      stage: string
+      message: string
+      submission_id?: string
+      job_id?: string
+    }
+  | { type: 'report'; report: ReportArtifact; report_id: string }
+  | {
       type: 'done'
       citations?: Citation[]
       run_id?: string
       submission_id?: string
-      metrics?: { model_requests?: number; route?: { mode?: 'saved' | 'agent' } }
+      report_id?: string
+      research_job_id?: string
+      skill_calls?: { skill: string; datasource: string }[]
+      as_of?: string | null
+      disclaimer?: string
+      metrics?: {
+        model_requests?: number
+        route?: { mode?: 'saved' | 'agent' | 'research' }
+      }
     }
   | { type: 'error'; message?: string }
 
@@ -38,7 +55,8 @@ export async function readMarketStream(
     if (event.type === 'done') completed = true
     if (event.type === 'error')
       throw new Error(event.message || 'The native agent reported an error.')
-    if (event.type === 'token' || event.type === 'done') onEvent(event)
+    if (['token', 'done', 'progress', 'report'].includes(event.type))
+      onEvent(event)
   }
   try {
     while (true) {

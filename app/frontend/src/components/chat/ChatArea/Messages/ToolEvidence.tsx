@@ -28,10 +28,10 @@ export default function ToolEvidence({ tool }: { tool: ToolCall }) {
           </p>
           {pack.publisherReportedChanges.length > 0 && (
             <section aria-label="Publisher-reported changes" className="my-3">
-              <h3>Publisher-reported changes · 机构原文披露变化</h3>
+              <h3>Publisher-reported changes</h3>
               <p>
                 Attributed source statements, not system-calculated changes or
-                independently verified facts. 人工审核状态保持不变。
+                independently verified facts. Human review status is unchanged.
               </p>
               {pack.publisherReportedChanges.map((change) => (
                 <details key={change.id} className="mt-3">

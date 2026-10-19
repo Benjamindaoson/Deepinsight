@@ -66,7 +66,10 @@ def test_provider_raw_usage_and_body_survive_parse(tmp_path):
     chunk=ChatCompletionChunk(id='offline',created=1,model=model.id,object='chat.completion.chunk',
         choices=[dict(index=0,delta={'content':'Unapproved source observation'},finish_reason=None)],
         usage={'prompt_tokens':120,'completion_tokens':1801,'total_tokens':1921})
-    model._parse_provider_response_delta(chunk)
+    parsed=model._parse_provider_response_delta(chunk)
+    # Parsing may run in a provider worker without the run-owned ContextVar.
+    # The calling stream retains the carried wire receipt in its own budget.
+    model._retain_wire(parsed)
     saved=receipt(tmp_path)
     assert saved['calls'][0]['raw_provider_usage'][-1]['completion_tokens']==1801
     assert saved['calls'][0]['raw_response_text']=='Unapproved source observation'

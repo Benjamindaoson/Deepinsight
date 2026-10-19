@@ -196,6 +196,8 @@ export interface ReasoningMessage {
   created_at?: number
 }
 export interface ChatMessage {
+  reportId?: string
+  operation?: string
   publicationOrigin?: string
   role: 'user' | 'agent' | 'system' | 'tool'
   content: string

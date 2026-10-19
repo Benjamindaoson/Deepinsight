@@ -15,7 +15,7 @@ const MessageArea = () => {
       initial="smooth"
     >
       <StickToBottom.Content className="flex min-h-full flex-col">
-        <div className="chat-messages mx-auto w-full max-w-[800px] space-y-7 px-5">
+        <div className="chat-messages mx-auto w-full max-w-[800px] space-y-7 px-5 has-[[data-report-id]]:max-w-[1160px]">
           <Messages messages={messages} />
         </div>
       </StickToBottom.Content>

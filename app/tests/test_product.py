@@ -76,6 +76,13 @@ def test_threshold_events_require_review_and_deduplicate(tmp_path):
         unit='percent',status='validated',human_review_status='approved')
     s.put('facts','old',dict(base,id='old',value='8.0',period='2026Q1'))
     s.put('facts','new',dict(base,id='new',value='8.6',period='2026Q2'))
+    s.put('sources','test',dict(id='test',name='Synthetic fixture',allow_llm=True))
+    for identity in ['old','new']:
+        fact=s.get('facts',identity)
+        quote=f"Synthetic fixture {fact['period']} vacancy {fact['value']} percent."
+        doc=s.snapshot(dict(id='test'),'https://example.org/synthetic/'+identity,quote.encode(),
+            'text/plain',[dict(text=quote,page=1,locator='fixture:1')])
+        s.update('facts',identity,dict(document_id=doc['id'],evidence=dict(quote=quote,page=1,locator='fixture:1')))
     result=svc.monitor_changes()
     assert result['alerts']==1
     assert svc.monitor_changes()['alerts']==1
@@ -117,10 +124,10 @@ def test_explicit_scale_normalization_records_rent_annual_basis():
     # headline rents are quoted per sq ft per annum by convention. The value is
     # used and the assumption is recorded, never silently applied.
     rent=derive(dict(metric='rent',value='95',unit='GBP/sqft',period='2026Q2',evidence={'quote':'Prime rents £95 per sq ft.'}))
-    assert rent['annualization']=='industry_convention'
-    assert rent['normalized_value']=='95' and rent['normalized_unit']=='GBP/sqft/year'
-    assert 'ANNUAL_BASIS_ASSUMED_BY_CONVENTION' in rent['normalization_notes']
-    assert 'ANNUAL_TIME_DENOMINATOR_NOT_CONFIRMED' not in rent['normalization_notes']
+    assert rent['annualization']=='unknown'
+    assert rent['normalized_value'] is None
+    assert rent['normalized_unit']=='GBP/sqft/unknown'
+    assert 'ANNUAL_TIME_DENOMINATOR_NOT_CONFIRMED' in rent['normalization_notes']
     # An explicit annual basis is recorded differently and needs no assumption.
     annual=derive(dict(metric='rent',value='95',unit='GBP/sqft',period='2026Q2',evidence={'quote':'Prime rents £95 per sq ft per annum.'}))
     assert annual['annualization']=='explicit'
