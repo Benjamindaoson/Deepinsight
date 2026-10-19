@@ -49,3 +49,11 @@ test('offline: restoring failed native history never promotes its saved draft', 
   )
   assert.equal(restoredRunError({ status: 'COMPLETED' }), '')
 })
+
+test('quota exhaustion is actionable and does not imply a model answer', () => {
+  for (const raw of ['PROVIDER_QUOTA_EXHAUSTED', 'insufficient_user_quota', '账户余额或套餐额度不足']) {
+    assert.match(chatFailureCopy(raw), /balance or plan quota is exhausted/)
+    assert.match(explainChatError(raw), /PROVIDER_QUOTA_EXHAUSTED/)
+    assert.match(explainChatError(raw), /no automatic retry/i)
+  }
+})

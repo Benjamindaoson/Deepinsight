@@ -1,162 +1,54 @@
-# DeepInsight Lite - London Office Market Agent
+# DeepInsight Lite — London Office Market Agent
 
-**B路线：基于 Agno 框架的快速开发**
+> **GitHub source snapshot:** this checkout contains the application source,
+> tests, and a saved public-evidence fixture. The accepted local frozen release
+> under `docs/delivery/`, live databases, original documents, and credentials
+> are intentionally not published. For a fresh clone, use the explicit offline
+> source path in [PUBLISHING.md](PUBLISHING.md); the formal local launch below
+> requires the separately verified frozen release. The integration boundary
+> is documented in
+> [CURRENT_RUNTIME_AND_INTEGRATION.md](docs/architecture/CURRENT_RUNTIME_AND_INTEGRATION.md).
 
-项目路径: `D:\deepinsight-lite`
+在原验收主机上的正式本地产品地址为 **http://127.0.0.1:3105**，API 为 **http://127.0.0.1:7788**。该主机的冻结版本由 Git 忽略的 `docs/delivery/ACTIVE_RELEASE.json` 指定；全新克隆不会自动取得它。
 
----
+- [公开源码的运行及资料边界](PUBLISHING.md)
+- [当前运行架构与整合边界](docs/architecture/CURRENT_RUNTIME_AND_INTEGRATION.md)
+- [Agno 运行结构图](docs/architecture/agno-runtime-audit-20261019-v2.html)
 
-## 项目状态
+正式版本的运行说明、真实浏览器和模型验收、文件哈希与独立复核资料保存在原验收主机的 `docs/delivery/unified-release-20261019-r1/`，本公开源码仓库不包含该目录。不能用这些历史记录直接证明本次 GitHub 提交已通过相同验收。
 
-| 项目 | 状态 |
-|------|------|
-| Agno 安装 | ✅ 已完成 |
-| 基础 Agent | ✅ 已创建 |
-| Market Tools | ✅ 已实现 |
-| Market Skills | ✅ 已定义 |
-| Research Team | ✅ 已配置 |
-| Monitor Workflow | ✅ 已定义 |
+本项目面向伦敦办公地产市场的证据查询、AI 分析、报告与监测。技术栈是 Agno 2.9.0 / AgentOS、FastAPI、SQLite、Next.js。当前市场数据仍有覆盖、口径和人工审核缺口；功能链路通过不等于市场结论全部满足发布或投资决策条件。
 
----
+## 正式版本如何运行
 
-## 快速开始
+Windows 的 `app/Start-London-Market.cmd`、`scripts/run.ps1`、`scripts/run-chat-models.ps1` 与兼容入口 `app/scripts/product-launch.ps1` 均使用正式发布指针。启动前验证清单哈希、冻结文件哈希和前端 BUILD_ID；验证失败就停止，不回退到工作目录或离线模板。`GET /api/market/release` 返回正在执行的源目录、版本哈希、构建 ID、运行模式和原生 Workflow ID；它本身不代表已经发生模型调用。
 
-### 1. 配置环境变量
+项目使用现有独立 Python 环境 `app/.venv` 与锁定依赖。正式前端依赖使用本机现有 `app/frontend/node_modules` 的 junction，运行数据库与原文位于 `app/data/product`。该交付目录是在当前 Windows 主机验证的发布版本，不是已验证可独立搬到另一台机器的安装包。不要直接修改其中的冻结源码或构建；修改后应建立并验收新的候选版本。
 
-创建 `.env` 文件：
+本轮已由 Codex 完成启动和验收，无需用户手动执行命令。维护时正式入口为：
 
-```bash
-# LLM API
-OPENAI_API_KEY=your-openai-api-key
-# 或
-ANTHROPIC_API_KEY=your-anthropic-api-key
-
-# Tavily Search (可选)
-TAVILY_API_KEY=your-tavily-api-key
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run.ps1
 ```
 
-### 2. 运行测试
+已占用端口会明确拒绝启动，不会终止未知进程。进程记录位于被 Git 忽略的 `app/data/personal-model-launch/processes.json`。
 
-```bash
-cd D:\deepinsight-lite
+## 模型、个人连接与附件
 
-# 运行主程序
-python market_agent.py
+后端读取 `LONDON_MODEL_CONFIG` 指定的受保护 JSON 文件；本机默认指向 Git 忽略的 `secrets/model.deepseek-acceptance-20261019.json`。配置字段为 `model`、`base_url`、`api_key`，此文件不能进入源码或提交。真实验收使用用户已授权的官方 DeepSeek 服务和 `deepseek-flash`；没有为验收扩购额度或使用未授权服务。
 
-# 或直接测试
-python -c "import market_agent; from agno import test; test(market_agent.market_agent)"
-```
+用户在页面的 Models & API keys 中管理个人连接；服务端按浏览器 owner 隔离并用 Windows DPAPI 保护保存的密钥，前端只得到掩码和连接元数据。真实生成请求从后端发出。上传 PDF、TXT、Markdown、CSV 也按 owner 隔离，保留原件，仅把有界文本片段加入用户选择模型的请求；上传不改变事实的审核状态。
 
-### 3. 启动 Agent UI
+正式启动关闭 Scheduler、自动监测分析、外部通知与付费搜索。监测与通知能力的历史工程/本机测试结果不应被解释为本版本已向外部收件人投递成功。
 
-```bash
-# 克隆 Agent UI
-git clone https://github.com/agno-agi/agent-ui.git
-cd agent-ui
+## Agent、Workflow、Skill 的运行证据
 
-# 安装依赖
-npm install
+普通 AI 问答执行真实 Agno Agent；模型先调用 `load_market_skills` 按需加载，再调用 `search_market_evidence`。Skill 的源文件/引用哈希、SDK 实际读取记录、操作约束投影与工具次序均保留在验收目录中。未加载或不匹配的 Skill 会被检索门禁拦截。
 
-# 配置环境
-cp .env.example .env
-# 编辑 .env 填入 API keys
+保存查询的范围和报告上下文、后台研究、周期报告使用真正的 Agno Workflow 并持久化 Run 与步骤。验收将浏览器中的提交、业务 Job、原生 Agent/Workflow Run、Provider 响应 ID 和 usage 逐一关联；写有 Skill 文档、工程测试通过或 HTTP 健康不单独算真实模型成功。
 
-# 启动
-npm run dev
-```
+## 数据与结论边界
 
----
+报告保留地域、统计期、指标定义、单位、原始引用、审核状态和缺口。题目提供的数值不能冒充独立来源核验；不同发布机构和指标口径不能自动合并。当前正式数据库不能独立证明 West End Q1 2026 的 6.8%，因此不得宣称已完成 6.8%→6.7% 的历史变化核验。Canary Wharf 2026 年 10 月的缺失数据也不应用其他子市场替代。
 
-## 已实现组件
-
-### 1. MarketTools (工具集)
-```python
-from market_agent import MarketTools
-
-tools = MarketTools()
-tools.get_current_date()      # 获取当前日期
-tools.get_london_offices()   # 获取子市场列表
-tools.get_metric_types()     # 获取指标类型
-```
-
-### 2. Market Skills (技能)
-```python
-from market_agent import market_research, market_analysis
-
-# 在 Agent 中使用
-agent = Agent(
-    skills=[market_research, market_analysis]
-)
-```
-
-### 3. Market Agent (单 Agent)
-```python
-from market_agent import market_agent
-
-response = market_agent.run("伦敦金融城最新租金是多少？")
-print(response.content)
-```
-
-### 4. Research Team (多 Agent 团队)
-```python
-from market_agent import research_team
-
-response = research_team.run("比较 City 和 West End 的租金趋势")
-```
-
-### 5. Monitor Workflow (定时监测)
-```python
-from market_agent import MarketMonitorWorkflow
-
-workflow = MarketMonitorWorkflow(areas=["city", "west_end"])
-result = await workflow.run()
-```
-
----
-
-## B0 → B5 开发路线
-
-| 阶段 | 内容 | 状态 |
-|------|------|------|
-| **B0** | Agno 原版跑通 | ✅ 完成 |
-| **B1** | 功能审计与测试 | 🔄 进行中 |
-| **B2** | 市场监测能力开发 | ⏳ 待开始 |
-| **B3** | 智能分析能力 | ⏳ 待开始 |
-| **B4** | Dashboard UI | ⏳ 待开始 |
-| **B5** | 部署与评测 | ⏳ 待开始 |
-
----
-
-## 技术架构
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Agno Framework                            │
-├─────────────────────────────────────────────────────────────┤
-│  Agent    │  Team    │  Workflow  │  Skills  │  Tools     │
-├─────────────────────────────────────────────────────────────┤
-│                    Our Market Modules                        │
-│  MarketAgent  │  MarketTools  │  MarketSkills  │  Monitor  │
-├─────────────────────────────────────────────────────────────┤
-│                    External Services                         │
-│         OpenAI  │  Anthropic  │  Tavily  │  SQLite       │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 与 A 路线对比
-
-| 维度 | A路线 (deepinsight-rader) | B路线 (deepinsight-lite) |
-|------|---------------------------|---------------------------|
-| 框架 | 自研 Python | Agno |
-| 前端 | Next.js | Agent UI |
-| 开发时间 | 13-21 天 | 8-14 天 |
-| 复杂度 | 高 | 中 |
-| 可控性 | 完全自控 | 依赖 Agno |
-
----
-
-## License
-
-MIT License
+较早的 `chat-models-*`、`skill-runtime-*` 和 `reports/` 验收材料属于历史版本，不能覆盖当前正式指针。离线兼容运行需显式 `scripts/run.ps1 -Offline`；Linux `scripts/run.sh` 也是历史离线入口，其结果不构成本正式版本的真实 AI 验收。兼容旧 `app/scripts/product-launch.ps1 -Legacy` 保留供历史诊断使用。

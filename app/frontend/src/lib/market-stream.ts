@@ -1,3 +1,4 @@
+import type { ReportArtifact } from './report-artifact'
 export type Citation = {
   fact_id?: string
   id?: string
@@ -10,13 +11,29 @@ export type Citation = {
 export type MarketStreamEvent =
   | { type: 'token'; content: string }
   | {
+      type: 'progress'
+      stage: string
+      message: string
+      submission_id?: string
+      job_id?: string
+    }
+  | { type: 'report'; report: ReportArtifact; report_id: string }
+  | {
       type: 'done'
       citations?: Citation[]
       run_id?: string
       submission_id?: string
-      metrics?: { model_requests?: number; route?: { mode?: 'saved' | 'agent' } }
+      report_id?: string
+      research_job_id?: string
+      skill_calls?: { skill: string; datasource: string }[]
+      as_of?: string | null
+      disclaimer?: string
+      metrics?: {
+        model_requests?: number
+        route?: { mode?: 'saved' | 'agent' | 'research' }
+      }
     }
-  | { type: 'error'; message?: string }
+  | { type: 'error'; message?: string; code?: string }
 
 /** Decode SSE across arbitrary byte and CRLF boundaries, including a final un-delimited event. */
 export async function readMarketStream(
@@ -37,8 +54,12 @@ export async function readMarketStream(
     const event = JSON.parse(payload) as MarketStreamEvent
     if (event.type === 'done') completed = true
     if (event.type === 'error')
-      throw new Error(event.message || 'The native agent reported an error.')
-    if (event.type === 'token' || event.type === 'done') onEvent(event)
+      throw Object.assign(
+        new Error(event.message || 'The native agent reported an error.'),
+        { code: event.code }
+      )
+    if (['token', 'done', 'progress', 'report'].includes(event.type))
+      onEvent(event)
   }
   try {
     while (true) {

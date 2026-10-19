@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,9 +23,43 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
-    }
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "allowImportingTsExtensions": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "node_modules.failed", "home"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next-chat-report-release/types/**/*.ts",
+    ".next-chat-report/types/**/*.ts",
+    ".next-final-delivery-v2/types/**/*.ts",
+    ".next-final-delivery/types/**/*.ts",
+    ".next-institutional-final/types/**/*.ts",
+    ".next-institutional/types/**/*.ts",
+    ".next-personal-models-accepted/types/**/*.ts",
+    ".next-personal-models-final/types/**/*.ts",
+    ".next-personal-models-live/types/**/*.ts",
+    ".next-personal-models-site/types/**/*.ts",
+    ".next-personal-models-v2/types/**/*.ts",
+    ".next-personal-models/types/**/*.ts",
+    ".next-phase2-8004/types/**/*.ts",
+    ".next-phase2-audit/types/**/*.ts",
+    ".next-phase2-current/types/**/*.ts",
+    ".next-phase2-integrated/types/**/*.ts",
+    ".next-real-e2e-final/types/**/*.ts",
+    ".next-real-e2e-verified/types/**/*.ts",
+    ".next-real-e2e/types/**/*.ts",
+    ".next-regional-verified/types/**/*.ts",
+    ".next-smoke/types/**/*.ts",
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    ".next-personal-models-site-final/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "node_modules.failed",
+    "home"
+  ]
 }

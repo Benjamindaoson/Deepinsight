@@ -5,6 +5,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from uuid import uuid4
 from sqlalchemy import create_engine, text
+from . import temporal_search
 
 TABLES = ('sources', 'documents', 'facts', 'extractions', 'comparisons', 'events', 'jobs', 'reports', 'notifications', 'settings', 'reviews')
 
@@ -23,6 +24,7 @@ class Store:
             c.execute(text('PRAGMA journal_mode=WAL'))
             for statement in migration.read_text(encoding='utf-8').split(';'):
                 if statement.strip(): c.execute(text(statement))
+            temporal_search.ensure_index(c)
 
     def _table(self, table):
         if table not in TABLES: raise ValueError('Unknown table')
@@ -32,9 +34,12 @@ class Store:
         self._table(table)
         data = dict(payload, id=payload.get('id') or uid(), created_at=payload.get('created_at') or now())
         with self.engine.begin() as c:
-            c.execute(text(f'INSERT OR IGNORE INTO {table}(id,identity,payload) VALUES(:id,:identity,:payload)'),
+            inserted = c.execute(text(f'INSERT OR IGNORE INTO {table}(id,identity,payload) VALUES(:id,:identity,:payload)'),
                       dict(id=data['id'], identity=identity, payload=json.dumps(data, ensure_ascii=False, default=str)))
-            return json.loads(c.execute(text(f'SELECT payload FROM {table} WHERE identity=:identity'), dict(identity=identity)).scalar_one())
+            saved = json.loads(c.execute(text(f'SELECT payload FROM {table} WHERE identity=:identity'), dict(identity=identity)).scalar_one())
+            if inserted.rowcount:
+                temporal_search.sync_record(c, table, saved)
+            return saved
 
     def get(self, table, identity):
         self._table(table)
@@ -53,7 +58,11 @@ class Store:
             if not old: raise KeyError(identity)
             data = dict(json.loads(old), **changes, updated_at=now())
             c.execute(text(f'UPDATE {table} SET payload=:p WHERE id=:i'), {'p': json.dumps(data, ensure_ascii=False, default=str), 'i': identity})
+            temporal_search.sync_record(c, table, data)
         return data
+
+    def search_evidence(self, query, **filters):
+        return temporal_search.search(self.engine, query, **filters)
 
     def snapshot(self, source, url, content, media, segments, **metadata):
         digest = hashlib.sha256(content).hexdigest()

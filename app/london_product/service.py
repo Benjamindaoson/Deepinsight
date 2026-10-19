@@ -7,7 +7,7 @@ import os
 import re
 import threading
 import time
-from decimal import Decimal
+from decimal import Decimal,InvalidOperation
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from jinja2 import Environment, BaseLoader, select_autoescape
@@ -15,10 +15,25 @@ from .store import now, uid
 from .analysis_guard import reviewed_result, event_context, report_view
 from london_data.comparison import compare as strict_compare
 
-DEFAULTS = dict(news_interval_hours=6, market_interval_hours=168, notifications_enabled=False,
+DEFAULTS = dict(news_interval_hours=6, market_interval_hours=168, notifications_enabled=False,monitor_analysis_enabled=False,
                 geographies=['Central London','City', 'West End', 'Canary Wharf', 'Midtown / Fringe'],
                 metrics=['rent', 'vacancy', 'takeup', 'supply', 'interest_rate', 'employment'], monitoring_enabled=True,
                 rent_threshold_pct=5.0, takeup_threshold_pct=10.0, vacancy_threshold_pp=0.5)
+
+
+def _run_analysis_agent(agent, prompt):
+    """Native query agents have async hooks; preserve scoped context across loops."""
+    if not callable(getattr(agent,'arun',None)):
+        return agent.run(prompt)  # Explicit synchronous adapters, including offline fixtures.
+    async def execute():return await agent.arun(prompt)
+    try:asyncio.get_running_loop()
+    except RuntimeError:return asyncio.run(execute())
+    # A synchronous service can also be called by an async host. Never nest an
+    # event loop, and carry ACTIVE_REPORT and run-scoped budget contexts with it.
+    from contextvars import copy_context
+    context=copy_context()
+    with ThreadPoolExecutor(max_workers=1,thread_name_prefix='market-analysis') as pool:
+        return pool.submit(context.run,lambda:asyncio.run(execute())).result()
 
 
 class MarketService:
@@ -26,7 +41,7 @@ class MarketService:
         self.store = store; self.pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix='market-job')
         self._cache = {}; self._lock = threading.RLock(); self.schedule_manager = None
         self.workflow = None; self.agent_factory = None
-        self.report_workflow=None
+        self.report_workflow=None; self.query_workflow=None
         self.extraction_locks={}
         self.analysis_lock=threading.Lock()
         self.notification_locks={}
@@ -36,6 +51,7 @@ class MarketService:
         data = self.store.get('settings', 'product')
         result = dict(DEFAULTS, **(data.get('values', {}) if data else {}))
         result.update(news_discovery=configuration(),notification_configured=bool(os.environ.get('LONDON_NOTIFICATION_URL')),
+                      monitoring_rules=[dict(id=r['id'],rule=r['rule']) for r in self.store.all('settings') if isinstance(r.get('rule'),dict)],
                       schedules=[s.to_dict() for s in self.schedule_manager.list() if s.name.startswith('london-')] if self.schedule_manager else [])
         return result
 
@@ -51,7 +67,7 @@ class MarketService:
         for key in ['geographies', 'metrics']:
             if key in values and (not isinstance(values[key], list) or len(values[key]) > 30 or any(not isinstance(x, str) or len(x) > 100 for x in values[key])):
                 raise ValueError('Invalid ' + key)
-        for key in ['monitoring_enabled', 'notifications_enabled']:
+        for key in ['monitoring_enabled', 'notifications_enabled','monitor_analysis_enabled']:
             if key in values and not isinstance(values[key], bool): raise ValueError('Boolean required')
         prior = self.store.put('settings', 'product', dict(values=dict(DEFAULTS)))
         self.store.update('settings', prior['id'], dict(values=dict(prior['values'], **values)))
@@ -63,12 +79,14 @@ class MarketService:
         for category, hours in [('news', config['news_interval_hours']), ('market', config['market_interval_hours'])]:
             cron = f'0 */{hours} * * *' if hours < 24 else ('0 7 * * *' if hours == 24 else '0 7 * * 1')
             schedule = self.schedule_manager.create(name='london-' + category, cron=cron,
+                timezone='Europe/London',
                 endpoint='/api/market/scheduled/' + category, payload={}, timeout_seconds=180, max_retries=1,
                 retry_delay_seconds=60, if_exists='update')
             if config['monitoring_enabled']: self.schedule_manager.enable(schedule.id)
             else: self.schedule_manager.disable(schedule.id)
         for period, cron in [('daily','0 8 * * *'),('weekly','0 8 * * 1')]:
             schedule=self.schedule_manager.create(name='london-report-'+period,cron=cron,
+                timezone='Europe/London',
                 endpoint='/api/market/scheduled/report-'+period,payload={},timeout_seconds=60,max_retries=0,if_exists='update')
             if config['monitoring_enabled']:self.schedule_manager.enable(schedule.id)
             else:self.schedule_manager.disable(schedule.id)
@@ -81,6 +99,12 @@ class MarketService:
             if attempt.get('status')=='running':self.store.update('extractions',attempt['id'],dict(status='interrupted',finished_at=now()))
         for attempt in self.store.all('notifications'):
             if attempt.get('status')=='sending':self.store.update('notifications',attempt['id'],dict(status='delivery_unknown',error='Service stopped during delivery; inspect channel before resending',finished_at=now()))
+        for event in self.store.all('events'):
+            if event.get('kind')!='metric_change' or event.get('analysis_status')!='running':continue
+            attempt=next((j for j in self.store.all('jobs') if j.get('kind')=='analysis'
+                and j.get('report_id')==event.get('report_id')),None)
+            self.store.update('events',event['id'],dict(analysis_status='interrupted',analysis_id=(attempt or {}).get('id'),
+                notification_status='analysis_not_publishable'))
 
     def invalidate(self):
         with self._lock: self._cache.clear()
@@ -97,7 +121,9 @@ class MarketService:
             if actual==str(v):return True
             # Search grouping only; source geography stays intact for strict comparisons.
             return k=='geography' and v in ['City','West End','Canary Wharf'] and actual.startswith(str(v)+' (')
-        items = [f for f in self.store.all('facts') if f.get('status') != 'superseded' and all(matches(f,k,v) for k, v in filters.items())]
+        from .normalization import current_fact
+        items = [current_fact(f) for f in self.store.all('facts') if f.get('status') != 'superseded']
+        items = [f for f in items if all(matches(f,k,v) for k,v in filters.items())]
         data = dict(items=items[offset:offset+limit], total=len(items), updated_at=now(), cache_hit=False)
         with self._lock: self._cache[key] = (time.monotonic(), data)
         return data
@@ -115,7 +141,8 @@ class MarketService:
         featured=[rows[i] for i in range(max([len(v) for v in groups.values()]+[0])) for rows in groups.values() if i<len(rows)]
         facts=featured+[f for f in facts if f.get('metric') not in groups]
         from . import directional
-        return dict(updated_at=now(), facts=facts, events=events[:12], sources=self.store.all('sources'),
+        from .structured_sources import current_event
+        return dict(updated_at=now(), facts=facts, events=[current_event(e) for e in events[:12]], sources=self.store.all('sources'),
                     comparisons=self.store.all('comparisons')[:20], jobs=self.store.all('jobs')[:6],
                     directional=directional.assess(self.store),
                     counts=dict(facts=len(facts), events=len(events), documents=len(self.store.all('documents')),
@@ -127,6 +154,8 @@ class MarketService:
     def evidence(self, fact_id):
         fact = self.store.get('facts', fact_id)
         if not fact: raise KeyError(fact_id)
+        from .normalization import current_fact
+        fact=current_fact(fact)
         doc = self.store.get('documents', fact['document_id'])
         return dict(fact=fact, document={k:doc.get(k) for k in ['id','title','url','published_at','collected_at','sha256','media']},
                     evidence=fact.get('evidence', {}), download_url='/api/market/documents/' + doc['id'] + '/file',
@@ -139,10 +168,10 @@ class MarketService:
         blockers = []
         if fact.get('status') in ['rejected', 'superseded']:
             blockers.append('RECORD_REJECTED_OR_SUPERSEDED')
-        if fact.get('metric') == 'rent' and fact.get('annualization') == 'unknown':
-            blockers.append('RENT_ANNUAL_BASIS_UNRESOLVED')
-        if fact.get('annualization') == 'industry_convention':
-            blockers.append('ANNUAL_BASIS_ASSUMED')
+        if fact.get('metric') == 'rent':
+            from .normalization import derive
+            if derive(fact)['annualization'] != 'explicit':
+                blockers.append('RENT_ANNUAL_BASIS_UNRESOLVED')
         if fact.get('status') == 'needs_review':
             blockers.append('VALIDATION_FLAGS_PRESENT')
         if not (fact.get('evidence') or {}).get('quote'):
@@ -150,7 +179,7 @@ class MarketService:
         if not fact.get('document_id') or not self.store.get('documents', fact['document_id']):
             blockers.append('ORIGINAL_DOCUMENT_MISSING')
         # A reviewer note cannot supply a missing time denominator.
-        soft = {'VALIDATION_FLAGS_PRESENT', 'ANNUAL_BASIS_ASSUMED'}
+        soft = {'VALIDATION_FLAGS_PRESENT'}
         return dict(eligible=not [b for b in blockers if b not in soft],
                     blockers=blockers, requires_note=bool(blockers),
                     note_required_for=[b for b in blockers if b in soft])
@@ -174,10 +203,10 @@ class MarketService:
             if not any(fact.get(k) != patch.get(k) for k in keys):
                 continue
             numeric_ok = fact.get('value') is None or fact.get('precision') != 'unknown'
-            annual_ok = fact.get('metric') != 'rent' or patch['annualization'] in ('explicit', 'industry_convention')
+            annual_ok = fact.get('metric') != 'rent' or patch['annualization'] == 'explicit'
             complete = all(fact.get(k) not in [None, '', 'unknown']
                            for k in ['value', 'unit', 'geography', 'period', 'definition', 'basis', 'grade', 'method'])
-            patch['status'] = ('validated' if fact.get('human_review_status') == 'approved'
+            patch['status'] = ('validated' if fact.get('human_review_status') == 'approved' and annual_ok
                                else 'pending_review' if numeric_ok and annual_ok and complete
                                else 'needs_review')
             self.store.update('facts', fact['id'], patch)
@@ -193,7 +222,7 @@ class MarketService:
         if not fact: raise KeyError(identity)
         eligibility = self.review_eligibility(fact)
         if decision == 'approve':
-            hard = [b for b in eligibility['blockers'] if b not in ('VALIDATION_FLAGS_PRESENT', 'ANNUAL_BASIS_ASSUMED')]
+            hard = [b for b in eligibility['blockers'] if b != 'VALIDATION_FLAGS_PRESENT']
             if hard: raise ValueError('Cannot approve: ' + ', '.join(hard))
             if eligibility['requires_note'] and not note.strip():
                 raise ValueError('A note is required to approve a flagged observation: ' + ', '.join(eligibility['blockers']))
@@ -217,7 +246,8 @@ class MarketService:
         return dict(fact=updated, review=record)
 
     def review_queue(self, status='pending'):
-        facts = [f for f in self.store.all('facts') if f.get('status') != 'superseded']
+        from .normalization import current_fact
+        facts = [current_fact(f) for f in self.store.all('facts') if f.get('status') != 'superseded']
         if status == 'pending':
             facts = [f for f in facts if f.get('human_review_status') not in ['approved', 'rejected']]
         elif status == 'approved':
@@ -237,6 +267,8 @@ class MarketService:
     def compare(self, old_id, new_id):
         a, b = [self.store.get('facts', i) for i in [old_id, new_id]]
         if not a or not b: raise KeyError('Fact not found')
+        from .normalization import current_fact
+        a,b=current_fact(a),current_fact(b)
         def inputs(f):
             return dict(f,value=f.get('normalized_value') if f.get('normalization_version') else f.get('value'),
                 unit=f.get('normalized_unit') if f.get('normalization_version') else f.get('unit'),
@@ -247,40 +279,239 @@ class MarketService:
             result.update(status='not_comparable', absolute_change=None, relative_change_pct=None, change_unit=None)
             result['reasons'].append('HUMAN_REVIEW_PENDING')
             result.pop('display', None)
+        from .safe_answer import safe_evidence
+        groups,_=safe_evidence(self.store,[dict(facts=[dict(id=a['id']),dict(id=b['id'])])])
+        verified_ids={f['id'] for f in groups['verified_fact']}
+        if {a['id'],b['id']}-verified_ids:
+            result.update(status='not_comparable',absolute_change=None,relative_change_pct=None,change_unit=None)
+            result['reasons'].append('EVIDENCE_NOT_VERIFIED')
+            result.pop('display',None)
         key = hashlib.sha256(json.dumps(result, sort_keys=True, default=str).encode()).hexdigest()
         return self.store.put('comparisons', key, result)
 
-    def monitor_changes(self, run_id=None):
+    def monitor_changes(self, run_id=None, detection_context='scheduled_refresh'):
+        """Threshold events on approved, comparable consecutive quarters.
+
+        detection_context: 'scheduled_refresh' for live scheduled runs, or
+        'historical_replay' when re-processing saved historical snapshots. A
+        replay is always labelled; it is never presented as a new market move.
+        """
         from .publisher_changes import discover_reported_changes
         reported = discover_reported_changes(self.store, run_id)
-        facts=self.facts(limit=500)['items']; config=self.settings(); alerts=[]; refused=0
+        # Do not reuse the UI's short-lived read cache for signal authority.
+        from .normalization import current_fact
+        facts=[];invalid_inputs=[]
+        for f in self.store.all('facts'):
+            if f.get('status') in ['superseded','rejected']:continue
+            try:facts.append(current_fact(f))
+            except (InvalidOperation,ValueError,TypeError):
+                invalid_inputs.append(dict(status='invalid_observation',fact_ids=[f['id']],reason='NORMALIZATION_FAILED'))
+        config=self.settings(); alerts=[]; refused=len(invalid_inputs);decisions=list(invalid_inputs)
+        invalid_numeric_ids=set()
+        for fact in facts:
+            if fact.get('metric') not in ['rent','vacancy','takeup']:
+                continue
+            value=fact.get('normalized_value') if fact.get('normalization_version') else fact.get('value')
+            try:
+                number=Decimal(str(value))
+                valid=number.is_finite() and number>=0 and (fact['metric']!='vacancy' or number<=100)
+            except (InvalidOperation,TypeError,ValueError):
+                valid=False
+            if not valid:
+                invalid_numeric_ids.add(fact['id'])
+                decisions.append(dict(status='invalid_observation',fact_ids=[fact['id']],
+                    reason='Invalid numeric observation; directional monitoring withheld.'))
+                refused+=1
+        from .safe_answer import safe_evidence
+        grounded,_=safe_evidence(self.store,[dict(facts=facts)])
+        eligible_ids={f['id'] for f in grounded['verified_fact']}-invalid_numeric_ids
+        previous=[e for e in self.store.all('events') if e.get('kind')=='metric_change' and e.get('status')!='superseded']
+        preferred_ids={i for e in previous for i in [e.get('old_id'),e.get('new_id')]}
+        for event in previous:
+            if event.get('old_id') not in eligible_ids or event.get('new_id') not in eligible_ids:
+                self.store.update('events',event['id'],dict(status='superseded',signal_status='retracted',
+                    superseded_reason='comparison_not_comparable',superseded_at=now()))
         groups={}
         for f in facts:
+            if f['id'] not in eligible_ids:continue
             if f.get('metric') not in ['rent','vacancy','takeup'] or f.get('metric') not in config['metrics']:continue
             area=f.get('geography') or ''
             if not any(area==g or area.startswith(g+' (') or (g=='Midtown / Fringe' and area in ['Midtown','Fringe']) for g in config['geographies']):continue
-            key=tuple(str(f.get(k)) for k in ['source_id','series','metric','geography','definition','basis','grade','method'])
+            key=tuple(str(f.get(k)) for k in ['source_id','series','metric','geography','definition','basis','grade','method','currency'])
+            key+=(str(f.get('normalized_unit') if f.get('normalization_version') else f.get('unit')),)
             groups.setdefault(key,[]).append(f)
+        conflicting_ids=set()
         for rows in groups.values():
-            rows.sort(key=lambda f:(f.get('normalized_period') if f.get('normalization_version') else f.get('period')) or '')
+            periods={}
+            for f in rows:
+                p=(f.get('normalized_period') if f.get('normalization_version') else f.get('period')) or ''
+                periods.setdefault(p,[]).append(f)
+            rows=[]
+            for p,candidates in sorted(periods.items()):
+                try:
+                    values={Decimal(str(f.get('normalized_value') if f.get('normalization_version') else f.get('value'))) for f in candidates}
+                    valid=all(v.is_finite() and v>=0 and (candidates[0]['metric']!='vacancy' or v<=100) for v in values)
+                except (InvalidOperation,TypeError,ValueError):values=set();valid=False
+                if not valid or len(values)!=1:
+                    conflicting_ids.update(f['id'] for f in candidates)
+                    decisions.append(dict(status='conflicting_observations' if valid else 'invalid_observation',period=p,fact_ids=[f['id'] for f in candidates],
+                        reason='Approved same-period values disagree; directional monitoring withheld.' if valid else 'Invalid numeric observation; directional monitoring withheld.'))
+                    refused+=1;continue
+                # Keep an existing eligible representative so an identical
+                # disclosure does not produce a new event or notification.
+                rows.append(min(candidates,key=lambda f:(f['id'] not in preferred_ids,f['id'])))
             for old,new in zip(rows,rows[1:]):
                 result=self.compare(old['id'],new['id'])
-                if result['status']!='comparable':refused+=1;continue
+                decision=dict(old_id=old['id'],new_id=new['id'],comparison_id=result['id'],status=result['status'])
+                decisions.append(decision)
+                signal_identity=hashlib.sha256(('metric_change:'+old['id']+':'+new['id']).encode()).hexdigest()
+                def active_events():
+                    return [event for event in self.store.all('events')
+                        if event.get('kind')=='metric_change' and event.get('status')!='superseded'
+                        and event.get('old_id')==old['id'] and event.get('new_id')==new['id']]
+                def retire(reason):
+                    for event in active_events():
+                        self.store.update('events',event['id'],dict(status='superseded',
+                            signal_status='retracted',superseded_reason=reason,superseded_at=now()))
+                if result['status']!='comparable':
+                    retire('comparison_not_comparable');refused+=1;continue
                 metric=new['metric']; threshold=config['vacancy_threshold_pp' if metric=='vacancy' else metric+'_threshold_pct']
                 value=result['absolute_change'] if metric=='vacancy' else result.get('relative_change_pct')
-                if value is None or abs(Decimal(value))<Decimal(str(threshold)):continue
-                event=self.store.put('events','threshold:'+result['id'],dict(kind='metric_change',importance='high',status='new',
-                    title=f"{new['geography']} {metric}: {value} {'pp' if metric=='vacancy' else '%'} change",
+                decision.update(value=value,threshold=threshold,change_unit='pp' if metric=='vacancy' else 'percent')
+                if value is None or abs(Decimal(value))<=Decimal(str(threshold)):
+                    decision['status']='below_threshold'
+                    retire('threshold_not_met');continue
+                decision['status']='threshold_met'
+                for previous in active_events():
+                    if previous.get('comparison_id')!=result['id']:
+                        self.store.update('events',previous['id'],dict(status='superseded',
+                            signal_status='retracted',superseded_reason='comparison_revised',superseded_at=now()))
+                existing=next((event for event in active_events() if event.get('comparison_id')==result['id']),None)
+                prior=self.store.get('events','threshold:'+result['id'])
+                identity='threshold:'+result['id'] if not prior else 'threshold:'+result['id']+':'+uid()
+                unit='pp' if metric=='vacancy' else '%'
+                reason=(f"System-computed change: {metric} moved {value}{unit} from {old.get('period')} to {new.get('period')}, "
+                    f"strictly exceeding the configured {threshold}{unit} threshold. Both observations have recorded approval, are hash-verified and "
+                    f"share one source definition ({new.get('definition') or 'definition on record'}). Comparison record {result['id']}; "
+                    f"periods are statistical quarters, not detection dates.")
+                if detection_context=='historical_replay':
+                    reason+=' HISTORICAL REPLAY: detected by re-processing saved snapshots; not a new market discovery.'
+                event=existing or self.store.put('events',identity,dict(kind='metric_change',importance='high',status='new',
+                    signal_identity=signal_identity,signal_status='active',review_status='approved',
+                    title=f"{new['geography']} {metric}: {value} {unit} change",
                     summary='Deterministic threshold on reviewed, compatible consecutive quarters.',geography=new['geography'],
                     source_id=new['source_id'],document_id=new.get('document_id'),period=new['period'],
-                    comparison_id=result['id'],old_id=old['id'],new_id=new['id'],threshold=threshold,
+                    comparison_id=result['id'],old_id=old['id'],new_id=new['id'],threshold=threshold,metric=metric,
+                    importance_reason=reason,detection_context=detection_context,
                     value=value,change_unit='pp' if metric=='vacancy' else 'percent',evidence=new.get('evidence',{})))
                 alerts.append(event['id'])
+        # A deleted, superseded or regrouped input can disappear from the pairs
+        # above entirely. Reconcile all previously active signals as well.
+        for event in self.store.all('events'):
+            if event.get('kind')=='metric_change' and event.get('status')!='superseded' and event['id'] not in alerts:
+                self.store.update('events',event['id'],dict(status='superseded',signal_status='retracted',
+                    superseded_reason='approved_same_period_conflict' if {event.get('old_id'),event.get('new_id')}&conflicting_ids else 'input_no_longer_current_pair',superseded_at=now()))
         self.invalidate();return dict(alerts=len(alerts),event_ids=alerts,not_comparable=refused,
+            decisions=decisions,excluded_unreviewed_or_ungrounded=len(facts)+len(invalid_inputs)-len(eligible_ids),
             publisher_reported_changes=[e['id'] for e in reported])
 
-    def report_analysis(self):
+    def monitor_intelligence(self, monitor_result, run_id=None, detection_context='scheduled_refresh'):
+        """Close the loop: threshold event → scoped report → optional notification.
+
+        Every artefact is linked by ID (event → report → notification) and every
+        step is idempotent: the event identity derives from the comparison, the
+        report key from the event, and notification dedupe from the report.
+        Model interpretation is explicit opt-in, uses the existing bounded
+        Agent, and must pass the same report publication gate before sending.
+        """
+        outcomes=[]
+        for event_id in monitor_result.get('event_ids',[]):
+            event=self.store.get('events',event_id)
+            if not event or event.get('kind')!='metric_change' or event.get('status')=='superseded':continue
+            if event.get('report_id'):
+                outcomes.append(dict(event_id=event_id,report_id=event['report_id'],notification_id=event.get('notification_id'),deduplicated=True))
+                continue
+            from .chat_report import build_report
+            metric=event.get('metric') or 'vacancy'
+            query=f"Analyse the {event['geography']} {metric} change in {event['period']} versus the previous quarter."
+            if metric=='takeup':
+                query+=' Include vacancy as an evidence cross-check for conditional risks and opportunities.'
+            report=build_report(self,query,key='monitor:'+event_id,acquisition=dict(
+                mode='scheduled_monitoring',network_requests=0,detection_context=detection_context,
+                notice='Triggered by a monitoring threshold event on saved approved snapshots; no live retrieval was performed.'
+                    +(' Historical replay: conclusions describe saved historical periods, not new discoveries.' if detection_context=='historical_replay' else '')))
+            # Claim the event/report link before optional inference. Interrupted
+            # or failed inference must never be replayed by scheduler retries.
+            self.store.update('events',event_id,dict(report_id=report['report_id'],
+                analysis_status='running' if self.settings()['monitor_analysis_enabled'] else 'not_requested',run_id=run_id))
+            analysis=None
+            if self.settings()['monitor_analysis_enabled']:
+                analysis=self.report_analysis(report_id=report['report_id'])
+            analysis_status=(analysis or {}).get('analysis_status','not_requested')
+            notification=None
+            if self.settings()['notifications_enabled'] and (analysis is None or analysis_status=='published'):
+                notification=self.notify(report['report_id'])
+            self.store.update('events',event_id,dict(report_id=report['report_id'],analysis='model_interpretation' if analysis else 'deterministic_report',
+                analysis_status=analysis_status,analysis_id=(analysis or {}).get('analysis_id'),
+                run_id=run_id,notification_id=(notification or {}).get('id'),
+                notification_status=(notification or {}).get('status') or ('analysis_not_publishable' if analysis is not None and analysis_status!='published' else None)))
+            outcomes.append(dict(event_id=event_id,report_id=report['report_id'],generation_status=report['generation_status'],
+                analysis_status=analysis_status,analysis_id=(analysis or {}).get('analysis_id'),
+                notification_id=(notification or {}).get('id'),notification_status=(notification or {}).get('status')
+                    or ('analysis_not_publishable' if analysis is not None and analysis_status!='published' else None),deduplicated=False))
+        return outcomes
+
+    def _scoped_report_analysis(self,report_id):
+        """Existing analysis entry point, bound to one saved report and receipt."""
+        from .chat_report import ACTIVE_REPORT,read_report,attach_analysis
+        from .qa_context import classify_error
+        with self.analysis_lock:
+            report=read_report(self.store,report_id)
+            identity='scoped-analysis:'+report_id
+            prior=self.store.get('jobs',identity)
+            if prior:
+                receipt=dict(prior.get('result') or {})
+                current=(report.get('ai_analysis') or {}).get('status')
+                withheld=report['publication_review']['status']=='withheld' or current=='withheld'
+                result=dict(receipt,analysis_id=prior['id'],analysis_status='withheld' if withheld else current or receipt.get('analysis_status',prior['status']),
+                    execution_receipt=receipt,cached=True)
+                if withheld:result['error_code']=next(iter(report['publication_review'].get('codes',[])),'PUBLICATION_REVALIDATION_FAILED')
+                return result
+            row=self.store.put('jobs',identity,dict(kind='analysis',report_id=report_id,status='running',stage='prerequisites',
+                progress=10,started_at=now(),attempts=1))
+            eligible=[e['id'] for e in report['evidence'] if e.get('review_status')=='approved']
+            if not eligible or report['publication_review']['status']=='withheld':
+                attach_analysis(self.store,report_id,error='NO_VERIFIED_EVIDENCE')
+                result=dict(report_id=report_id,analysis_id=row['id'],analysis_status='blocked',error_code='NO_VERIFIED_EVIDENCE',metrics=dict(requests=0),cached=False)
+                self.store.update('jobs',row['id'],dict(status='blocked',stage='prerequisites',finished_at=now(),error_code='NO_VERIFIED_EVIDENCE',metrics=result['metrics'],result=result))
+                return result
+            agent=None;run=None;token=ACTIVE_REPORT.set(report_id)
+            try:
+                agent=self.agent_factory()
+                self.store.update('jobs',row['id'],dict(stage='native_agent'))
+                run=_run_analysis_agent(agent,report['query']+'\nReturn only the ReportInterpretation JSON for the existing report; do not change scope or review state.')
+                if str(getattr(run.status,'value',run.status))!='COMPLETED' or not str(run.content or '').strip():raise ValueError('FINAL_ANSWER_MISSING')
+                artifact=attach_analysis(self.store,report_id,run.content,run_id=run.run_id)
+                metrics=agent.model.budget_for(run.run_id).record()
+                status=artifact['ai_analysis']['status']
+                result=dict(report_id=report_id,analysis_id=row['id'],analysis_status=status,run_id=run.run_id,metrics=metrics,cached=False)
+                self.store.update('jobs',row['id'],dict(status='succeeded' if status=='published' else 'partial',stage='publication_review',
+                    progress=100,finished_at=now(),run_id=run.run_id,metrics=metrics,result=result,quality_status='REVIEW_REQUIRED'))
+                return result
+            except Exception as exc:
+                code=classify_error(str(exc),type(exc).__name__)
+                attach_analysis(self.store,report_id,error=code,run_id=getattr(run,'run_id',None))
+                metrics=agent.model.budget.record() if agent else dict(requests=0)
+                result=dict(report_id=report_id,analysis_id=row['id'],analysis_status='failed',error_code=code,metrics=metrics,cached=False)
+                self.store.update('jobs',row['id'],dict(status='failed',stage='native_agent',finished_at=now(),error_code=code,
+                    error=code,exception_type=type(exc).__name__,failure_stage='agent_execution',
+                    metrics=metrics,result=result,quality_status='REVIEW_REQUIRED'))
+                return result
+            finally:ACTIVE_REPORT.reset(token)
+
+    def report_analysis(self,report_id=None):
         """Explicit optional analysis, cached on the saved evidence identity."""
+        if report_id is not None:return self._scoped_report_analysis(report_id)
         with self.analysis_lock:
             if not self.facts(limit=1)['items']:raise ValueError('NO_SAVED_EVIDENCE')
             fingerprint=hashlib.sha256(json.dumps(dict(facts=self.facts(limit=500)['items'],events=self.store.all('events'),prompt_version='report-analysis-v2'),sort_keys=True,default=str).encode()).hexdigest()
@@ -291,7 +522,7 @@ class MarketService:
             agent=self.agent_factory()
             run=None
             try:
-                run=agent.run('Retrieve saved London office market evidence. Write at most 550 words. Include: reported core observations with periods; one leasing/supply event; two conditional risk/opportunity hypotheses; review limitations. Cite exact saved URLs and periods for each factual claim. All source observations remain pending. Do not calculate changes. Do not give source counts. Do not claim a geography or metric is absent from the database: retrieval is a bounded subset and saved_geographies/saved_metrics describes broader coverage. Vacancy overall is not the same as Grade A. Do not explain why publishers differ without direct methodology evidence. No investment recommendations. Separate reported fact, tentative interpretation and unconfirmed method. Use saved evidence only.')
+                run=_run_analysis_agent(agent,'Retrieve saved London office market evidence. Write at most 550 words. Include: reported core observations with periods; one leasing/supply event; two conditional risk/opportunity hypotheses; review limitations. Cite exact saved URLs and periods for each factual claim. All source observations remain pending. Do not calculate changes. Do not give source counts. Do not claim a geography or metric is absent from the database: retrieval is a bounded subset and saved_geographies/saved_metrics describes broader coverage. Vacancy overall is not the same as Grade A. Do not explain why publishers differ without direct methodology evidence. No investment recommendations. Separate reported fact, tentative interpretation and unconfirmed method. Use saved evidence only.')
                 answer=str(run.content or '')
                 if str(getattr(run.status,'value',run.status))!='COMPLETED' or not answer.strip():raise ValueError('NATIVE_ANALYSIS_INCOMPLETE')
                 if not any(d['url'] in answer for d in self.store.all('documents')):raise ValueError('ANALYSIS_MISSING_SAVED_CITATIONS')
@@ -302,20 +533,38 @@ class MarketService:
                 self.store.update('jobs',row['id'],dict(status='failed',stage='failed',finished_at=now(),error=type(exc).__name__,run_id=getattr(run,'run_id',None),metrics=agent.model.budget.record(),result={'raw_answer':str(getattr(run,'content','') or '')},quality_status='REVIEW_REQUIRED'))
                 raise
 
-    def report(self, period, key=None, analysis=None):
+    def report(self, period, key=None, analysis=None, geography=None):
         if period not in ['daily', 'weekly']: raise ValueError('Unsupported report period')
         if key:
             prior=self.store.get('reports','report:'+key)
             if prior and prior.get('status')=='superseded':
                 key=key+':revision-1';prior=self.store.get('reports','report:'+key)
             if prior:
-                if prior['period']!=period:raise ValueError('Report idempotency key used for another period')
+                if prior['period']!=period or prior.get('geography')!=geography:raise ValueError('Report idempotency key used for another scope or period')
                 return dict(prior,markdown_url=f"/api/market/reports/{prior['id']}?format=markdown",html_url=f"/api/market/reports/{prior['id']}?format=html")
-        facts = self.facts(limit=500)['items']; events = [e for e in self.store.all('events')
+        facts = [f for f in self.facts(limit=500)['items'] if f.get('status')!='rejected' and f.get('human_review_status')!='rejected']; events = [e for e in self.store.all('events')
             if e.get('kind') not in ['source_update','publisher_reported_change']
             and e.get('status') not in ['superseded','rejected'] and e.get('human_review_status')!='rejected'][:30]
+        def in_scope(row):
+            area=row.get('geography') or ''
+            return not geography or area==geography or area.startswith(geography+' (') or (geography=='Midtown / Fringe' and area in ['Midtown','Fringe'])
+        facts=[f for f in facts if in_scope(f)]
+        events=[e for e in events if in_scope(e)]
         sources = self.store.all('sources'); stamp = now()
+        from datetime import datetime,timezone,timedelta
+        window_days=1 if period=='daily' else 7
+        window_start=(datetime.fromisoformat(stamp)-timedelta(days=window_days)).isoformat()
+        def recent_event(e):
+            from .structured_sources import current_event
+            e=current_event(e)
+            try:
+                date=datetime.fromisoformat((e.get('published_at') or '').replace('Z','+00:00'))
+                if date.tzinfo is None:date=date.replace(tzinfo=timezone.utc)
+                return datetime.fromisoformat(window_start) <= date <= datetime.fromisoformat(stamp)
+            except (ValueError,TypeError):return False
+        recent=[e for e in events if recent_event(e)]
         lines = [f'# London office market — {period} brief', '', f'Generated {stamp}. Historical source periods remain labelled. Human review: pending_review / needs_review.',
+                 f'Scope: {geography or "All saved areas"}. News window: {window_start} to {stamp} ({window_days} days); {len(recent)} dated events in window. Other observations below are historical background, not new daily/weekly market changes.',
                  '', '## Market facts', '', '| Metric / area | Period | Value / unit | Status | Definition and evidence | Source |', '|---|---|---|---|---|---|']
         for f in facts:
             safe = lambda x: str(x if x is not None else 'Unknown').replace('|','\\|').replace('\n',' ')
@@ -327,18 +576,21 @@ class MarketService:
         if not facts:lines+=['','No saved market facts. This is an empty-source status report, not a market conclusion.']
         from . import directional
         assessment = directional.assess(self.store)
+        if geography:
+            assessment=dict(assessment,series=[s for s in assessment.get('series',[]) if in_scope(s)],summary='Scoped candidate series; original source boundaries and periods retained.')
         block = directional.render(assessment)
         if block: lines += ['', block]
         from .publisher_changes import saved_reported_changes
         lines += ['', '## Publisher-reported changes — attributed, not independently approved']
         for change in saved_reported_changes(self.store):
+            if not in_scope(change):continue
             lines += ['', '### '+change['title'],
                 'Classification: publisher_reported_change; not a system-calculated change. Human review: '+change['human_review_status'],
                 '> '+change['evidence']['quote'],
                 f"Period: {change['period']} versus {change['comparison_period']}; definition: {change['definition']}",
                 f"Source: {change['url']}; published: {change.get('published_at') or 'not disclosed'}; locator: {change['evidence']['locator']}; record: {change['id']}; document SHA-256: {change['document_sha256']}",
                 change['limitation']]
-        lines += ['', '## Important events']
+        lines += ['', '## Important events — source dates retained; historical background when outside window']
         for e in events:
             context=event_context(e,self.store)
             lines += ['', '### '+e['title'], context['quote'], e.get('url',''), 'Evidence status: '+e.get('status','pending_review'), 'Evidence locator: '+str(context.get('locator'))]
@@ -354,22 +606,23 @@ class MarketService:
         env = Environment(loader=BaseLoader(), autoescape=select_autoescape(default=True))
         rendered = env.from_string('<!doctype html><html lang="en"><meta charset="utf-8"><title>{{title}}</title><style>body{font:16px system-ui;max-width:1100px;margin:40px auto;padding:20px;line-height:1.6}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style><h1>{{title}}</h1><pre>{{body}}</pre></html>').render(title='London office market '+period+' brief',body=markdown)
         row = self.store.put('reports', 'report:'+key if key else uid(), dict(title='London office market '+period+' brief', period=period, markdown=markdown, html=rendered,
+            geography=geography,window_days=window_days,window_start=window_start,window_end=stamp,recent_event_ids=[e['id'] for e in recent],
             analysis_status='REVIEW_REQUIRED' if analysis else ('deterministic_evidence_summary' if facts else 'no_data'),analysis_id=analysis.get('analysis_id') if analysis else None,analysis_cached=analysis.get('cached') if analysis else None, fact_ids=[f['id'] for f in facts], event_ids=[e['id'] for e in events],
             directional_status=assessment.get('status'), directional_series=len(assessment.get('series',[]))))
         return dict(row, markdown_url=f"/api/market/reports/{row['id']}?format=markdown", html_url=f"/api/market/reports/{row['id']}?format=html")
 
-    def generate_report(self,period,key=None):
-        if not self.report_workflow:return self.report(period,key)
+    def generate_report(self,period,key=None,geography=None):
+        if not self.report_workflow:return self.report(period,key,geography=geography)
         with self._lock:
             identity='report:'+(key or uid());prior=self.store.get('jobs',identity)
             if prior:
-                if prior.get('period')!=period:raise ValueError('Report idempotency key used for another period')
+                if prior.get('period')!=period or prior.get('geography')!=geography:raise ValueError('Report idempotency key used for another scope or period')
                 if prior.get('status')=='running':raise ValueError('Report already running')
-                if prior.get('status')=='succeeded':return self.report(period,key)
+                if prior.get('status')=='succeeded':return self.report(period,key,geography=geography)
                 raise ValueError('Prior report failed or was interrupted; use a fresh idempotency key for explicit retry')
-            job=self.store.put('jobs',identity,dict(kind='report',status='running',stage='evidence_summary',progress=10,started_at=now(),attempts=1,period=period))
+            job=self.store.put('jobs',identity,dict(kind='report',status='running',stage='evidence_summary',progress=10,started_at=now(),attempts=1,period=period,geography=geography))
         try:
-            run=self.report_workflow.run(dict(period=period,key=key,job_id=job['id']))
+            run=self.report_workflow.run(dict(period=period,key=key,job_id=job['id'],geography=geography))
             if str(getattr(run.status,'value',run.status))!='COMPLETED' or not isinstance(run.content,dict):raise RuntimeError('REPORT_WORKFLOW_FAILED')
             report=run.content
             self.store.update('reports',report['id'],dict(workflow_run_id=run.run_id))
@@ -405,6 +658,20 @@ class MarketService:
         if not url: return self.store.put('notifications', uid(), dict(base,status='configuration_missing',error='Set server-side LONDON_NOTIFICATION_URL; nothing sent'))
         if not self.settings()['notifications_enabled']:
             return self.store.put('notifications', uid(), dict(base,status='disabled',error='Notifications disabled; nothing sent'))
+        if report.get('artifact'):
+            from .chat_report import read_report,render_notification
+            current=read_report(self.store,report_id)
+            ai=current.get('ai_analysis')
+            if current['publication_review']['status']=='withheld' or (ai and ai.get('status')!='published'):
+                code=next(iter(current['publication_review'].get('codes',[])),'ANALYSIS_NOT_PUBLISHABLE')
+                return self.store.put('notifications',uid(),dict(base,status='publication_withheld',error=code,finished_at=now()))
+            try:body=render_notification(current)
+            except ValueError as exc:
+                return self.store.put('notifications',uid(),dict(base,status='payload_withheld',error=str(exc),finished_at=now()))
+        else:
+            body=report_view(report,self.store,'markdown')
+            if len(body.encode('utf-8'))>12000:
+                return self.store.put('notifications',uid(),dict(base,status='payload_withheld',error='NOTIFICATION_EVIDENCE_ENVELOPE_EXCEEDED',finished_at=now()))
         prior = next((a for a in self.store.all('notifications') if a['report_id']==report_id and a['status']=='sent'), None)
         if prior: return dict(prior,deduplicated=True)
         uncertain=next((a for a in self.store.all('notifications') if a['report_id']==report_id and a['status']=='delivery_unknown'),None)
@@ -415,7 +682,6 @@ class MarketService:
         dispatched=False
         try:
             transport=apprise.Apprise(); valid=transport.add(url)
-            body=report_view(report,self.store,'markdown')[:12000]
             dispatched=bool(valid)
             sent=bool(valid and transport.notify(body=body,title=report['title']))
             return self.store.update('notifications',row['id'],dict(status='sent' if sent else 'failed',finished_at=now(),
@@ -464,7 +730,7 @@ class MarketService:
         self.invalidate()
 
     async def refresh(self, job):
-        from .sources import fetch_source, parse_content, discover_article_sources
+        from .sources import fetch_source, parse_content, discover_article_sources, document_metadata
         from .structured_sources import segments as structured_segments, planning_events, nomis_employment
         sources = [s for s in self.store.all('sources') if s.get('enabled') and (not job.get('source_id') or s['id']==job['source_id'])]
         if job.get('category')=='news': sources=[s for s in sources if s.get('category') in ['news','owner','planning']]
@@ -477,6 +743,14 @@ class MarketService:
                     response=await fetch_source(source,etag=source.get('etag'),last_modified=source.get('last_modified'))
                     if response['status_code']==304:
                         if not source.get('last_article_failures'):
+                            from .indicator_ingestion import project_document, project_macro
+                            macro_replayed=False
+                            for saved in self.store.all('documents'):
+                                if saved['source_id']==source['id']:
+                                    project_document(self.store,saved,source)
+                                    if source['id'] in ['boe','ons','ons-employment','ons-gva'] and not macro_replayed and saved['url']==source['url']:
+                                        project_macro(self.store,saved,source,Path(saved['path']).read_bytes())
+                                        macro_replayed=True
                             self.store.update('sources',source['id'],dict(health='healthy',last_success=now(),last_error=None));return dict(source_id=source['id'],status='unchanged')
                         saved=next((d for d in self.store.all('documents') if d['source_id']==source['id'] and d['url']==source['url']),None)
                         if not saved:raise ValueError('CONDITIONAL_RECOVERY_SNAPSHOT_MISSING')
@@ -484,9 +758,11 @@ class MarketService:
                     structured = source['id'].startswith('planning-api-') or source['id']=='epc-nondomestic'
                     segments=structured_segments(source,response['content']) if structured else parse_content(response['content'],response['media'])
                     doc=self.store.snapshot(source,response['url'],response['content'],response['media'],segments,
-                        title=source.get('name'),published_at=response.get('published_at'),etag=response.get('etag'),last_modified=response.get('last_modified'))
+                        title=source.get('name'),published_at=response.get('published_at') or document_metadata(response['content'],response['media']).get('published_at'),etag=response.get('etag'),last_modified=response.get('last_modified'))
                     self.store.update('sources',source['id'],dict(health='healthy',last_success=now(),last_error=None,etag=response.get('etag'),last_modified=response.get('last_modified')))
                     articles=[]; structured_records=0
+                    from .indicator_ingestion import project_document, project_macro
+                    structured_records+=project_document(self.store,doc,source)
                     if source['id'].startswith('planning-api-'):
                         structured_records=planning_events(self.store,doc,source,response['content'])
                     elif source['id']=='nomis-london':
@@ -496,11 +772,12 @@ class MarketService:
                         for article in discover_article_sources(response['content'],response['url']):
                             try:
                                 child=await fetch_source(dict(source,url=article['url']))
-                                child_doc=self.store.snapshot(source,child['url'],child['content'],child['media'],parse_content(child['content'],child['media']),title=article['title'],published_at=article.get('published_at'))
+                                child_doc=self.store.snapshot(source,child['url'],child['content'],child['media'],parse_content(child['content'],child['media']),title=article['title'],published_at=article.get('published_at') or document_metadata(child['content'],child['media']).get('published_at'))
+                                structured_records+=project_document(self.store,child_doc,source)
                                 if source.get('category')!='research':self.events_from_document(child_doc,source)
                                 articles.append(dict(url=article['url'],status='saved',document_id=child_doc['id']))
                             except Exception as exc:articles.append(dict(url=article['url'],status='failed',error=type(exc).__name__))
-                    if source['id'] in ['boe','ons','ons-employment']:self.macro_from_document(doc,source,response['content'])
+                    if source['id'] in ['boe','ons','ons-employment','ons-gva']:structured_records+=project_macro(self.store,doc,source,response['content'])
                     child_failures=sum(a['status']=='failed' for a in articles)
                     self.store.update('sources',source['id'],dict(last_article_failures=child_failures,listing_health='healthy',health='partial' if child_failures else 'healthy',last_error='ARTICLE_FETCH_PARTIAL' if child_failures else None))
                     return dict(source_id=source['id'],status='saved',document_id=doc['id'],articles=articles,
@@ -526,6 +803,7 @@ class MarketService:
         discovery=dict(status='not_requested',requests=0,candidates=[],successes=0,failures=0)
         if discovery_task: discovery=await discovery_task
         article_failures=sum(a['status']=='failed' for r in results for a in r.get('articles',[]))
+        self.invalidate()
         return dict(sources=results,discovery=discovery,successes=sum(r['status']!='failed' for r in results)+discovery.get('successes',0),failures=sum(r['status']=='failed' for r in results)+article_failures+discovery.get('failures',0),article_failures=article_failures)
 
     def events_from_document(self, doc, source):
@@ -583,15 +861,27 @@ class MarketService:
             published_at=doc.get('published_at'),collected_at=doc['collected_at'],extraction_version='deterministic-macro-v1',evidence=dict(quote=quote,page=None,locator=locator)))
 
     def saved_answer(self, message):
-        facts=self.facts(limit=100)['items']; events=[e for e in self.store.all('events') if e.get('kind')!='source_update' and e.get('status')!='superseded']
+        facts=[f for f in self.facts(limit=500)['items'] if f.get('status')!='rejected' and f.get('human_review_status')!='rejected']; events=[e for e in self.store.all('events') if e.get('kind')!='source_update' and e.get('status') not in ['superseded','rejected'] and e.get('human_review_status')!='rejected']
         lower=message.lower();geos=[g for g in ['City','West End','Canary Wharf','Midtown'] if g.lower() in lower]
         if geos:facts=[f for f in facts if any(g.lower() in f.get('geography','').lower() for g in geos)]
-        metric=next((v for k,v in [('rent','rent'),('租金','rent'),('vacancy','vacancy'),('空置','vacancy'),('take-up','takeup'),('成交','takeup'),('interest','interest_rate'),('利率','interest_rate'),('employment','employment'),('就业','employment'),('inflation','inflation_cpih'),('通胀','inflation_cpih')] if k in lower),None)
-        if metric:facts=[f for f in facts if f['metric']==metric]
-        if metric=='employment' and ('london' in lower or '伦敦' in lower):
+        metrics={v for k,v in [('rent','rent'),('租金','rent'),('vacancy','vacancy'),('空置','vacancy'),('availability','availability'),('take-up','takeup'),('leasing','takeup'),('成交','takeup'),('interest','interest_rate'),('利率','interest_rate'),('employment','employment'),('就业','employment'),('inflation','inflation_cpih'),('通胀','inflation_cpih'),('bank of england','interest_rate'),('boe','interest_rate'),('base rate','interest_rate'),('bank rate','interest_rate')] if k in lower}
+        if metrics:facts=[f for f in facts if f['metric'] in metrics]
+        if 'grade a' in lower and 'rent' in lower:facts=[f for f in facts if f.get('grade')=='Grade A']
+        elif 'prime' in lower and 'rent' in lower:
+            from .indicators import matches
+            facts=[f for f in facts if matches(f,'prime_rent')]
+        periods=set(re.findall(r'20\d{2}Q[1-4]',message,re.I))
+        if periods:facts=[f for f in facts if (f.get('normalized_period') or f.get('period') or '').upper() in {p.upper() for p in periods}]
+        if metrics=={'employment'} and ('london' in lower or '伦敦' in lower):
             facts=[f for f in facts if f.get('geography','').startswith('London')]
-        wants_events=any(term in lower for term in ('事件','新闻','规划','项目','供应','event','news','planning','supply'))
-        if wants_events and not metric: facts=[]
+        wants_events=any(term in lower for term in ('事件','新闻','规划','项目','供应','event','news','planning','supply','notable changes','developments','leasing activity'))
+        theme_terms={'hybrid_working':['hybrid','混合办公'],'esg':['esg','sustainab','可持续'],
+                     'flight_to_quality':['flight-to-quality','flight to quality','优质化'],'refurbishment':['refurbish','翻新'],'prelet':['pre-let','prelet','预租']}
+        themes=[k for k,words in theme_terms.items() if any(w in lower for w in words)]
+        if themes:
+            wants_events=True
+            events=[e for e in events if any(k in e.get('indicator_keys',[]) for k in themes)]
+        if wants_events and not metrics: facts=[]
         if wants_events:
             if any(term in lower for term in ('规划','planning')):
                 events=[e for e in events if e.get('kind')=='planning']
@@ -612,13 +902,13 @@ class MarketService:
         from . import directional
         assessment=directional.assess(self.store)
         series=assessment.get('series',[])
-        if metric: series=[s for s in series if s['metric']==metric]
+        if metrics: series=[s for s in series if s['metric'] in metrics]
         if geos: series=[s for s in series if any(g.lower() in (s['geography'] or '').lower() for g in geos)]
         if series:
             reviewed=sum(1 for s in series if s.get('basis')=='human_approved')
             scoped=dict(assessment,status='available',series=series,
-                summary=(f'与本次问询相关的 {len(series)} 组同口径候选序列中，{reviewed} 组已获人工审核，'
-                         f'{len(series)-reviewed} 组仍为未审核候选。方向仅代表已保存两期记录的算术差异，不是已确认的市场变化。'))
+                summary=(f'{len(series)} comparable candidate series; {reviewed} human-reviewed; '
+                         f'{len(series)-reviewed} pending review. Arithmetic differences do not establish a confirmed market change.'))
             block=directional.render(scoped)
             if block: lines+=['',block]
         if wants_events:

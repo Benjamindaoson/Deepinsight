@@ -37,6 +37,17 @@ def discover_reported_changes(store, run_id=None):
                     if f'Office | Q{quarter} {year}' not in text:
                         continue
                     previous = f'{year}Q{quarter-1}' if quarter > 1 else f'{year-1}Q4'
+                    # Content-level dedupe: a record already saved under any identity
+                    # (e.g. a legacy scheme) for the same original and sentence is the
+                    # same disclosed change; re-fetching must not duplicate it.
+                    existing = next((e for e in store.all('events')
+                        if e.get('classification') == 'publisher_reported_change'
+                        and e.get('status') not in ['rejected', 'superseded']
+                        and e.get('document_sha256') == doc['sha256']
+                        and (e.get('evidence') or {}).get('quote') == match.group()), None)
+                    if existing:
+                        results.append(existing)
+                        continue
                     identity = 'publisher-change:' + hashlib.sha256((doc['source_id'] + doc['sha256'] + match.group()).encode()).hexdigest()
                     row = store.put('events', identity, dict(
                         kind='publisher_reported_change', classification='publisher_reported_change',

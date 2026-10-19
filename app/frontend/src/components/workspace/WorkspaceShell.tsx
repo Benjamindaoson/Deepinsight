@@ -25,6 +25,9 @@ import useChatActions from '@/hooks/useChatActions'
 import Sessions from '@/components/chat/Sidebar/Sessions'
 import AuthToken from '@/components/chat/Sidebar/AuthToken'
 import { Toaster } from '@/components/ui/sonner'
+import ModelSettings from './ModelSettings'
+import EndpointSettings from './EndpointSettings'
+import { usePersonalModels } from '@/lib/personal-models'
 
 const navigation = [
   ['/', 'DeepInsight AI', MessageSquare, 'AI Workspace'],
@@ -85,6 +88,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   const [search, setSearch] = useState('')
   const hydrated = useStore((s) => s.hydrated)
   const endpoint = useStore((s) => s.selectedEndpoint)
+  const setSelectedEndpoint = useStore((s) => s.setSelectedEndpoint)
   const auth = useStore((s) => s.authToken)
   const streaming = useStore((s) => s.isStreaming)
   const active = useStore((s) => s.isEndpointActive)
@@ -189,6 +193,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </label>
+        <div className="sidebar-scroll">
         <nav aria-label="Workspace sections">
           {['AI Workspace', 'Market Intelligence', 'Monitoring'].map(
             (group) => (
@@ -219,15 +224,23 @@ function Shell({ children }: { children: React.ReactNode }) {
         <div className="recent-chats">
           <Sessions search={search} />
         </div>
+        </div>
         <div className="sidebar-bottom">
+          <button
+            className="model-settings-trigger"
+            onClick={() => usePersonalModels.getState().setOpen(true)}
+          >
+            <Settings2 size={20} /> Models & API keys
+          </button>
           <ThemeToggle />
           <details className="connection-settings">
             <summary>Connection settings</summary>
-            <p className="break-all">{endpoint}</p>
-            <AuthToken
-              hasEnvToken={!!process.env.NEXT_PUBLIC_OS_SECURITY_KEY}
-              envToken={process.env.NEXT_PUBLIC_OS_SECURITY_KEY || ''}
+            <EndpointSettings
+              endpoint={endpoint}
+              onSave={setSelectedEndpoint}
+              disabled={streaming}
             />
+            <AuthToken />
           </details>
         </div>
       </aside>
@@ -278,6 +291,7 @@ export default function WorkspaceShell({
       storageKey="london-office-theme"
     >
       <Shell>{children}</Shell>
+      <ModelSettings />
       <Toaster />
     </ThemeProvider>
   )

@@ -15,6 +15,13 @@ import { conversationLink, contextIsReady } from '../src/lib/workflow.ts'
 import { formatConversationTime } from '../src/lib/workflow.ts'
 import { latestChatFailure } from '../src/lib/workflow.ts'
 
+test('partial research retains a link to its saved evidence report without claiming success', () => {
+  const view = jobPresentation({ kind: 'research', status: 'partial', result: { report_id: 'partial-report' } })
+  assert.equal(view.href, '/reports?report=partial-report')
+  assert.match(view.explanation, /Inspect the result/)
+  assert.equal(view.showProgress, false)
+})
+
 test('history: same selection can be retried, older success/error is rejected, live run cannot be overwritten', () => {
   const guard = createSelectionGuard()
   const first = guard.begin('a')
@@ -29,13 +36,15 @@ test('history: same selection can be retried, older success/error is rejected, l
 })
 
 test('job retry matches backend contract, including interrupted and partial but excluding model jobs', () => {
-  for (const kind of ['refresh', 'extract'])
+  for (const kind of ['refresh', 'extract', 'research'])
     for (const status of ['failed', 'interrupted', 'partial'])
       assert.equal(retryableJob({ kind, status }), true)
   for (const kind of ['ask', 'report', 'report_analysis'])
     assert.equal(retryableJob({ kind, status: 'failed' }), false)
   assert.equal(retryableJob({ kind: 'refresh', status: 'cancelled' }), false)
   assert.equal(retryableJob({ kind: 'extract', status: 'succeeded' }), false)
+  assert.equal(jobPresentation({ kind: 'research', status: 'succeeded', result: { report_id: 'saved-1' } }).href,
+    '/reports?report=saved-1')
 })
 
 test('terminal processing never implies approved evidence or a successful 100% failure', () => {

@@ -15,6 +15,7 @@ def test_native_registration_is_idempotent_and_can_disable(tmp_path):
     service.sync_schedules()
     assert {s.name:s.id for s in service.schedule_manager.list()}==first
     assert len(first)==4
+    assert all(s.timezone=='Europe/London' for s in service.schedule_manager.list())
     service.save_settings({'monitoring_enabled':False})
     assert all(not s.enabled for s in service.schedule_manager.list())
     service.pool.shutdown()

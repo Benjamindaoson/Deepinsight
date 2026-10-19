@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "DeepInsight Lite：Agno 实际运行边界",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1300,
+      820
+    ]
+  },
+  "components": [
+    {
+      "id": "browser",
+      "type": "frontend",
+      "label": "Next.js 业务界面",
+      "sublabel": "问答、报告、Jobs",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        180,
+        80
+      ]
+    },
+    {
+      "id": "os",
+      "type": "backend",
+      "label": "Agno AgentOS",
+      "sublabel": "挂载 FastAPI；原生 API",
+      "pos": [
+        300,
+        100
+      ],
+      "size": [
+        180,
+        80
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "MarketService",
+      "sublabel": "自定义路由与发布门禁",
+      "pos": [
+        560,
+        100
+      ],
+      "size": [
+        180,
+        80
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "原生 Agno Agent",
+      "sublabel": "一问最多三次模型请求",
+      "pos": [
+        820,
+        100
+      ],
+      "size": [
+        180,
+        80
+      ]
+    },
+    {
+      "id": "provider",
+      "type": "external",
+      "label": "真实模型供应商",
+      "sublabel": "后端凭证；逐请求账本",
+      "pos": [
+        1080,
+        100
+      ],
+      "size": [
+        180,
+        80
+      ]
+    },
+    {
+      "id": "native",
+      "type": "database",
+      "label": "agno.sqlite3",
+      "sublabel": "会话、运行、追踪、计划",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        180,
+        80
+      ]
+    },
+    {
+      "id": "workflow",
+      "type": "backend",
+      "label": "三个原生 Workflow",
+      "sublabel": "监测、报告、保存证据研究",
+      "pos": [
+        560,
+        390
+      ],
+      "size": [
+        180,
+        80
+      ]
+    },
+    {
+      "id": "skills",
+      "type": "backend",
+      "label": "Skills / LocalSkills",
+      "sublabel": "17 包；真实 SDK 读取与回执",
+      "pos": [
+        820,
+        390
+      ],
+      "size": [
+        180,
+        80
+      ]
+    },
+    {
+      "id": "business",
+      "type": "database",
+      "label": "业务证据与文件",
+      "sublabel": "market.sqlite3、原文、报告",
+      "pos": [
+        560,
+        680
+      ],
+      "size": [
+        180,
+        80
+      ]
+    },
+    {
+      "id": "sources",
+      "type": "external",
+      "label": "机构来源 / 公开接口",
+      "sublabel": "HTTP 采集；不保证可访问",
+      "pos": [
+        820,
+        680
+      ],
+      "size": [
+        180,
+        80
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "browser",
+      "to": "os",
+      "label": "HTTP / SSE",
+      "variant": "emphasis"
+    },
+    {
+      "from": "os",
+      "to": "service",
+      "label": "业务 API",
+      "variant": "emphasis"
+    },
+    {
+      "from": "service",
+      "to": "agent",
+      "label": "Agent.arun",
+      "variant": "emphasis"
+    },
+    {
+      "from": "agent",
+      "to": "provider",
+      "label": "模型请求",
+      "variant": "emphasis"
+    },
+    {
+      "from": "os",
+      "to": "native",
+      "label": "原生持久化",
+      "labelDy": 24
+    },
+    {
+      "from": "service",
+      "to": "workflow",
+      "label": "Workflow.run",
+      "labelDy": 24
+    },
+    {
+      "from": "agent",
+      "to": "skills",
+      "label": "加载指令",
+      "labelDy": 24
+    },
+    {
+      "from": "workflow",
+      "to": "native",
+      "label": "步骤与运行"
+    },
+    {
+      "from": "workflow",
+      "to": "business",
+      "label": "证据 / 报告",
+      "labelDy": 24
+    },
+    {
+      "from": "workflow",
+      "to": "sources",
+      "label": "受控采集",
+      "variant": "dashed"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "后端运行层：模型密钥不进入浏览器",
+      "wraps": [
+        "os",
+        "service",
+        "agent",
+        "native",
+        "workflow",
+        "skills"
+      ],
+      "pad": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "框架真实使用",
+      "items": [
+        "AgentOS、Agent、函数 Step Workflow、SQLite、Skills 均有产品代码入口。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "需要区分",
+      "items": [
+        "普通问答不经过 Workflow；数据检索、审核和报告主体由业务代码实现。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "没有全量接入",
+      "items": [
+        "产品没有 Team；未因此获得向量知识库、长期记忆、MCP 或企业权限。"
+      ]
+    }
+  ]
+}

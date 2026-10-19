@@ -163,6 +163,7 @@ const useSessionLoader = () => {
 
                 filteredMessages.push({
                   role: 'agent',
+                  reportId: publications.get(run.run_id)?.report_id,
                   content:
                     publications.get(run.run_id)?.answer ??
                     (restoredRunError(run)

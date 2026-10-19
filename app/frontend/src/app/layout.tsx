@@ -17,7 +17,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="antialiased">
+      <body
+        className="antialiased"
+        data-release-id={process.env.NEXT_PUBLIC_PRODUCT_RELEASE_ID || 'development'}
+      >
         <NuqsAdapter>
           <Suspense fallback={<div className="p-8">Loading workspace…</div>}>
             <WorkspaceShell>{children}</WorkspaceShell>

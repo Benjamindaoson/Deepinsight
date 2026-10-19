@@ -14,8 +14,12 @@ def test_payload_estimate_counts_tool_schemas_and_records_rejections():
     model._reserve((), args)
     call = model.budget.record()['calls'][0]
     assert call['estimate']['components']['tools'] > 0
-    assert call['estimate']['method'] == 'calibrated-character-envelope-v1'
-    assert call['estimate']['calibration_samples'] == 4
+    if str(model.base_url).rstrip('/') in ['https://api.deepseek.com','https://api.deepseek.com/v1']:
+        assert call['estimate']['method'] == 'utf8-bytes-plus-framing-v1'
+        assert call['estimate']['calibration_samples'] == 0
+    else:
+        assert call['estimate']['method'] == 'calibrated-character-envelope-v1'
+        assert call['estimate']['calibration_samples'] == 4
     assert call['estimate']['payload_sha256']
     model.budget.after(40, 5)
     args['messages'] = [Message(role='user', content='x' * 200000)]
@@ -61,6 +65,8 @@ def test_wire_compression_preserves_raw_messages_and_fact_qualifiers():
     ('TOKEN_BUDGET','TOKEN_BUDGET_EXCEEDED'),
     ('MODEL_TIMEOUT','MODEL_TIMEOUT'),('TOOL_ERROR','TOOL_ERROR'),
     ('FINAL_ANSWER_MISSING','FINAL_ANSWER_MISSING'),
+    ('insufficient_user_quota','PROVIDER_QUOTA_EXHAUSTED'),
+    ('MODEL_OUTPUT_TRUNCATED','MODEL_OUTPUT_TRUNCATED'),
     ('secret-provider-error','PROVIDER_ERROR')])
 def test_error_stage_and_final_answer_state(tmp_path, native, expected):
     from fastapi.testclient import TestClient
@@ -119,7 +125,8 @@ def test_calibration_samples_reproduce_from_real_records_without_network():
     import hashlib, math
     from pathlib import Path
     from london_product.qa_context import calibration, character_units
-    model = query_model(); config = calibration();root=Path(__file__).parents[2]
+    from agno.models.openai import OpenAIChat
+    config = calibration();model=OpenAIChat(id=config['model']);root=Path(__file__).parents[2]
     for sample in config['samples']:
         path=root/sample['evidence_path']
         assert hashlib.sha256(path.read_bytes()).hexdigest()==sample['evidence_sha256']
@@ -142,7 +149,8 @@ def test_evidence_pack_is_topic_limited_and_preserves_statuses(tmp_path):
     assert len(broad['facts'])<=8
     assert broad['notice_code']=='NO_VERIFIED_EVIDENCE'
     for f in broad['facts']:
-        original=service.store.get('facts',f['id'])
+        from london_product.normalization import current_fact
+        original=current_fact(service.store.get('facts',f['id']))
         assert f['status']==original['status'] and f['candidate_only']
         assert len(f['evidence']['quote'])<=700
         assert 'published_at' in broad['documents'][f['document_id']]

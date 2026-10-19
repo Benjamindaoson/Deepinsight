@@ -92,7 +92,7 @@ export const useStore = create<Store>()(
         })),
       chatInputRef: { current: null },
       selectedEndpoint:
-        process.env.NEXT_PUBLIC_AGENT_OS_URL || 'http://127.0.0.1:7780',
+        process.env.NEXT_PUBLIC_AGENT_OS_URL || 'http://127.0.0.1:8000',
       setSelectedEndpoint: (selectedEndpoint) =>
         set(() => ({ selectedEndpoint })),
       authToken: '',

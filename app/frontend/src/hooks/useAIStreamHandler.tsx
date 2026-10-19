@@ -12,10 +12,13 @@ import { useQueryState } from 'nuqs'
 import { getJsonMarkdown } from '@/lib/utils'
 import { explainChatError } from '@/lib/chat-errors'
 import { getPublication } from '@/lib/publication'
+import { usePersonalModels } from '@/lib/personal-models'
+import { readMarketStream } from '@/lib/market-stream'
 
 const useAIChatStreamHandler = () => {
   const controller = useRef<AbortController | null>(null)
   const activeRun = useRef<{ url: string; session: string } | null>(null)
+  const personalRun = useRef(false)
   const setMessages = useStore((state) => state.setMessages)
   const { addMessage, focusChatInput } = useChatActions()
   const [agentId] = useQueryState('agent')
@@ -108,6 +111,7 @@ const useAIChatStreamHandler = () => {
       if (useStore.getState().isStreaming) return
       controller.current = new AbortController()
       activeRun.current = null
+      personalRun.current = false
       setStreamingErrorMessage('')
       setIsStreaming(true)
 
@@ -151,6 +155,126 @@ const useAIChatStreamHandler = () => {
       let completedRun: string | undefined
       try {
         const endpointUrl = constructEndpointUrl(selectedEndpoint)
+        const personal = usePersonalModels.getState()
+        if (guarded && personal.connectionId) {
+          personalRun.current = true
+          personal.setProgress(
+            'Preparing your selected model and checking evidence…'
+          )
+          const ownedSession = sessionId || crypto.randomUUID()
+          const previousReport = [...useStore.getState().messages]
+            .reverse()
+            .find((m) => m.reportId)?.reportId
+          const response = await fetch(`${endpointUrl}/api/market/ask`, {
+            method: 'POST',
+            credentials: 'include',
+            signal: controller.current.signal,
+            headers: {
+              'Content-Type': 'application/json',
+              ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
+            },
+            body: JSON.stringify({
+              message: formData.get('message'),
+              mode: 'agent',
+              session_id: ownedSession,
+              parent_report_id: previousReport,
+              connection_id: personal.connectionId,
+              model: personal.model,
+              thinking: personal.thinking,
+              attachment_ids: personal.attachments.map((f) => f.id)
+            })
+          })
+          if (!response.ok) {
+            const failure = await response.json().catch(() => ({}))
+            throw new Error(
+              typeof failure.detail === 'string'
+                ? failure.detail
+                : `Model request failed (${response.status}).`
+            )
+          }
+          if (!response.body)
+            throw new Error('The model response has no stream.')
+          setSessionId(ownedSession)
+          newSessionId = ownedSession
+          await readMarketStream(response.body, (event) => {
+            if (event.type === 'progress') personal.setProgress(event.message)
+            if (event.type === 'token')
+              setMessages((messages) =>
+                messages.map((m, i) =>
+                  i === messages.length - 1
+                    ? { ...m, content: m.content + event.content }
+                    : m
+                )
+              )
+            if (event.type === 'report')
+              setMessages((messages) =>
+                messages.map((m, i) =>
+                  i === messages.length - 1
+                    ? { ...m, reportId: event.report_id }
+                    : m
+                )
+              )
+            if (event.type === 'done') {
+              terminal = true
+              setSessionsData((sessions) =>
+                sessions?.some((s) => s.session_id === ownedSession)
+                  ? sessions
+                  : [
+                      {
+                        session_id: ownedSession,
+                        session_name: formData.get('message') as string,
+                        created_at: Math.floor(Date.now() / 1000)
+                      },
+                      ...(sessions || [])
+                    ]
+              )
+            }
+          })
+          return
+        }
+        if (guarded) {
+          const previousReport = [...useStore.getState().messages]
+            .reverse()
+            .find((m) => m.reportId)?.reportId
+          const focusedResponse = await fetch(
+            `${endpointUrl}/api/market/conversation`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
+              },
+              body: JSON.stringify({
+                message: formData.get('message'),
+                session_id: sessionId,
+                parent_report_id: previousReport
+              }),
+              signal: controller.current.signal
+            }
+          )
+          if (!focusedResponse.ok)
+            throw new Error(
+              `Conversation operation failed (${focusedResponse.status}). Open the report and use Ask a follow-up.`
+            )
+          const focused = await focusedResponse.json()
+          if (focused.handled) {
+            terminal = true
+            setMessages((prev) =>
+              prev.map((m, i) =>
+                i === prev.length - 1
+                  ? {
+                      ...m,
+                      content: focused.answer,
+                      reportId: focused.report_id,
+                      operation: focused.operation,
+                      streamingError: false
+                    }
+                  : m
+              )
+            )
+            return
+          }
+        }
 
         let RunUrl: string | null = null
 
@@ -460,7 +584,8 @@ const useAIChatStreamHandler = () => {
                 ? {
                     ...message,
                     content: publication.answer,
-                    publicationOrigin: publication.answer_origin
+                    publicationOrigin: publication.answer_origin,
+                    reportId: publication.report_id
                   }
                 : message
             )
@@ -480,6 +605,8 @@ const useAIChatStreamHandler = () => {
           )
         }
       } finally {
+        personalRun.current = false
+        usePersonalModels.getState().setProgress('')
         controller.current = null
         focusChatInput()
         setIsStreaming(false)
@@ -506,6 +633,13 @@ const useAIChatStreamHandler = () => {
   )
 
   const stopResponse = async () => {
+    if (personalRun.current) {
+      controller.current?.abort()
+      setStreamingErrorMessage(
+        'Stop requested. The interrupted analysis is incomplete; no automatic model retry was made.'
+      )
+      return
+    }
     const run = activeRun.current
     if (!run) {
       setStreamingErrorMessage(

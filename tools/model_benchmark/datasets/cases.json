@@ -1,0 +1,58 @@
+{
+  "status": "PROVISIONAL_SOURCE_CHECKED_PENDING_HUMAN_REVIEW",
+  "cases": [
+    {
+      "id": "rent_unit",
+      "question": "Compare the City and West End prime rent observations in Q1 and Q2. Can the time denominator be established and can an annual rent trend be published?",
+      "evidence": [
+        {"id": "BNP_Q1_P3", "path": "b1/g0-review/2026-10-17/raw/bnp-q1-2026.pdf", "sha256": "8255a921c15294718433e5a893e6616593ab730904de4be452ba74d0c27bde7c", "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-05/Q12026CentralLondonMarketUpdate.pdf", "locator": "PDF page 3", "text": "Prime West End rents reached £175 per sq ft, up 6.1% y-o-y. Prime rents in the City also increased 8.8%, to £92.50 per sq ft."},
+        {"id": "BNP_Q2_P3", "path": "b1/g0-review/2026-10-17/raw/bnp-q2-2026.pdf", "sha256": "3dd8de05ccb26ce235dfc8f9cf96d47bb2f760196d56cfcc94b0dc2a2a2016cd", "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-08/Q22026CentralLondonMarketUpdate.pdf", "locator": "PDF page 3", "text": "Prime West End rents reached £180 per sq ft, up 5.9% y-o-y. Prime rents in the City increased at a greater rate of 8.6%, to £95 per sq ft."}
+      ],
+      "checks": {"required": ["175", "180", "92.50", "95", "unknown"], "critical_forbidden": ["£/sq\\s*ft\\s*/\\s*year", "GBP/sqft/year", "annual rent rose"]}
+    },
+    {
+      "id": "vacancy_definition",
+      "question": "Explain Central London overall vacancy in Q1 and Q2, and distinguish Q2 West End overall vacancy, Grade A vacancy, and availability volume. State limits of method comparability.",
+      "evidence": [
+        {"id": "BNP_Q1_P3", "path": "b1/g0-review/2026-10-17/raw/bnp-q1-2026.pdf", "sha256": "8255a921c15294718433e5a893e6616593ab730904de4be452ba74d0c27bde7c", "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-05/Q12026CentralLondonMarketUpdate.pdf", "locator": "PDF page 3", "text": "Central London office vacancy stood at 8.4% as of Q1 2026, falling below the five-year average of 10.6%."},
+        {"id": "BNP_Q2_P4", "path": "b1/g0-review/2026-10-17/raw/bnp-q2-2026.pdf", "sha256": "3dd8de05ccb26ce235dfc8f9cf96d47bb2f760196d56cfcc94b0dc2a2a2016cd", "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-08/Q22026CentralLondonMarketUpdate.pdf", "locator": "PDF page 4", "text": "Total availability standing at 22.8m sq ft at the close of the quarter. Overall vacancy across Central London remained broadly stable during Q2 2026, standing at 8.4% at the end of the quarter, a marginal reduction of 2 basis points from Q1. The West End continues to be the most constrained market across Central London, with overall vacancy edging down to 6.7%. Grade A vacancy standing at just 1.3%."}
+      ],
+      "checks": {"required": ["8.4%", "6.7%", "1.3%", "22.8"], "critical_forbidden": ["availability rate (?:was|is) 22.8", "grade a vacancy (?:was|is) 6.7"]}
+    },
+    {
+      "id": "quarterly_takeup",
+      "question": "Compare BNP Central London quarterly take-up in Q1 and Q2. Distinguish quarter values from H1, show rounded-value arithmetic, and explain the publisher's 26% quarter-on-quarter claim without silently reconciling it.",
+      "evidence": [
+        {"id": "BNP_Q1_P3", "path": "b1/g0-review/2026-10-17/raw/bnp-q1-2026.pdf", "sha256": "8255a921c15294718433e5a893e6616593ab730904de4be452ba74d0c27bde7c", "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-05/Q12026CentralLondonMarketUpdate.pdf", "locator": "PDF page 3", "text": "Central London office take-up reached 2.5m sq ft in Q1 2026. Take-up figures based on all deals over 1,000 sq ft."},
+        {"id": "BNP_Q2_P3", "path": "b1/g0-review/2026-10-17/raw/bnp-q2-2026.pdf", "sha256": "3dd8de05ccb26ce235dfc8f9cf96d47bb2f760196d56cfcc94b0dc2a2a2016cd", "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-08/Q22026CentralLondonMarketUpdate.pdf", "locator": "PDF page 3", "text": "Central London office take-up reached 3.0m sq ft in Q2 2026, bringing H1 levels to 5.5m sq ft. Take-up figures based on all deals over 1,000 sq ft. Occupier activity strengthened considerably across Central London during Q2 2026, with take-up reaching 3.0m sq ft, representing a 26.0% increase on the previous quarter."}
+      ],
+      "checks": {"required": ["2.5", "3.0", "5.5", "20%", "26"], "critical_forbidden": ["5.5m (?:sq ft )?in Q2", "26% (?:calculated|from 2.5)"]}
+    },
+    {
+      "id": "prelet_status",
+      "question": "What does the GPE City Tower announcement establish about pre-letting, space under offer, total area, and future refurbishment? Do not present a combined area as signed pre-let space.",
+      "evidence": [
+        {"id": "GPE_CITY_TOWER", "path": "app/data/product/source-qualification/gpe-city-tower.html", "sha256": "07efa5926d0dd1c731165dd3d044932937280b6d3192b4e7a0588d6caf9de56e", "url": "https://www.gpe.co.uk/news-media/news/2026/gpe-secures-fully-managed-pre-lets-at-city-tower-ec2-ahead-of-launch/", "locator": "Article body; published 2026-09-24", "text": "GPE has pre let the initial floor of fully managed office space at City Tower, EC2, with a further floor under offer, as demand continues ahead of completion in early 2027. The transactions total more than 4,300 sq ft. The latest phase will convert a further 38,000 sq ft of space."}
+      ],
+      "checks": {"required": ["4,300", "under offer", "38,000", "2027"], "critical_forbidden": ["pre.?let (?:more than )?4,300", "4,300 sq ft (?:was|were) pre.?let"]}
+    },
+    {
+      "id": "news_planning",
+      "question": "Summarise the Silk Street planning announcement and British Land's Finsbury Avenue leasing update. Distinguish approval, construction/completion, and under-offer from signed leases.",
+      "evidence": [
+        {"id": "CITY_SILK", "path": "app/data/product/source-qualification/city-silk-street.html", "sha256": "913a4c7ce7f51ade920bac3637a2ed05048c434d42b29a638bed99bc47a77edd", "url": "https://news.cityoflondon.gov.uk/city-of-london-corporation-approves-major-office-scheme-on-silk-street/", "locator": "Article body; published 2026-05-28", "text": "City of London Corporation approves major office scheme on Silk Street. The Planning and Transportation Committee approved plans for the redevelopment of 1 Silk Street. The office-led scheme includes approximately 86,000 sq m of Grade A office space."},
+        {"id": "BRITISH_LAND_Q2", "path": "app/data/product/source-qualification/britishland-q2.html", "sha256": "7e43985550137c0759d5f0f0951fd0f1d9b152cec1870c249737f88905cdab9e", "url": "https://www.britishland.com/news/q2-trading-update/", "locator": "Article body", "text": "Our campus developments continue to lease up at record rents, with 1 Broadgate and One Triton Square now fully let and a further 119,000 sq ft under offer at 2 Finsbury Avenue."}
+      ],
+      "checks": {"required": ["approved", "86,000", "119,000", "under offer"], "critical_forbidden": ["Silk Street (?:was|is) completed", "119,000 sq ft (?:signed|let|leased)"]}
+    },
+    {
+      "id": "cross_source_conflict",
+      "question": "BNP and JLL give different Central London Q2 take-up and vacancy observations. Can they be combined into one trend? Identify each publisher, value, period and the missing comparability evidence.",
+      "evidence": [
+        {"id": "BNP_Q2_P3", "path": "b1/g0-review/2026-10-17/raw/bnp-q2-2026.pdf", "sha256": "3dd8de05ccb26ce235dfc8f9cf96d47bb2f760196d56cfcc94b0dc2a2a2016cd", "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-08/Q22026CentralLondonMarketUpdate.pdf", "locator": "PDF page 3", "text": "Central London office take-up reached 3.0m sq ft in Q2 2026. Central London office vacancy stood at 8.4% as of Q2 2026."},
+        {"id": "JLL_Q2_P1", "path": "b1/g0-review/2026-10-17-supplement/alternatives/jll_2026q2.pdf", "sha256": "e2eaadc6049e717d5ebc1375630fae9424b6ba9f463e2040fea00343316a6cc9", "url": "https://www.jll.com/content/dam/jllcom/en/uk/documents/reports/research-reports/26-insights-central-london-office-q2-2026.pdf", "locator": "PDF page 1", "text": "Central London vacancy rate: 8.6%. Q2 2026 take-up: 2.6m sq ft, up 15% q-o-q. West End prime rent: £190 per sq ft. City prime rent: £95 per sq ft."}
+      ],
+      "checks": {"required": ["BNP", "JLL", "3.0", "2.6", "8.4", "8.6", "not comparable"], "critical_forbidden": ["combined (?:take-up|vacancy) trend", "average vacancy (?:was|is) 8.5"]}
+    }
+  ]
+}

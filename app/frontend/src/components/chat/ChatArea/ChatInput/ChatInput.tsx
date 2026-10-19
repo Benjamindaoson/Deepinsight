@@ -1,7 +1,23 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { ArrowUp, Square, ArrowUpRight } from 'lucide-react'
+import {
+  ArrowUp,
+  Square,
+  ArrowUpRight,
+  Plus,
+  X,
+  SlidersHorizontal,
+  FileText
+} from 'lucide-react'
+import {
+  personalApi,
+  personalUrl,
+  chatModelCandidate,
+  supportsThinking,
+  usePersonalModels,
+  type Attachment
+} from '@/lib/personal-models'
 import { useStore } from '@/store'
 import useAIChatStreamHandler from '@/hooks/useAIStreamHandler'
 import { useQueryState } from 'nuqs'
@@ -30,6 +46,40 @@ const ChatInput = ({ welcome = false }: { welcome?: boolean }) => {
   const [dbId] = useQueryState('db_id')
   const { getSession } = useSessionLoader()
   const [input, setInput] = useState('')
+  const personal = usePersonalModels()
+  const fileInput = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const connection = personal.connections.find(
+    (c) => c.id === personal.connectionId
+  )
+  async function upload(files: FileList | null) {
+    if (!files?.length) return
+    setUploading(true)
+    setUploadError('')
+    try {
+      await personalApi('/model-connections')
+      for (const file of Array.from(files)) {
+        if (usePersonalModels.getState().attachments.length >= 4)
+          throw new Error('Attach at most four files per message.')
+        const body = new FormData()
+        body.append('file', file)
+        const saved = await personalApi<Attachment>('/attachments', {
+          method: 'POST',
+          body
+        })
+        personal.setAttachments([
+          ...usePersonalModels.getState().attachments,
+          saved
+        ])
+      }
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Upload failed.')
+    } finally {
+      setUploading(false)
+      if (fileInput.current) fileInput.current.value = ''
+    }
+  }
   const [selectedEvidence, setSelectedEvidence] = useState('')
   const [contextKind] = useQueryState('context')
   const [contextRecord] = useQueryState('record')
@@ -43,6 +93,8 @@ const ChatInput = ({ welcome = false }: { welcome?: boolean }) => {
     previousRevision.current = revision
     setInput('')
     setSelectedEvidence('')
+    usePersonalModels.getState().setAttachments([])
+    setUploadError('')
   }, [revision])
   const streaming = useStore((s) => s.isStreaming)
   const active = useStore((s) => s.isEndpointActive)
@@ -77,6 +129,7 @@ const ChatInput = ({ welcome = false }: { welcome?: boolean }) => {
   const submit = async (text = input) => {
     if (
       !text.trim() ||
+      uploading ||
       pending.current ||
       streaming ||
       historyBlocked ||
@@ -86,11 +139,18 @@ const ChatInput = ({ welcome = false }: { welcome?: boolean }) => {
     )
       return
     pending.current = true
+    if (personal.attachments.length && !personal.connectionId) {
+      personal.setOpen(true)
+      pending.current = false
+      return
+    }
     setInput('')
     try {
       await handleStreamResponse(
         attachResearchContext(text, ready ? selectedEvidence : '')
       )
+      if (useStore.getState().streamingErrorMessage) setInput(text)
+      else personal.setAttachments([])
     } finally {
       pending.current = false
     }
@@ -109,6 +169,45 @@ const ChatInput = ({ welcome = false }: { welcome?: boolean }) => {
           void submit()
         }}
       >
+        <input
+          ref={fileInput}
+          type="file"
+          className="sr-only"
+          accept=".pdf,.txt,.md,.csv"
+          multiple
+          aria-label="Upload reference files"
+          onChange={(e) => void upload(e.target.files)}
+        />
+        {personal.attachments.length > 0 && (
+          <div className="attachment-chips">
+            {personal.attachments.map((file) => (
+              <div key={file.id}>
+                <FileText size={18} />
+                <a
+                  href={personalUrl(`/attachments/${file.id}`)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {file.name}
+                </a>
+                <span title="Original retained. Only bounded text excerpts are sent to the selected model; uploads do not approve market facts.">
+                  {file.segment_count} sections · unreviewed excerpts
+                </span>
+                <button
+                  type="button"
+                  aria-label={`Remove ${file.name}`}
+                  onClick={() =>
+                    personal.setAttachments(
+                      personal.attachments.filter((f) => f.id !== file.id)
+                    )
+                  }
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <textarea
           aria-label="Message DeepInsight AI"
           placeholder="Ask DeepInsight AI about the London office market…"
@@ -128,55 +227,138 @@ const ChatInput = ({ welcome = false }: { welcome?: boolean }) => {
           }}
         />
         <div className="composer-bottom">
-          <span>
-            DeepInsight AI{' '}
-            <details className="sources-tools">
-              <summary>Sources & capabilities</summary>
-              <p>
-                Answers use saved market evidence and may call the configured
-                model. Current source availability does not mean an observation
-                has been verified. This quarter means the period you specify;
-                latest saved data may be older.
-              </p>
-              <div>
-                <Link href="/market-data">Inspect source data</Link> ·{' '}
-                <Link href="/ask">Search saved records without AI</Link> ·{' '}
-                <Link href="/reports">Create a briefing</Link> ·{' '}
-                <Link href="/settings">Configure monitoring</Link>
-              </div>
-              <p>
-                Reports and monitoring are configured on their pages; a chat
-                response alone does not create or change them.
-              </p>
-            </details>
-          </span>
-          {streaming ? (
+          <div className="composer-actions">
             <button
               type="button"
-              className="send-button"
-              aria-label="Stop generating"
-              onClick={stopResponse}
+              className="attach-button"
+              aria-label="Add files"
+              title="Upload PDF, TXT, Markdown or CSV"
+              disabled={uploading || streaming}
+              onClick={() => fileInput.current?.click()}
             >
-              <Square size={16} fill="currentColor" />
+              <Plus size={25} />
             </button>
-          ) : (
-            <button
-              className="send-button"
-              type="submit"
-              aria-label="Send message"
+            <span className="composer-source-link">
+              <details className="sources-tools">
+                <summary>Sources & capabilities</summary>
+                <p>
+                  Answers use saved market evidence and may call the configured
+                  model. Current source availability does not mean an
+                  observation has been verified. This quarter means the period
+                  you specify; latest saved data may be older.
+                </p>
+                <div>
+                  <Link href="/market-data">Inspect source data</Link> ·{' '}
+                  <Link href="/ask">Search saved records without AI</Link> ·{' '}
+                  <Link href="/reports">Create a briefing</Link> ·{' '}
+                  <Link href="/settings">Configure monitoring</Link>
+                </div>
+                <p>
+                  Reports and monitoring are configured on their pages; a chat
+                  response alone does not create or change them.
+                </p>
+              </details>
+            </span>
+          </div>
+          <div className="composer-model-controls">
+            <label className="sr-only" htmlFor="chat-model-select">
+              Chat model
+            </label>
+            <select
+              id="chat-model-select"
+              aria-label="Chat model"
+              disabled={streaming}
+              value={
+                personal.connectionId
+                  ? `${personal.connectionId}|${personal.model}`
+                  : 'system'
+              }
+              onChange={(e) => {
+                if (e.target.value === 'manage') personal.setOpen(true)
+                else if (e.target.value === 'system') personal.select('', '')
+                else {
+                  const [id, model] = e.target.value.split('|')
+                  personal.select(id, model)
+                }
+              }}
+            >
+              <option value="system">Shared service</option>
+              {personal.connections.map((c) => (
+                <optgroup label={c.name} key={c.id}>
+                  {c.models.filter(chatModelCandidate).map((m) => (
+                    <option key={m} value={`${c.id}|${m}`}>
+                      {m}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+              <option value="manage">Manage models & API keys…</option>
+            </select>
+            <select
+              aria-label="Thinking mode"
               disabled={
-                !input.trim() ||
-                !active ||
-                !(agent || team) ||
-                historyBlocked ||
-                contextBlocked
+                streaming || !supportsThinking(connection, personal.model)
+              }
+              value={personal.thinking}
+              title={
+                supportsThinking(connection, personal.model)
+                  ? 'Choose the provider thinking mode'
+                  : 'Thinking controls are not verified for this connection/model'
+              }
+              onChange={(e) =>
+                personal.setThinking(e.target.value as 'standard' | 'deep')
               }
             >
-              <ArrowUp size={20} />
+              <option value="standard">Standard</option>
+              <option value="deep">Deep thinking</option>
+            </select>
+            <button
+              type="button"
+              className="composer-settings"
+              aria-label="Model settings"
+              onClick={() => personal.setOpen(true)}
+            >
+              <SlidersHorizontal size={20} />
             </button>
-          )}
+            {streaming ? (
+              <button
+                type="button"
+                className="send-button"
+                aria-label="Stop generating"
+                onClick={stopResponse}
+              >
+                <Square size={16} fill="currentColor" />
+              </button>
+            ) : (
+              <button
+                className="send-button"
+                type="submit"
+                aria-label="Send message"
+                disabled={
+                  !input.trim() ||
+                  uploading ||
+                  !active ||
+                  !(agent || team) ||
+                  historyBlocked ||
+                  contextBlocked
+                }
+              >
+                <ArrowUp size={20} />
+              </button>
+            )}
+          </div>
         </div>
       </form>
+      {uploading && (
+        <p role="status" className="composer-note">
+          Uploading and parsing your document…
+        </p>
+      )}
+      {uploadError && (
+        <p role="alert" className="chat-error">
+          {uploadError}
+        </p>
+      )}
       {history.id === session && history.status === 'error' && (
         <div className="chat-error" role="alert">
           <p>
@@ -207,7 +389,8 @@ const ChatInput = ({ welcome = false }: { welcome?: boolean }) => {
       )}
       {streaming && (
         <p role="status" className="composer-note">
-          Working with saved evidence… You can stop generation.
+          {personal.progress ||
+            'Working with saved evidence… You can stop generation.'}
         </p>
       )}
       {!active && (
@@ -219,6 +402,9 @@ const ChatInput = ({ welcome = false }: { welcome?: boolean }) => {
       {error && !streaming && !historyBlocked && (
         <div className="chat-error" role="alert">
           <p>{chatFailureCopy(error)}</p>
+          <button onClick={() => personal.setOpen(true)}>
+            Change model or API key
+          </button>
           <details>
             <summary>Technical details</summary>
             {error}

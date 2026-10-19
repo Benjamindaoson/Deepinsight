@@ -48,7 +48,7 @@ def test_fixed_result_id_and_unknown_id_do_not_fall_back(tmp_path,monkeypatch):
 def test_failed_provider_usage_is_unknown_and_terminal(monkeypatch):
     def fail(*a,**k):raise TimeoutError('SENSITIVE PROVIDER BODY')
     monkeypatch.setattr(OpenAIChat,'invoke',fail)
-    m=BoundedOpenAIChat(id='test',max_tokens=20);m.budget=Budget()
+    m=BoundedOpenAIChat(id='test',api_key='offline-test',max_tokens=20);m.budget=Budget()
     with pytest.raises(TimeoutError):m.invoke(messages=[])
     r=m.budget.record()
     assert r['input_tokens'] is None and r['output_tokens'] is None
@@ -125,7 +125,7 @@ def test_stream_budget_checked_before_each_yield(monkeypatch):
         m.budget.started=time.monotonic()-481
         yield ModelResponse(content='late')
     monkeypatch.setattr(OpenAIChat,'invoke_stream',slow)
-    m=BoundedOpenAIChat(id='test',max_tokens=20);m.budget=Budget()
+    m=BoundedOpenAIChat(id='test',api_key='offline-test',max_tokens=20);m.budget=Budget()
     stream=m.invoke_stream(messages=[]);assert next(stream).content=='first'
     with pytest.raises(ValueError):next(stream)
     assert m.budget.record()['calls'][0]['status']=='failed'

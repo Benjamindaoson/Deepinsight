@@ -64,9 +64,9 @@ const AgentMessageWrapper = ({ message }: MessageWrapperProps) => {
   return (
     <div className="flex min-w-0 flex-col gap-y-4">
       <div className="review-banner">
-        Native Agent draft · REVIEW_REQUIRED. Source observations marked
-        pending_review or needs_review are not verified facts. This view does
-        not approve data or publish conclusions.
+        Check the review status of each observation. Pending records are source
+        disclosures, and model findings require the checks shown below. This
+        conversation does not approve data or investment conclusions.
       </div>
       {message.extra_data?.reasoning_steps &&
         message.extra_data.reasoning_steps.length > 0 && (

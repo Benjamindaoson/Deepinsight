@@ -1,4 +1,5 @@
 import { memo, useState } from 'react'
+import Image from 'next/image'
 
 import { type ImageData } from '@/types/os'
 import { cn } from '@/lib/utils'
@@ -24,9 +25,12 @@ function ImagePreview({ image }: { image: ImageData }) {
     )
   // Agent media URLs are React attributes; failed URLs never become HTML markup.
   return (
-    <img
+    <Image
       src={image.url}
       alt={image.revised_prompt || 'AI generated image'}
+      width={768}
+      height={512}
+      unoptimized
       className="w-full rounded-lg"
       onError={() => setFailed(true)}
     />

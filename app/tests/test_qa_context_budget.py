@@ -36,8 +36,10 @@ def saved_service(tmp_path):
 def test_real_evidence_search_is_bounded_and_deduplicated_per_run(tmp_path):
     service = saved_service(tmp_path)
     agent = query_agent(service, None)
+    loader = next(t for t in agent.tools if t.name == 'load_market_skills')
     search = next(t for t in agent.tools if t.name == 'search_market_evidence')
     context = RunContext(run_id='offline-a', session_id='offline', session_state={})
+    loader.entrypoint(run_context=context, skill_names=['market-intelligence'])
     import inspect
     initial_context = {'run_context': context} if 'run_context' in inspect.signature(search.entrypoint).parameters else {}
     first = search.entrypoint(query='London office market recent quarter changes risks opportunities 2026', **initial_context)
@@ -51,7 +53,8 @@ def test_real_evidence_search_is_bounded_and_deduplicated_per_run(tmp_path):
     assert not ({e['id'] for e in a['events']} & {e['id'] for e in b['events']})
     for result in [a, b]:
         for fact in result['facts']:
-            saved = service.store.get('facts', fact['id'])
+            from london_product.normalization import current_fact
+            saved = current_fact(service.store.get('facts', fact['id']))
             for key in ['value', 'unit', 'definition', 'status', 'period', 'evidence']:
                 assert fact[key] == saved.get(key)
             assert result['documents'][fact['document_id']]['url'] == service.store.get('documents', fact['document_id'])['url']
@@ -63,6 +66,7 @@ def test_real_evidence_search_is_bounded_and_deduplicated_per_run(tmp_path):
     assert repeat['facts'] == [] and repeat['events'] == []
     assert repeat['duplicate_query'] is True
     fresh = RunContext(run_id='offline-b', session_id='offline', session_state=context.session_state)
+    loader.entrypoint(run_context=fresh, skill_names=['market-intelligence'])
     assert json.loads(search.entrypoint(query='London office market recent quarter changes risks opportunities 2026', run_context=fresh))['facts'] == a['facts']
     # Conservative byte estimate and limits stay unchanged; two compact tool results fit.
     model = query_model()
@@ -103,8 +107,8 @@ def test_budget_error_reaches_sse_and_job_without_raw_provider_details(tmp_path)
     events = [json.loads(line[6:]) for line in response.text.splitlines() if line.startswith('data: ')]
     assert events[-1]['type'] == 'error'
     assert events[-1]['code'] == 'TOKEN_BUDGET_EXCEEDED'
-    assert '60,000' in events[-1]['message'] and '8,000' in events[-1]['message']
-    assert 'estimate' in events[-1]['message'].lower()
+    assert 'budget' in events[-1]['message'].lower()
+    assert 'narrower question' in events[-1]['message'].lower()
     assert not any(e['type'] in ['done', 'token'] for e in events)
     job = app.state.market.store.all('jobs')[0]
     assert job['error_code'] == 'TOKEN_BUDGET_EXCEEDED'
@@ -132,8 +136,12 @@ def test_oversized_qualifiers_are_omitted_whole_not_truncated(tmp_path):
     doc = store.put('documents', 'd', dict(id='d', source_id='s', url='https://example.org/large', segments=[dict(text=quote, locator='html:main')]))
     store.put('facts', 'f', dict(id='f', source_id='s', document_id=doc['id'], value='80', metric='prelet_share', unit='percent', status='needs_review', evidence=dict(quote=quote)))
     store.put('events', 'e', dict(id='e', source_id='s', document_id=doc['id'], status='pending_review', evidence=dict(quote=quote)))
-    tool = query_agent(MarketService(store), None).tools[0]
-    result = tool.entrypoint(run_context=RunContext(run_id='large', session_id='offline', session_state={}), query='pre-let')
+    agent = query_agent(MarketService(store), None)
+    loader = next(t for t in agent.tools if t.name == 'load_market_skills')
+    tool = next(t for t in agent.tools if t.name == 'search_market_evidence')
+    context = RunContext(run_id='large', session_id='offline', session_state={})
+    loader.entrypoint(run_context=context, skill_names=['market-intelligence'])
+    result = tool.entrypoint(run_context=context, query='pre-let')
     assert len(result.encode()) <= 10000
     data = json.loads(result)
     assert data['facts'] == [] and data['events'] == []

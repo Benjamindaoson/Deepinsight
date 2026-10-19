@@ -1,0 +1,24 @@
+endpoint: https://toapis.cn/v1
+protocol: OpenAI-compatible Chat Completions
+authentication: Bearer token supplied at runtime only
+pricing_checked: 2026-10-18
+price_basis: Authenticated ToAPIs model-marketplace CNY per million tokens; reference estimate, not billing receipt
+models:
+  - id: gpt-6-astra-official
+    family: OpenAI GPT
+    relay_owned_by: custom
+    input_cny_per_million: 56.00
+    output_cny_per_million: 280.00
+    guide: https://toapis.cn/en/model-guide/gpt-6-astra-official
+  - id: qwen3-max
+    family: Alibaba Qwen
+    relay_owned_by: ali
+    input_cny_per_million: 4.90
+    output_cny_per_million: 19.60
+    guide: https://toapis.cn/en/model-guide/qwen3-max
+  - id: deepseek-v4-pro
+    family: DeepSeek
+    relay_owned_by: custom
+    input_cny_per_million: 3.23
+    output_cny_per_million: 9.70
+    guide: https://toapis.cn/model-guide/deepseek-v4-pro

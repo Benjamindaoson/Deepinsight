@@ -48,6 +48,7 @@ def test_candidate_series_cannot_release_unverified_model_trend(tmp_path):
     for year, value in [('2023', '5778000'), ('2024', '5887000')]:
         store.put('facts', year, dict(id=year, metric='employment', geography='London (workplace)',
             definition='All-industry workplace employment', unit='jobs', period=year,
+            source_id='synthetic',series='synthetic-jobs',method='synthetic-method',basis='annual',grade='all',currency=None,
             value=value, status='pending_review', human_review_status='pending_review'))
     raw = 'London office supply declined and prime rent increased this quarter.'
     result = review_analysis(raw, store)
@@ -144,6 +145,10 @@ def test_sse_does_not_leak_raw_claims_even_on_incomplete_run(tmp_path, complete)
     class Agent:
         model = SimpleNamespace(budget_for=lambda _: Budget())
         async def arun(self,*args,**kwargs):
+            yield SimpleNamespace(event='ToolCallCompleted',run_id='fixture-run',tool=SimpleNamespace(
+                tool_name='load_market_skills',tool_call_error=False,result=json.dumps({'audit_id':'synthetic-skill-load'})))
+            yield SimpleNamespace(event='ToolCallCompleted',run_id='fixture-run',tool=SimpleNamespace(
+                tool_name='search_market_evidence',tool_call_error=False,result=json.dumps({'facts':[],'events':[],'documents':{}})))
             for content in [raw[:20],raw[20:]]:
                 yield SimpleNamespace(event='RunContent',content=content,run_id='fixture-run')
             if complete:

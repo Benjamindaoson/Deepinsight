@@ -17,7 +17,8 @@ test('offline: evidence presentation preserves unknown units, precision, period 
   const fact = { id: 'fixture', value: '190.00', unit: 'GBP/sqft, time denominator not stated', period: '2026Q2', status: 'needs_review', definition: 'Annual denominator unconfirmed', evidence: { page: 1, locator: 'pdf:page:1', quote: 'Fixture quote' } }
   const pack = readEvidencePack(JSON.stringify({ facts: [fact], documents: { doc: { published_at: null } } }))
   assert.deepEqual(pack.facts[0], fact)
-  assert.match(reviewLabel(pack.facts[0].status), /待核实/)
+  assert.match(reviewLabel(pack.facts[0].status), /Needs review.*unverified/)
+  assert.doesNotMatch(reviewLabel(pack.facts[0].status), /[\u3400-\u9fff]/)
   assert.match(reviewLabel('pending_review'), /Pending review/)
   assert.equal(reviewLabel('rejected'), 'Rejected')
   assert.equal(reviewLabel(undefined), 'Unknown review status')

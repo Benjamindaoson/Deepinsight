@@ -1,6 +1,6 @@
 from decimal import Decimal
 from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ProductFact(BaseModel):
@@ -29,6 +29,31 @@ class AskInput(BaseModel):
     model_config = ConfigDict(extra='forbid')
     message: str = Field(min_length=1,max_length=4000)
     mode: Literal['auto','saved','agent'] = 'saved'
+    parent_report_id: str | None = Field(default=None,max_length=160)
+    session_id: str | None = Field(default=None,max_length=160)
+    refresh_sources: bool = False
+    connection_id: str | None = Field(default=None, max_length=160)
+    model: str | None = Field(default=None, max_length=180)
+    thinking: Literal['standard','deep'] = 'standard'
+    attachment_ids: list[str] = Field(default_factory=list, max_length=4)
+
+    @field_validator('message')
+    @classmethod
+    def meaningful_message(cls,value):
+        if not value.strip():raise ValueError('Message cannot be whitespace only')
+        return value
+
+
+class ClassifyInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    message: str = Field(min_length=1,max_length=4000)
+    mode: Literal['auto','saved','agent'] = 'auto'
+
+    @field_validator('message')
+    @classmethod
+    def meaningful_message(cls,value):
+        if not value.strip():raise ValueError('Message cannot be whitespace only')
+        return value
 
 
 class CompareInput(BaseModel):
@@ -39,6 +64,7 @@ class CompareInput(BaseModel):
 class ReportInput(BaseModel):
     period: Literal['daily','weekly']='weekly'
     include_analysis: bool=False
+    geography: Literal['City','West End','Canary Wharf','Midtown','Fringe','Midtown / Fringe','Central London'] | None = None
 
 
 class NotifyInput(BaseModel):

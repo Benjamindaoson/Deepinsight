@@ -8,7 +8,7 @@ from agno.models.response import ModelResponse
 
 def test_streaming_provider_requests_are_budgeted(monkeypatch):
     monkeypatch.setattr(OpenAIChat,'invoke_stream',lambda *a,**k:iter([ModelResponse(content='fixture')]))
-    m=BoundedOpenAIChat(id='fixture',max_tokens=10);m.budget=Budget(max_requests=1)
+    m=BoundedOpenAIChat(id='fixture',api_key='offline-test',max_tokens=10);m.budget=Budget(max_requests=1)
     list(m.invoke_stream(messages=[]))
     with pytest.raises(ValueError):list(m.invoke_stream(messages=[]))
 
@@ -145,6 +145,6 @@ def test_late_provider_response_cannot_be_published():
 def test_idle_chat_runtime_receives_fresh_per_run_budget():
     import time
     from types import SimpleNamespace
-    m=BoundedOpenAIChat(id='fixture',max_tokens=10);m.budget=Budget();m.reset_budget_per_run=True;m.budget.started=time.monotonic()-600
+    m=BoundedOpenAIChat(id='fixture',api_key='offline-test',max_tokens=10);m.budget=Budget();m.reset_budget_per_run=True;m.budget.started=time.monotonic()-600
     m._reserve((),{'messages':[],'run_response':SimpleNamespace(run_id='new-user-run')})
     assert m.budget.requests==1

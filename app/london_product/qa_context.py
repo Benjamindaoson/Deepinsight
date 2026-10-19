@@ -2,9 +2,11 @@
 import hashlib
 import json
 import math
+import os
 import re
-from functools import lru_cache
 from pathlib import Path
+
+CALIBRATION_ROOT=Path(__file__).resolve().parents[2]
 
 
 def compact(value):
@@ -17,12 +19,58 @@ def character_units(value):
     return math.ceil(ascii_count / 3 + (len(text) - ascii_count) * 2)
 
 
-@lru_cache(maxsize=1)
 def calibration():
-    return json.loads(Path(__file__).with_name('qa-token-calibration.json').read_text(encoding='utf-8'))
+    override=os.environ.get('LONDON_TOKEN_CALIBRATION_PATH')
+    if not override:
+        return json.loads(Path(__file__).with_name('qa-token-calibration.json').read_text(encoding='utf-8'))
+    # Explicit isolated provider onboarding. Never relabel legacy samples or
+    # accept an endpoint-only edit as evidence of tokenizer calibration.
+    try:
+        path=Path(override).resolve()
+        if not path.is_relative_to(CALIBRATION_ROOT):raise ValueError()
+        config=json.loads(path.read_text(encoding='utf-8'))
+        samples=config['samples'];margin=float(config['safety_margin'])
+        if not samples or not math.isfinite(margin) or margin<1.25:raise ValueError()
+        ratios=[]
+        for sample in samples:
+            proof_path=Path(sample['evidence_path'])
+            if not proof_path.is_absolute():proof_path=CALIBRATION_ROOT/proof_path
+            proof_path=proof_path.resolve()
+            if not proof_path.is_relative_to(CALIBRATION_ROOT):raise ValueError()
+            raw=proof_path.read_bytes()
+            if hashlib.sha256(raw).hexdigest()!=sample['evidence_sha256']:raise ValueError()
+            proof=json.loads(raw);request=proof['request'];response=proof['response'];usage=response['usage']
+            if (str(proof['endpoint']).rstrip('/')!=config['endpoint'] or proof['model']!=config['model']
+                or request['model']!=config['model'] or response.get('model')!=config['model'] or not response.get('id')):raise ValueError()
+            inp=usage['prompt_tokens'];out=usage['completion_tokens'];cap=request['max_tokens']
+            if (type(cap) is not int or cap<=0 or type(inp) is not int or inp<=0 or type(out) is not int or out<0
+                or out>cap):raise ValueError()
+            counted={k:v for k,v in request.items() if k not in ['extra_headers','extra_query']}
+            ratios.append(inp/character_units(counted))
+        multiplier=float(config['multiplier'])
+        # ASCII units count roughly characters/3. A 3x floor reserves at least
+        # one token per ASCII character, plus the existing framing reserve.
+        # One sample remains limited evidence, never an exact tokenizer claim.
+        if not math.isfinite(multiplier) or multiplier<max(3,max(ratios)*margin):raise ValueError()
+        return dict(config,multiplier=multiplier,safety_margin=margin)
+    except (OSError,KeyError,TypeError,ValueError,ZeroDivisionError):
+        raise ValueError('TOKEN_ESTIMATOR_UNCALIBRATED') from None
 
 
 def estimate_payload(payload, endpoint):
+    from .model_connections import ACTIVE_CONNECTION
+    personal=ACTIVE_CONNECTION.get()
+    selected=bool(personal and personal.get('personal') and personal['model']==payload.get('model') and personal['base_url']==str(endpoint).rstrip('/'))
+    if selected or (str(endpoint).rstrip('/') in ['https://api.deepseek.com','https://api.deepseek.com/v1'] and payload.get('model') in ['deepseek-chat','deepseek-reasoner','deepseek-flash','deepseek-v4-pro']):
+        # A deliberately conservative byte envelope, NOT provider calibration.
+        # Count every request-body field and retain the existing context caps.
+        counted={k:v for k,v in payload.items() if k not in ['extra_headers','extra_query']}
+        encoded=compact(counted).encode('utf-8')
+        return dict(method='utf8-bytes-plus-framing-v1',estimated_input_tokens=len(encoded)+4096,
+            calibration_samples=0,multiplier=None,calibration_sha256=None,
+            payload_sha256=hashlib.sha256(encoded).hexdigest(),unicode_characters=len(compact(counted)),
+            components={k:len(compact(v).encode('utf-8')) for k,v in counted.items()},
+            limitation='Conservative byte envelope plus 4096 framing reserve; not tokenizer calibration, actual usage or an invoice.')
     config = calibration()
     if payload['model'] != config['model'] or str(endpoint).rstrip('/') != config['endpoint']:
         raise ValueError('TOKEN_ESTIMATOR_UNCALIBRATED')
@@ -37,7 +85,7 @@ def estimate_payload(payload, endpoint):
         payload_sha256=hashlib.sha256(compact(counted).encode()).hexdigest(),
         unicode_characters=len(compact(counted)),
         components={k: character_units(v) for k, v in counted.items()},
-        limitation='Four provider-usage samples; historical tool schemas unavailable. Calibrated on message-only lower bounds, then applied to full payload with 25% margin and 256 framing reserve. Estimate, not exact tokenizer count.')
+        limitation=config.get('limitation') or 'Provider-usage calibration with a framing reserve. Estimate, not exact tokenizer count or an invoice.')
 
 
 def compress_messages(messages, keep):
@@ -67,12 +115,16 @@ def compress_messages(messages, keep):
 
 TOPICS = {'rent': ('rent', '租金'), 'vacancy': ('vacancy', 'availability', '空置'),
           'takeup': ('take-up', 'takeup', 'leasing', '成交'),
-          'supply': ('supply', '供应'), 'macro': ('macro', 'interest', 'inflation', '宏观', '利率', '通胀')}
-METRIC_TOPIC = {'interest_rate': 'macro', 'inflation_cpih': 'macro', 'inflation_rate': 'macro', 'employment': 'macro',
+          'supply': ('supply', '供应'), 'macro': ('macro', 'interest', 'bank rate', 'base rate', 'inflation', '宏观', '利率', '通胀')}
+METRIC_TOPIC = {'interest_rate': 'macro', 'inflation_cpih': 'macro', 'inflation_rate': 'macro', 'gva_growth':'macro', 'employment': 'macro',
                 'availability': 'vacancy', 'prelet': 'supply', 'prelet_share': 'supply', 'grade_a_share': 'takeup'}
 
 
 def verified(fact):
+    if fact.get('metric') == 'rent':
+        from .normalization import derive
+        if derive(fact)['annualization'] != 'explicit':
+            return False
     return fact.get('status') in ['validated', 'approved'] and fact.get('human_review_status') == 'approved'
 
 
@@ -90,7 +142,8 @@ def evidence_pack(service, query, memo):
     candidates = [f for f in service.facts(limit=500)['items'] if f.get('source_id') in permitted
                   and f.get('status') not in ['rejected', 'superseded'] and f.get('human_review_status') != 'rejected']
     broad = bool(re.search(r'变化|风险|机会|changes|risks|opportunities|overview', query, re.I))
-    requested = [k for k, words in TOPICS.items() if any(w in query.lower() for w in words)]
+    from .routing import positive_metric_text
+    requested = [k for k, words in TOPICS.items() if any(w in positive_metric_text(query).lower() for w in words)]
     topics = list(TOPICS) if broad or not requested else requested
     result = dict(facts=[], events=[], documents={}, topics={k: [] for k in topics},
         coverage=dict(saved_fact_records=len(candidates), selected_fact_records=0,
@@ -99,9 +152,7 @@ def evidence_pack(service, query, memo):
         review_notice='Candidate observations are not confirmed trends. pending_review, needs_review and rejected are not approved. No change claim without approved compatible facts or explicit source attribution. Evidence is selected, not exhaustive; newer calendar quarters may be missing. Do not infer annual rent units, pre-let splits, approval decisions or causal explanations.')
     if not result['coverage']['approved_fact_records']:
         result['notice_code'] = 'NO_VERIFIED_EVIDENCE'
-        result['answer_constraint'] = ('没有任何已人工批准的事实。已确认的市场变化必须写“无已核验事实”。'
-            '可以给出方向性判断，但只能写在“倾向性判断（未审核）”标题下：必须说明依据的是未审核候选记录、不是已确认变化；'
-            '同一指标至少两条相同地域、相同定义的候选记录才可比较方向；不得编造百分比或未返回的数值。风险和机会只能作为待验证假设。')
+        result['answer_constraint'] = ('No human-approved facts are available. Do not assert confirmed market changes. Comparable unreviewed observations may support only labelled candidate arithmetic, not causal or investment conclusions. Never invent values or percentages.')
         from . import directional
         directional_assessment = directional.assess(service.store)
         result['directional_candidates'] = [
@@ -122,8 +173,7 @@ def evidence_pack(service, query, memo):
                 'report_title', 'published_at', 'url', 'limitation']})
             break
     if result['publisher_reported_changes']:
-        result['answer_constraint'] = ('没有已批准的可比数值，不可声称完成系统变化计算。可以单列“机构披露变化 (publisher_reported_change)”，'
-            '按原文说明机构、时期、地域和变化，明确非系统计算、非独立核实、人审待完成。其他候选数字仍待核实；风险和机会须标 hypothesis，不推导前期数值。')
+        result['answer_constraint'] = ('Publisher-reported changes (publisher_reported_change) may be quoted separately with publisher, period, geography and original wording. They are not independent calculations or verification. Other candidate values remain unverified; do not infer prior values.')
     seen = set(); selected = set(memo['facts']); skipped = 0
     for topic in topics:
         rows = [f for f in candidates if METRIC_TOPIC.get(f.get('metric'), f.get('metric')) == topic]
@@ -151,10 +201,16 @@ def evidence_pack(service, query, memo):
                 if new_doc: result['documents'].pop(d['id'])
                 skipped += 1; continue
             seen.add(signature)
-    if broad or re.search(r'event|news|事件|新闻',query,re.I):
+    if broad or re.search(r'event|news|hybrid|sustainab|esg|flight.to.quality|refurbish|pre.let|混合办公|可持续|事件|新闻',query,re.I):
+        theme_terms={'hybrid_working':r'hybrid|混合办公','esg':r'esg|sustainab|可持续',
+                     'flight_to_quality':r'flight.to.quality','refurbishment':r'refurbish','prelet':r'pre.let'}
+        themes=[k for k,p in theme_terms.items() if re.search(p,query,re.I)]
         for e in service.store.all('events'):
             if len(result['events']) >= 1: break
             if e['id'] in memo['events'] or e.get('source_id') not in permitted or e.get('kind') in ['source_update','publisher_reported_change'] or e.get('status') in ['rejected','superseded'] or e.get('human_review_status')=='rejected': continue
+            if themes and not any(k in e.get('indicator_keys',[]) for k in themes):continue
+            from .structured_sources import current_event
+            e=current_event(e)
             context = event_context(e,service.store)
             if context.get('context_missing') or len(context['quote']) > 1200: skipped += 1; continue
             d = service.store.get('documents', e.get('document_id','')) or {}
@@ -167,11 +223,48 @@ def evidence_pack(service, query, memo):
     return result
 
 
+ERROR_MESSAGES = {
+    'SKILL_EXECUTION_INCOMPLETE': 'The model did not complete the required Skill loading and evidence retrieval. No unverified model analysis was published.',
+    'MODEL_RESPONSE_TOO_LARGE': 'The generated response exceeded the bounded response size. No unverified analysis was published. Try a narrower question.',
+    'MODEL_OUTPUT_TRUNCATED': 'The provider stopped before a complete answer was available. Try a narrower question.',
+    'MODEL_AUTHENTICATION_FAILED': 'The model service could not authenticate. Ask the service owner to check the configured credential.',
+    'MODEL_CONNECTION_FAILED': 'The model service could not be reached. Saved evidence remains available; retry manually when the connection recovers.',
+    'MODEL_TIMEOUT': 'The model service timed out. Saved evidence remains available; you may retry manually.',
+    'PROVIDER_RESPONSE_INVALID': 'The model service returned an incomplete or invalid response. No analysis was published.',
+    'PROVIDER_QUOTA_EXHAUSTED': 'The model account has insufficient quota. Ask the service owner to restore access.',
+    'TOKEN_ESTIMATOR_UNCALIBRATED': 'The model configuration has no approved context-budget profile. Ask the service owner to review it.',
+    'TOKEN_BUDGET_EXCEEDED': 'This request reached the configured context or output budget. Try a narrower question.',
+    'TOOL_ERROR': 'An evidence retrieval tool failed. Inspect the source status before retrying.',
+    'NO_VERIFIED_EVIDENCE': 'The available evidence cannot support the requested conclusion. Review the saved report for the specific gaps.',
+    'FINAL_ANSWER_MISSING': 'The model did not provide a complete answer. No analysis was published.',
+    'PROVIDER_ERROR': 'The model service could not complete this request. Saved evidence remains available.',
+}
+
+
+def error_message(code):
+    """Total, English-only public mapping. Never echo raw provider content."""
+    return ERROR_MESSAGES.get(code, ERROR_MESSAGES['PROVIDER_ERROR'])
+
+
 def classify_error(error, error_type=''):
     value = str(error)
-    if value in ['TOKEN_BUDGET','TOKEN_BUDGET_EXCEEDED','REQUEST_OR_TIME_BUDGET','PROVIDER_REPORTED_TOKEN_LIMIT_EXCEEDED','TOKEN_ESTIMATOR_UNCALIBRATED']:
+    if value in ERROR_MESSAGES:return value
+    lower=(error_type+' '+value).lower()
+    # Agno's RunError is classified once before crossing the API exception
+    # boundary. Keep this code stable on the second pass; never echo provider
+    # content (which may contain request details) in the public error message.
+    if (value == 'PROVIDER_QUOTA_EXHAUSTED'
+            or 'insufficient_user_quota' in value.lower()
+            or '账户余额或套餐额度不足' in value):
+        return 'PROVIDER_QUOTA_EXHAUSTED'
+    if any(s in lower for s in ['authentication','invalid api key','api_key not set','invalid_api_key','unauthorized','error code: 401']):
+        return 'MODEL_AUTHENTICATION_FAILED'
+    if 'timed out' in lower or 'timeout' in lower:return 'MODEL_TIMEOUT'
+    if any(s in lower for s in ['connection error','connecterror','apiconnectionerror','disconnected']):return 'MODEL_CONNECTION_FAILED'
+    if any(s in lower for s in ['jsondecodeerror','responsevalidationerror','invalid json','malformed']):return 'PROVIDER_RESPONSE_INVALID'
+    if value in ['TOKEN_BUDGET','TOKEN_BUDGET_EXCEEDED','REQUEST_OR_TIME_BUDGET','PROVIDER_REPORTED_TOKEN_LIMIT_EXCEEDED']:
         return 'TOKEN_BUDGET_EXCEEDED'
     if value in ['DOCUMENT_DEADLINE','LATE_RESPONSE_REJECTED','MODEL_TIMEOUT'] or 'timeout' in (error_type+' '+value).lower(): return 'MODEL_TIMEOUT'
-    if value in ['TOOL_ERROR','NO_VERIFIED_EVIDENCE','FINAL_ANSWER_MISSING']: return value
+    if value in ['TOOL_ERROR','NO_VERIFIED_EVIDENCE','FINAL_ANSWER_MISSING','MODEL_OUTPUT_TRUNCATED','MODEL_RESPONSE_TOO_LARGE']: return value
     if value in ['INCOMPLETE_MODEL_ANSWER','MODEL_MISSING_SAVED_CITATIONS']: return 'FINAL_ANSWER_MISSING'
     return 'PROVIDER_ERROR'

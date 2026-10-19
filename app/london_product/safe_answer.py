@@ -2,8 +2,24 @@
 import hashlib
 import html
 import json
+import re
 from pathlib import Path
 from urllib.parse import urlsplit
+
+
+def english_text(value):
+    """Presentation only: retain original Unicode source data in storage."""
+    value=str(value if value is not None else 'Not supplied')
+    return re.sub(r'[\u3400-\u9fff\uf900-\ufaff]+', '[Non-English text; inspect original]', value)
+
+
+def join_blocks(lines):
+    """Keep Markdown table rows adjacent while separating prose paragraphs."""
+    result='';previous=''
+    for line in lines:
+        result+=('' if not result else '\n' if line.startswith('|') and previous.startswith('|') else '\n\n')+line
+        previous=line
+    return result
 
 
 def retrieved_packs(tools):
@@ -36,6 +52,9 @@ def safe_evidence(store, packs):
                     continue
                 seen.add((table, identity))
                 row = store.get(table, identity or '')
+                if table == 'facts' and row:
+                    from .normalization import current_fact
+                    row = current_fact(row)
                 reason = None
                 if not row or row.get('status') in ['rejected', 'superseded'] or row.get('human_review_status') == 'rejected':
                     reason = 'missing_rejected_or_superseded'
@@ -70,6 +89,8 @@ def safe_evidence(store, packs):
                 # paraphrased planning/lease status or a computed market trend.
                 item = {k: row.get(k) for k in ['id','metric','period','geography','definition','value','unit','status','human_review_status']}
                 item.update(quote=quote, document_id=did, document_sha256=doc['sha256'],
+                    source_document_sha256=doc.get('source_document_sha256') or doc['sha256'],
+                    receipt_sha256=doc.get('receipt_sha256'), provenance_kind=doc.get('provenance_kind'),
                     report_title=doc.get('title'), url=doc.get('url'), published_at=doc.get('published_at'),
                     page=segment.get('page'), locator=segment.get('locator'), retrieved_locator=evidence.get('locator'))
                 category = 'pending_review'
@@ -83,57 +104,109 @@ def safe_evidence(store, packs):
 
 def text(value):
     # Source text is data, not Markdown/HTML instructions or active links.
-    value = html.escape(str(value if value is not None else '未披露'), quote=True)
+    value = html.escape(english_text(value), quote=True)
     for char in ['\\', '`', '*', '_', '[', ']', '#', '|']:
         value = value.replace(char, '\\'+char)
     return value.replace('\n', ' ')
 
 
 def render_groups(groups, omitted):
-    """Render the retrieved evidence groups; shared by both publication tiers."""
-    lines = []
-    headings = [('verified_fact','已核验事实'), ('publisher_reported_change','机构披露变化'), ('pending_review','待审核的原始披露')]
-    for category, heading in headings:
+    """Only retrieved, currently traceable records; approval remains separate."""
+    headings={'verified_fact':'Verified facts','publisher_reported_change':'Publisher-reported changes','pending_review':'Pending-review disclosures'}
+    lines=[]
+    for category,heading in headings.items():
         lines.append('## '+heading)
-        if not groups[category]:
-            lines.append('本次检索没有可在此类别展示的记录。现有已核验数据不足以确认市场趋势。')
+        if not groups[category]:lines.append('No eligible record was retrieved in this category.')
         for item in groups[category]:
-            lines.append('### '+text(item.get('metric') or '来源原文')+' · '+text(item['period']))
-            lines.append('分类：'+category+'；数据状态：'+text(item['status'])+'；人工审核：'+text(item['human_review_status'])+'。')
-            if category=='publisher_reported_change':
-                lines.append('仅转述机构原文，不是系统计算，不是已批准事实；未反推上期数值。')
-            elif category=='pending_review':
-                lines.append('待核实：仅展示来源披露，不用于正式变化计算或风险、机会结论。')
-            lines.append('地域：'+text(item['geography'])+'；定义：'+text(item['definition'])+'；原记录数值：'+text(item['value'])+'；单位：'+text(item['unit'])+'。')
-            lines.append('> '+text(item['quote']))
-            url=item.get('url') or ''
-            link='<'+url.replace('>','%3E').replace('<','%3C').replace(' ','%20')+'>' if urlsplit(url).scheme in ['http','https'] else 'URL 未核验'
-            lines.append('来源：'+text(item['report_title'])+'；发布日期：'+text(item['published_at'])+'；'+link+'  \n'
-                +'原文位置：'+text(item['locator'])+'；页码：'+text(item['page'])+'；引用定位：'+text(item['retrieved_locator'])+'  \n'
-                +'记录 ID：'+text(item['id'])+'；文档 ID：'+text(item['document_id'])+'；SHA-256：'+text(item['document_sha256']))
+            lines += ['Category: '+category,'### '+text(item.get('metric') or 'Source disclosure')+' / '+text(item.get('period')),
+                'Area: '+text(item.get('geography'))+'; value: '+text(item.get('value'))+' '+text(item.get('unit')),
+                'Review: '+text(item.get('human_review_status'))+'; record status: '+text(item.get('status')),
+                'Definition: '+text(item.get('definition')), '> '+text(item.get('quote')),
+                'Source: '+text(item.get('report_title'))+' | Published: '+text(item.get('published_at'))+' | '+str(item.get('url') or 'URL unavailable'),
+                'Location: '+text(item.get('locator'))+' | Page: '+text(item.get('page'))+' | Evidence ID: '+text(item.get('id')),
+                'Source document SHA-256: '+text(item.get('source_document_sha256'))]
+            if item.get('receipt_sha256'):
+                lines.append('Offline receipt SHA-256: '+text(item.get('receipt_sha256'))
+                    +' | Publisher bytes are not redistributed; local integrity covers the receipt.')
+            if category!='verified_fact':lines.append('This disclosure is not an approved market fact; it is not a system calculation or independent verification.')
     return lines
 
 
 def render_safe_answer(groups, omitted, codes):
-    lines = ['AI draft withheld — 现展示基于证据的安全回答',
-        '原始 AI 草稿未通过发布检查，未发布其判断。以下由确定性代码整理本次检索证据；没有新增模型调用，没有批准任何数据。REVIEW_REQUIRED。',
-        '拦截原因：'+', '.join(codes)]
-    lines += render_groups(groups, omitted)
-    lines += ['## 风险与机会 · 证据不足',
-        '本回退没有重新生成投资、租赁或开发判断。单个披露值不能证明趋势、因果或租户支付溢价意愿。需要更多已核验、同口径证据才可作判断；不以模型常识补齐。',
-        '## 口径与覆盖限制',
-        '租金年度分母、空置率方法及季度成交口径未经确认时保持待核实。不同机构或统计时期不拼接为趋势；本回答没有执行数值比较。',
-        '预租与洽谈中交易的合并面积不代表已签预租面积。规划受理、审查、撤回指令、拟采纳和正式批准并不等同；事件仅引用原文，不升级状态。',
-        '仅覆盖本次实际检索且原件哈希、原文和记录一致的证据，不代表全市场或当前最新季度。未检索、缺失、已拒绝或无法复核的证据不展示。',
-        f'无法安全展示的检索记录：{len(omitted)}。原始草稿及拦截原因仍保存在运行记录中。']
+    lines=['Model draft withheld: insufficient evidence or failed claim verification.',
+        'A model draft was generated, but its conclusions were not published. The records below are selected by deterministic checks; no additional model call or fact approval was made.',
+        'Failure reasons: '+', '.join(codes)]
+    lines += render_groups(groups,omitted)
+    lines += ['Next step: inspect the cited original and resolve the listed review or comparability gaps before requesting another analysis.',
+        'No investment judgment is released. Unknown rent denominators, combined geographies and incompatible periods remain unresolved.',
+        f'{len(omitted)} retrieved record(s) could not be safely displayed. The draft and rejection reasons remain in the run audit record.']
     return '\n\n'.join(lines)
+
+
+def project_report_result(result, report):
+    """Describe the revalidated artifact, without releasing the raw model draft."""
+    ai = report.get('ai_analysis') or {}
+    accepted = len(ai.get('accepted') or [])
+    published = (ai.get('status') == 'published' and accepted > 0
+        and report.get('generation_status') in ['success', 'partial']
+        and (report.get('publication_review') or {}).get('status') == 'evidence_checked')
+    result['raw_draft_review'] = dict(result['publication_review'])
+    lines=[]
+    if published:
+        lines=['## Evidence-grounded model findings']
+        for finding in ai['accepted']:
+            lines.append('- '+english_text(finding['text']))
+            for evidence in report.get('evidence',[]):
+                if evidence['id'] in finding.get('evidence_ids',[]):
+                    lines.append('  Source: '+str(evidence.get('report_title'))+' | period '+str(evidence.get('period'))
+                        +' | published '+str(evidence.get('published_at') or 'unknown')+' | '+str(evidence.get('locator'))
+                        +' | '+str(evidence.get('url')))
+        lines.append('These model-selected findings passed limited record-level checks. They do not establish causality or constitute investment advice.')
+    else:
+        lines=['## Evidence limitations', 'No model interpretation passed the publication checks for this request. The draft was withheld.']
+    if report.get('market_snapshot'):
+        lines += ['## Available source disclosures',
+            '| Area | Metric | Period | Disclosed value | Review |','|---|---|---|---|---|']
+        for row in report['market_snapshot'][:8]:
+            lines.append('| '+' | '.join(english_text(row.get(k)) for k in ['geography','metric','period','value'])+' '+english_text(row.get('unit'))+' | '+english_text(row.get('review_status'))+' |')
+        for evidence in report['evidence'][:8]:
+            lines.append('Source: '+english_text(evidence.get('report_title'))+' | published '+str(evidence.get('published_at') or 'unknown')
+                +' | '+english_text(evidence.get('locator'))+' | '+str(evidence.get('url')))
+        lines.append('Pending observations are attributed source disclosures, not approved market conclusions. Unknown rent time denominators cannot support annual comparisons.')
+    if report.get('data_gaps'):
+        lines += ['## Missing evidence']+[f"- {english_text(g.get('geography'))} / {english_text(g.get('metric'))}: {english_text(g.get('reason'))}" for g in report['data_gaps'][:8]]
+    lines += [english_text(x) for x in report.get('limitations',[])[:3]]
+    lines.append('Next step: review the cited original definitions and obtain matching evidence for the missing period or measure. No missing quantity or forecast has been invented.')
+    result['answer']=join_blocks(lines)
+    result['outcome']='ANSWERED' if published and report['generation_status']=='success' else 'PARTIALLY_ANSWERED' if published or report.get('market_snapshot') else 'INSUFFICIENT_EVIDENCE'
+    result['answer_origin'] = 'ai_limited_checks' if published else 'deterministic_evidence_fallback'
+    result['publication_review'] = dict(status='limited_checks_passed' if published else 'withheld',
+        semantic_approval=False, codes=[] if published else result['publication_review'].get('codes', []),
+        scope='revalidated_report_findings')
+    result['report_id'] = report['report_id']
+    return result
 
 
 def project_run(run, store):
     from .analysis_guard import review_analysis
     if run.get('agent_id') != 'london-market-agent' or run.get('status') != 'COMPLETED' or not isinstance(run.get('content'), str) or not run['content'].strip():
         raise ValueError('FINAL_ANSWER_MISSING: only completed London Market Runs can be published')
-    result = review_analysis(run['content'], store, evidence_packs=retrieved_packs(run.get('tools')))
+    packs=retrieved_packs(run.get('tools'))
+    result = review_analysis(run['content'], store, evidence_packs=packs)
+    report_id=next((p.get('report_id') for p in packs if p.get('report_id')),None)
+    if report_id:
+        from .chat_report import read_report
+        report=read_report(store,report_id)
+        # Free-form model JSON is an unpublished draft even when a lexical
+        # checker misses its claim. Only the deterministic artifact is released.
+        project_report_result(result, report)
+    else:
+        # Legacy runs have no typed report to verify. Render only current
+        # source records; unknown model prose is never an affirmative answer.
+        groups,omitted=safe_evidence(store,packs)
+        result['answer']='\n\n'.join(render_groups(groups,omitted))
+        result['answer_origin']='deterministic_evidence_fallback'
+        result['publication_review'].update(status='withheld',semantic_approval=False)
     # Raw content remains in the native Run; do not send it to the presentation layer.
     result.pop('raw_answer', None)
     return dict(result, run_id=run['run_id'], session_id=run.get('session_id'), projection_only=True)
