@@ -1,0 +1,17 @@
+query DemoContract {
+  mini: serviceInstance(environmentId: "6436b265-5c84-4e96-a08a-fe58da1bb1d5", serviceId: "61a6dacb-9f2c-47ce-8752-3e3b0e89de8e") {
+    domains { serviceDomains { domain } }
+    latestDeployment { status }
+  }
+  liteFrontend: serviceInstance(environmentId: "39a8633b-dd81-4a9f-b08c-ee93cbf1a282", serviceId: "49c29fe6-9f64-4312-b5be-36161d8d920d") {
+    domains { serviceDomains { domain } }
+    latestDeployment { status }
+  }
+  liteBackend: serviceInstance(environmentId: "39a8633b-dd81-4a9f-b08c-ee93cbf1a282", serviceId: "445a4fae-ce02-4978-ab86-3ce9c63b3e0c") {
+    latestDeployment { status }
+  }
+  miniAuto: serviceInstanceAutoDeployStatus(environmentId: "6436b265-5c84-4e96-a08a-fe58da1bb1d5", projectId: "7d5ba219-cc57-440f-a974-e884ab4c7179", serviceId: "61a6dacb-9f2c-47ce-8752-3e3b0e89de8e") { enabled }
+  liteAuto: serviceInstanceAutoDeployStatus(environmentId: "39a8633b-dd81-4a9f-b08c-ee93cbf1a282", projectId: "68317bb1-cfa9-4756-94b9-393f834d8e34", serviceId: "49c29fe6-9f64-4312-b5be-36161d8d920d") { enabled }
+  miniVariables: variables(environmentId: "6436b265-5c84-4e96-a08a-fe58da1bb1d5", projectId: "7d5ba219-cc57-440f-a974-e884ab4c7179", serviceId: "61a6dacb-9f2c-47ce-8752-3e3b0e89de8e")
+  liteVariables: variables(environmentId: "39a8633b-dd81-4a9f-b08c-ee93cbf1a282", projectId: "68317bb1-cfa9-4756-94b9-393f834d8e34", serviceId: "49c29fe6-9f64-4312-b5be-36161d8d920d")
+}

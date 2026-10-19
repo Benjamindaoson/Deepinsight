@@ -14,6 +14,7 @@
 - [公开源码的运行及资料边界](PUBLISHING.md)
 - [当前运行架构与整合边界](docs/architecture/CURRENT_RUNTIME_AND_INTEGRATION.md)
 - [Agno 运行结构图](docs/architecture/agno-runtime-audit-20261019-v2.html)
+- [面向评审的固定演示链接与发布前后检查](docs/operations/DEMO_LINK_CONTRACT.md)
 
 正式版本的运行说明、真实浏览器和模型验收、文件哈希与独立复核资料保存在原验收主机的 `docs/delivery/unified-release-20261019-r1/`，本公开源码仓库不包含该目录。不能用这些历史记录直接证明本次 GitHub 提交已通过相同验收。
 
